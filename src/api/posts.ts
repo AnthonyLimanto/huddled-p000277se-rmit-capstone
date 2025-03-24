@@ -1,8 +1,8 @@
 import {supabase} from "./supabase"
 
-export const createPost = async (userId: number, content: string, imageUrl: string) => {
+export const createPost = async (userId: string, content: string, imageUrl: string) => {
     const {data, error} = await supabase
-        .from("Posts")
+        .from("posts")
         .insert([
             {user_id: userId, content: content, image_url: imageUrl}
         ]);
@@ -12,7 +12,7 @@ export const createPost = async (userId: number, content: string, imageUrl: stri
 
 export const fetchPosts = async () => {
     const {data, error} = await supabase
-        .from('Posts')
+        .from('posts')
         .select('*')
         .order('created_at', { ascending: false });
     

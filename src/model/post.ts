@@ -1,6 +1,6 @@
 export type Post = {
-    id: number,
-    user_id: number,
+    id: string,
+    user_id: string,
     content: string,
     image_url?: string
     created_at: Date
