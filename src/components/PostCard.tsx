@@ -7,10 +7,10 @@ type PostCardProps = {
 };
 
 const PostCard = ({ post }: PostCardProps) => {
-    console.log('PostCard received post:', post); // Debugging: Log the post received by PostCard
+    console.log('PostCard received post:', post); 
 
   if (!post) {
-    return <Text>No post data available.</Text>; // Handle undefined post
+    return <Text>No post data available.</Text>; 
   }
   return (
     <View >

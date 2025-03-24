@@ -1,8 +1,14 @@
-import { Text, View } from "react-native";
+import { FlatList, Text, View } from "react-native";
 import { fetchPosts } from "../api/posts";
 import PostCard from "../components/PostCard";
 import { Post } from '../model/post';
 import { useEffect, useState } from "react";
+
+const renderPost = ({item}) => (
+  <PostCard post={item} />
+)
+
+const keyExtractor = (post) => post.id;
 
 export default function Index() {
   const [posts, setPosts] = useState<Post[]>([]);
@@ -29,7 +35,12 @@ export default function Index() {
     >
       <Text>Edit app/index.tsx to edit this screen.</Text>
       <Text>Below are posts</Text>
-      <PostCard post={posts[0]} />
+      <FlatList
+        data={posts}
+        renderItem={renderPost}
+        keyExtractor={keyExtractor}
+      />
+      <Text>Below are posts</Text>
     </View>
   );
 }
