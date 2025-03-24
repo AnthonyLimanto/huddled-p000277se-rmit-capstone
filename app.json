@@ -8,15 +8,18 @@
     "scheme": "myapp",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
+
     "splash": {
       "image": "./assets/images/icon-only.png",
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
+
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.anonymous.huddledp000277sermitcapstone"
     },
+
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/icon-only.png",
@@ -24,11 +27,11 @@
       },
       "package": "com.anonymous.huddledp000277sermitcapstone"
     },
+
     "web": {
-      "bundler": "metro",
-      "output": "static",
       "favicon": "./assets/images/icon-only.png"
     },
+
     "plugins": [
       "expo-router",
       [
@@ -40,6 +43,7 @@
         }
       ]
     ],
+
     "experiments": {
       "typedRoutes": true
     }
