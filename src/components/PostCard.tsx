@@ -81,8 +81,8 @@ const styles = StyleSheet.create({
     gap: 8,                     // Space between PFP and username
   },
   timestamp: {
-    fontSize: 12,
-    color: '#666',
+    color: '#777',
+    fontSize: 14,
   },
   profilePic: {
     width: 40,

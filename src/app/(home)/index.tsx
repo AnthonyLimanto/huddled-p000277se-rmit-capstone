@@ -1,7 +1,32 @@
 import React from 'react';
-import { View, Text, StyleSheet, ScrollView, SafeAreaView, StatusBar } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, SafeAreaView, StatusBar, FlatList } from 'react-native';
+import { fetchPosts } from "../../api/posts";
+import PostCard from "../../components/PostCard";
+import { Post } from '../../model/post';
+import { useEffect, useState } from "react";
+
+const renderPost = ({item}) => (
+  <PostCard post={item} />
+)
+
+const keyExtractor = (post) => post.id;
 
 export default function HomeScreen() {
+  const [posts, setPosts] = useState<Post[]>([]);
+
+  useEffect(() => {
+    const loadPosts = async () => {
+      try {
+        const fetchedPosts = await fetchPosts(); 
+        setPosts(fetchedPosts);
+        // console.log(completeSignUp("examplasdasdsd12easdasdasda123s@domain.com", "password123ASD@", "usasderasdasdna123measdas1231", "EXAMPLE DEGREE", null))
+      } catch (error) {
+        console.error('Failed to fetch posts:', error);
+      }
+    };
+
+    loadPosts(); 
+  }, []);
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" />
@@ -16,31 +41,19 @@ export default function HomeScreen() {
         </View>
         
         <View style={styles.feedContainer}>
-          {/* Feed content placeholder */}
-          <View style={styles.postItem}>
-            <View style={styles.postHeader}>
-              <View style={styles.avatar} />
-              <View>
-                <Text style={styles.userName}>User Name</Text>
-                <Text style={styles.postTime}>3 mins</Text>
-              </View>
-            </View>
-            <Text style={styles.postContent}>
-              Example post content would go here...
-            </Text>
-          </View>
-          
-          <View style={styles.postItem}>
-            <View style={styles.postHeader}>
-              <View style={styles.avatar} />
-              <View>
-                <Text style={styles.userName}>Another User</Text>
-                <Text style={styles.postTime}>15 mins</Text>
-              </View>
-            </View>
-            <Text style={styles.postContent}>
-              Another example post content...
-            </Text>
+          <View
+            style={{
+              flex: 1,
+              justifyContent: "center",
+              alignItems: "center",
+            }}
+            >
+            <FlatList
+              data={posts}
+              renderItem={renderPost}
+              keyExtractor={keyExtractor}
+              ItemSeparatorComponent={() => <View style={{ height: 10 }} />}
+            />
           </View>
         </View>
       </ScrollView>
