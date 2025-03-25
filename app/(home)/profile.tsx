@@ -1,8 +1,19 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, SafeAreaView, StatusBar } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
+
 
 export default function ProfileScreen() {
+
+  const router = useRouter();
+  
+  const handleLogin = () => {
+    //To sign in page
+    router.replace('../(auth)/signin');
+  };
+
+
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" />
@@ -66,7 +77,7 @@ export default function ProfileScreen() {
         </View>
         
         <View style={styles.logoutContainer}>
-          <TouchableOpacity style={styles.logoutButton}>
+          <TouchableOpacity style={styles.logoutButton} onPress={handleLogin}>
             <Ionicons name="log-out-outline" size={20} color="#FF3B30" />
             <Text style={styles.logoutText}>Log Out</Text>
           </TouchableOpacity>
