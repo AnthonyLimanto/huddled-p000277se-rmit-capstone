@@ -3,6 +3,7 @@ import { fetchPosts } from "../api/posts";
 import PostCard from "../components/PostCard";
 import { Post } from '../model/post';
 import { useEffect, useState } from "react";
+import { completeSignUp } from "../api/users";
 
 const renderPost = ({item}) => (
   <PostCard post={item} />
@@ -18,6 +19,7 @@ export default function Index() {
       try {
         const fetchedPosts = await fetchPosts(); 
         setPosts(fetchedPosts);
+        // console.log(completeSignUp("examplasdasdsd12easdasdasda123s@domain.com", "password123ASD@", "usasderasdasdna123measdas1231", "EXAMPLE DEGREE", null))
       } catch (error) {
         console.error('Failed to fetch posts:', error);
       }
