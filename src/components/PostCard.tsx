@@ -1,6 +1,8 @@
 import React from 'react';
 import { View, Text, Image, StyleSheet } from 'react-native';
 import { Post } from '../model/post';
+import { getProfileByUserId } from '../api/profile';
+import { Profile } from '../model/profile';
 
 type PostCardProps = {
   post: Post;
@@ -9,9 +11,7 @@ type PostCardProps = {
 
 const howLongAgo = (postTime: Date) => {
   const timeInMins = Math.abs(Math.round((Date.now() - postTime.getTime()) / (1000 * 60))) - 660; // Miuns 11 hours because of time difference in the database
-  console.log("Time: " + timeInMins)
-  console.log("date: " + postTime.getTime())
-  console.log("now: " + Date.now())
+
   if (timeInMins < 60) {
     return `${timeInMins} minute${timeInMins === 1 ? '' : 's'}`;
   }
@@ -26,7 +26,6 @@ const howLongAgo = (postTime: Date) => {
 };
 
 const PostCard = ({ post }: PostCardProps) => {
-  console.log('PostCard received post:', post); 
   let postDate = new Date(post.created_at)
   
   if (!post) {
@@ -39,14 +38,14 @@ const PostCard = ({ post }: PostCardProps) => {
         <View style={styles.leftGroup}>
           <View style={styles.profilePic} />
           <View>
-            <Text style={styles.username}>USER</Text>
-            <Text style={styles.degree}>Bachelors of Software Engineering</Text>
+            <Text style={styles.username}>{post.profile.username}</Text>
+            <Text style={styles.degree}>{post.profile.degree}</Text>
           </View>
         </View>
         <Text style={styles.timestamp}>{howLongAgo(postDate)} ago</Text>
       </View>
       <View >
-        <Text>From User ID: {post.user_id}</Text>
+        <Text>From User ID: {post.profile.username}</Text>
         <Text>Post ID: {post.id}</Text>
         <Text>Message: {post.content}</Text>
       </View>

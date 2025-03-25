@@ -1,3 +1,4 @@
+import { getProfileByUserId } from "./profile";
 import {supabase} from "./supabase"
 
 export const createPost = async (userId: string, content: string, imageUrl: string) => {
@@ -11,11 +12,20 @@ export const createPost = async (userId: string, content: string, imageUrl: stri
 }
 
 export const fetchPosts = async () => {
-    const {data, error} = await supabase
+    const { data, error } = await supabase
         .from('posts')
-        .select('*')
+        .select(`
+            id,
+            content,
+            created_at,
+            profile:users(username, degree, pfp_url)
+        `)
         .order('created_at', { ascending: false });
-    
-    if (error) throw error;
+
+        if (error) {
+            console.error("Error fetching posts:", error);
+        } else {
+            console.log("Posts with profile info:", data);
+        }
     return data; 
 } 
