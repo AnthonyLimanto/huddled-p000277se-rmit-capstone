@@ -35,15 +35,12 @@ export default function Index() {
         alignItems: "center",
       }}
     >
-      <Text>Edit app/index.tsx to edit this screen.</Text>
-      <Text>Below are posts</Text>
       <FlatList
         data={posts}
         renderItem={renderPost}
         keyExtractor={keyExtractor}
         ItemSeparatorComponent={() => <View style={{ height: 10 }} />}
       />
-      <Text>Below are posts</Text>
     </View>
   );
 }
