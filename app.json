@@ -4,12 +4,12 @@
     "slug": "huddled-p000277se-rmit-capstone",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/icon-only.png",
+    "icon": "assets/images/splash-icon.png",
     "scheme": "myapp",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "splash": {
-      "image": "./assets/images/icon-only.png",
+      "image": "assets/images/splash-icon.png",
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
@@ -19,7 +19,7 @@
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/images/icon-only.png",
+        "foregroundImage": "assets/images/splash-icon.png",
         "backgroundColor": "#ffffff"
       },
       "package": "com.anonymous.huddledp000277sermitcapstone"
@@ -27,14 +27,14 @@
     "web": {
       "bundler": "metro",
       "output": "static",
-      "favicon": "./assets/images/icon-only.png"
+      "favicon": "assets/images/splash-icon.png"
     },
     "plugins": [
       "expo-router",
       [
         "expo-splash-screen",
         {
-          "image": "./assets/images/icon-only.png",
+          "image": "assets/images/splash-icon.png",
           "resizeMode": "contain",
           "backgroundColor": "#ffffff"
         }

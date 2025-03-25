@@ -13,63 +13,94 @@ import {
 
 const Login = () => {
   const [email, setEmail] = useState("");
+  const [emailError, setEmailError] = useState("");
+
   const [password, setPassword] = useState("");
+  const [passwordError, setPasswordError] = useState("");
+
+  const handleEmailBlur = () => {
+    if (!email.includes("@") || !email.includes(".")) {
+      setEmailError("Please enter a valid email address.");
+    } else {
+      setEmailError("");
+    }
+  };
+
+  const handlePasswordBlur = () => {
+    if (password.length < 6) {
+      setPasswordError("Password must be at least 6 characters.");
+    } else {
+      setPasswordError("");
+    }
+  };
 
   const handleLogin = () => {
-    console.log("Logging in with:", email, password);
+    if (emailError || passwordError || !email || !password) {
+      alert("Please fix the errors before logging in.");
+      return;
+    }
+
+    alert("Login successful (mock)");
   };
 
   return (
     <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
       <KeyboardAvoidingView
         style={styles.container}
-        behavior={Platform.OS === "ios" ? "padding" : undefined}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
       >
-        <View style={styles.logoContainer}>
-          <Image source={require("../assets/images/icon-only.png")} style={styles.icon} />
-          <Image source={require("../assets/images/Huddled-wordmark.png")} style={styles.wordmark} />
-        </View>
+        <View style={{ flex: 1 }}>
+          <View style={styles.logoContainer}>
+            <Image source={require("../assets/images/icon-only.png")} style={styles.icon} />
+            <Image source={require("../assets/images/Huddled-wordmark.png")} style={styles.wordmark} />
+          </View>
   
-        {/* Bottom box */}
-        <View style={styles.bottomBox}>
-          <Text style={styles.welcome}>Welcome Back</Text>
-          <Text style={styles.subtitle}>Login to your account</Text>
+          <View style={styles.bottomBox}>
+            <Text style={styles.welcome}>Welcome Back</Text>
+            <Text style={styles.subtitle}>Login to your account</Text>
   
-          <Text style={styles.label}>Email :</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="someone@xsj.com"
-            value={email}
-            onChangeText={setEmail}
-            keyboardType="email-address"
-            autoCapitalize="none"
-          />
+            <Text style={styles.label}>Email :</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="someone@xsj.com"
+              value={email}
+              onChangeText={setEmail}
+              onBlur={handleEmailBlur}
+              keyboardType="email-address"
+              autoCapitalize="none"
+              returnKeyType="next"
+            />
+            {emailError ? <Text style={styles.error}>{emailError}</Text> : null}
   
-          <Text style={styles.label}>Password :</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="Enter Your Password Here"
-            value={password}
-            onChangeText={setPassword}
-            secureTextEntry
-          />
+            <Text style={styles.label}>Password :</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="Enter Your Password Here"
+              value={password}
+              onChangeText={setPassword}
+              onBlur={handlePasswordBlur}
+              secureTextEntry
+              returnKeyType="done"
+            />
+            {passwordError ? <Text style={styles.error}>{passwordError}</Text> : null}
   
-          <TouchableOpacity>
-            <Text style={styles.forgot}>Forgot Password?</Text>
-          </TouchableOpacity>
+            <TouchableOpacity>
+              <Text style={styles.forgot}>Forgot Password?</Text>
+            </TouchableOpacity>
   
-          <TouchableOpacity style={styles.loginBtn} onPress={handleLogin}>
-            <Text style={styles.loginText}>Login</Text>
-          </TouchableOpacity>
+            <TouchableOpacity style={styles.loginBtn} onPress={handleLogin}>
+              <Text style={styles.loginText}>Login</Text>
+            </TouchableOpacity>
   
-          <Text style={styles.signupPrompt}>
-            Don’t have an Account?
-            <Text style={styles.signupLink}> Sign Up Here</Text>
-          </Text>
+            <Text style={styles.signupPrompt}>
+              Don’t have an Account?
+              <Text style={styles.signupLink}> Sign Up Here</Text>
+            </Text>
+          </View>
         </View>
       </KeyboardAvoidingView>
     </TouchableWithoutFeedback>
-  );  
+  );
 };
 
 const styles = StyleSheet.create({
@@ -180,6 +211,14 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     letterSpacing: 1.0,
   },
+  error: {
+    fontFamily: "Poppins",
+    color: "red",
+    fontSize: 12,
+    marginTop: -4,
+    marginBottom: 8,
+    marginLeft: 2,
+  },  
 });
 
 export default Login;
