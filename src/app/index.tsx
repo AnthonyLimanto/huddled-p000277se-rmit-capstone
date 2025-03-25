@@ -39,6 +39,7 @@ export default function Index() {
         data={posts}
         renderItem={renderPost}
         keyExtractor={keyExtractor}
+        ItemSeparatorComponent={() => <View style={{ height: 10 }} />}
       />
       <Text>Below are posts</Text>
     </View>
