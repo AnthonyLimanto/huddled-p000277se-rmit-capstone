@@ -49,6 +49,7 @@ const PostCard = ({ post }: PostCardProps) => {
         <Text>Post ID: {post.id}</Text>
         <Text>Message: {post.content}</Text>
       </View>
+      
     </View>
     
   ); 
@@ -96,8 +97,9 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
   },
   degree: {
-    fontSize: 12,
-    fontWeight: "semibold",
+    fontWeight: 'bold',
+    color: '#777',
+    fontSize: 14,
   },
   content: {
     fontSize: 14,

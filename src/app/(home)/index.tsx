@@ -1,9 +1,10 @@
-import React from 'react';
-import { View, Text, StyleSheet, ScrollView, SafeAreaView, StatusBar, FlatList } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { useEffect, useState } from "react";
+import { FlatList, Platform, SafeAreaView, ScrollView, StatusBar, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { fetchPosts } from "../../api/posts";
 import PostCard from "../../components/PostCard";
+import Header from "../../components/Header";
 import { Post } from '../../model/post';
-import { useEffect, useState } from "react";
 
 const renderPost = ({item}) => (
   <PostCard post={item} />
@@ -31,10 +32,7 @@ export default function HomeScreen() {
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" />
       <ScrollView>
-        <View style={styles.header}>
-          <Text style={styles.title}>Huddled</Text>
-          <View style={styles.notificationIcon} />
-        </View>
+        <Header/>
         
         <View style={styles.newPostsButton}>
           <Text style={styles.newPostsText}>New posts</Text>
@@ -66,31 +64,17 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#FFF',
   },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingTop: 20,
-    paddingBottom: 10,
-  },
-  title: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: '#0066CC',
-  },
-  notificationIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: '#F0F0F0',
-  },
+  
   newPostsButton: {
-    backgroundColor: '#0066CC',
+    width: 150,
+    height: 40,
+    backgroundColor: '#1357DA',
     borderRadius: 20,
-    padding: 10,
-    margin: 10,
+    paddingHorizontal: 20,
+    paddingVertical: 10,
     alignItems: 'center',
+    alignSelf: 'center',
+    marginVertical: 10,
   },
   newPostsText: {
     color: 'white',
