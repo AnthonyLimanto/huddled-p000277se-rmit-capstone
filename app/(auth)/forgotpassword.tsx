@@ -1,33 +1,42 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { 
   View, 
   Text, 
   StyleSheet, 
   TextInput, 
   TouchableOpacity, 
-  Image, 
   SafeAreaView,
   KeyboardAvoidingView,
-  Platform
+  Platform,
+  Alert
 } from 'react-native';
 import { useRouter } from 'expo-router';
 
-export default function SignIn() {
+export default function ForgotPassword() {
   const router = useRouter();
+  const [email, setEmail] = useState('');
+  const [errorMessage, setErrorMessage] = useState('');
 
-  const handleLogin = () => {
-    //To home page
-    router.replace('/(home)');
+  const handleSend = () => {
+    if (email.trim() === '') {
+      setErrorMessage('Email does not exist. Try again.');
+      return;
+    }
+    
+    // 点击Send后跳转到Reset password页面
+    // 这里只是演示，实际上不会有验证邮箱的功能
+    // 假设resetpassword页面将位于与forgotpassword同一目录
+    router.push('../(auth)/resetpassword'); 
   };
 
-  const handleSignUp = () => {
-    //To sign up page
-    router.replace('../(auth)/signup');
+  const handleSignIn = () => {
+    // 点击Sign in链接，回到signin页面
+    router.replace('/(auth)/signin');
   };
 
-  const handleForgotPassword = () => {
-    //To forgot password page
-    router.push('../(auth)/forgotpassword');
+  const handleBack = () => {
+    // 点击back按钮，返回到signin页面
+    router.replace('/(auth)/signin');
   };
 
   return (
@@ -48,8 +57,11 @@ export default function SignIn() {
         </View>
         
         <View style={styles.formContainer}>
-          <Text style={styles.welcomeText}>Welcome Back</Text>
-          <Text style={styles.subText}>Login to your account</Text>
+          <Text style={styles.title}>Forgot Password?</Text>
+          
+          <Text style={styles.description}>
+            Please enter your registered email so that we can send you password reset link.
+          </Text>
           
           <View style={styles.inputGroup}>
             <Text style={styles.label}>Email :</Text>
@@ -57,31 +69,34 @@ export default function SignIn() {
               style={styles.input}
               keyboardType="email-address"
               autoCapitalize="none"
+              value={email}
+              onChangeText={setEmail}
             />
+            {errorMessage ? (
+              <Text style={styles.errorText}>{errorMessage}</Text>
+            ) : null}
           </View>
           
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Password :</Text>
-            <TextInput
-              style={styles.input}
-              secureTextEntry
-            />
-          </View>
-          
-          <TouchableOpacity style={styles.forgotPassword} onPress={handleForgotPassword}>
-            <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
+          <TouchableOpacity 
+            style={styles.sendButton} 
+            onPress={handleSend}
+          >
+            <Text style={styles.sendButtonText}>Send</Text>
           </TouchableOpacity>
           
-          <TouchableOpacity style={styles.loginButton} onPress={handleLogin}>
-            <Text style={styles.loginButtonText}>Login</Text>
-          </TouchableOpacity>
-          
-          <View style={styles.signupContainer}>
-            <Text style={styles.noAccountText}>Don't have an Account? </Text>
-            <TouchableOpacity onPress={handleSignUp}>
-              <Text style={styles.signupLink}>Sign Up Here</Text>
+          <View style={styles.rememberContainer}>
+            <Text style={styles.rememberText}>Remember Password? </Text>
+            <TouchableOpacity onPress={handleSignIn}>
+              <Text style={styles.signInLink}>Sign in</Text>
             </TouchableOpacity>
           </View>
+
+          <TouchableOpacity 
+            style={styles.backButton}
+            onPress={handleBack}
+          >
+            <Text style={styles.backButtonText}>← Back</Text>
+          </TouchableOpacity>
         </View>
       </KeyboardAvoidingView>
     </SafeAreaView>
@@ -165,15 +180,16 @@ const styles = StyleSheet.create({
     padding: 30,
     alignItems: 'center',
   },
-  welcomeText: {
+  title: {
     fontSize: 24,
     fontWeight: 'bold',
-    marginBottom: 5,
+    marginBottom: 20,
   },
-  subText: {
+  description: {
     fontSize: 14,
-    color: '#777777',
-    marginBottom: 30,
+    color: '#555',
+    textAlign: 'center',
+    marginBottom: 25,
   },
   inputGroup: {
     width: '100%',
@@ -191,15 +207,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: 15,
     fontSize: 16,
   },
-  forgotPassword: {
-    alignSelf: 'flex-end',
-    marginBottom: 30,
-  },
-  forgotPasswordText: {
-    color: '#0066CC',
+  errorText: {
+    color: 'red',
     fontSize: 14,
+    marginTop: 5,
   },
-  loginButton: {
+  sendButton: {
     backgroundColor: '#0066CC',
     width: '100%',
     height: 50,
@@ -208,22 +221,31 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 20,
   },
-  loginButtonText: {
+  sendButtonText: {
     color: '#fff',
     fontSize: 18,
     fontWeight: 'bold',
   },
-  signupContainer: {
+  rememberContainer: {
     flexDirection: 'row',
     marginTop: 10,
   },
-  noAccountText: {
+  rememberText: {
     fontSize: 14,
     color: '#555',
   },
-  signupLink: {
+  signInLink: {
     fontSize: 14,
     color: '#0066CC',
     fontWeight: 'bold',
   },
-});
+  backButton: {
+    position: 'absolute',
+    bottom: 30,
+    right: 30,
+  },
+  backButtonText: {
+    fontSize: 16,
+    color: '#555',
+  },
+}); 
