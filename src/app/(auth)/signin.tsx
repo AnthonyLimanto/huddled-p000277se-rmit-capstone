@@ -49,16 +49,18 @@ export default function SignIn() {
             <TextInput
               style={styles.input}
               placeholder="someone@example.com"
+              placeholderTextColor="#777777"
               keyboardType="email-address"
               autoCapitalize="none"
             />
           </View>
-          
+
           <View style={styles.inputGroup}>
             <Text style={styles.label}>Password :</Text>
             <TextInput
               style={styles.input}
               placeholder="Enter your password"
+              placeholderTextColor="#777777"
               secureTextEntry
             />
           </View>
@@ -109,9 +111,9 @@ const styles = StyleSheet.create({
   },
   formContainer: {
     flex: 1,
-    backgroundColor: '#E5F3FD',
-    borderTopLeftRadius: 30,
-    borderTopRightRadius: 30,
+    backgroundColor: '#CDECFF',
+    borderTopLeftRadius: 35,
+    borderTopRightRadius: 35,
     padding: 30,
     alignItems: 'center',
   },
@@ -119,39 +121,46 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: 'bold',
     marginBottom: 5,
+    letterSpacing: 1.4,
   },
   subText: {
     fontSize: 14,
-    color: '#777777',
     marginBottom: 30,
+    letterSpacing: 1.0,
   },
   inputGroup: {
     width: '100%',
     marginBottom: 20,
+    letterSpacing: 1.0,
   },
   label: {
     fontSize: 14,
-    marginBottom: 5,
+    marginBottom: 10,
+    letterSpacing: 1.0,
   },
   input: {
     backgroundColor: '#fff',
     width: '100%',
-    height: 50,
+    height: 40,
     borderRadius: 8,
     paddingHorizontal: 15,
-    fontSize: 16,
+    fontSize: 14,
+    color: '#777777',
+    letterSpacing: 1.0,
   },
   forgotPassword: {
     alignSelf: 'flex-end',
     marginBottom: 30,
+    letterSpacing: 1.0,
   },
   forgotPasswordText: {
-    color: '#0066CC',
+    color: '#075DB6',
     fontSize: 14,
+    letterSpacing: 1.0,
   },
   loginButton: {
-    backgroundColor: '#0066CC',
-    width: '100%',
+    backgroundColor: '#075DB6',
+    width: 160,
     height: 50,
     borderRadius: 25,
     justifyContent: 'center',
@@ -162,6 +171,7 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 18,
     fontWeight: 'bold',
+    letterSpacing: 1.0,
   },
   signupContainer: {
     flexDirection: 'row',
@@ -170,10 +180,12 @@ const styles = StyleSheet.create({
   noAccountText: {
     fontSize: 14,
     color: '#555',
+    letterSpacing: 1.0,
   },
   signupLink: {
     fontSize: 14,
-    color: '#0066CC',
+    color: '#075DB6',
     fontWeight: 'bold',
+    letterSpacing: 1.0,
   },
 });
