@@ -7,7 +7,8 @@ import {
   TouchableOpacity, 
   SafeAreaView,
   KeyboardAvoidingView,
-  Platform
+  Platform,
+  ScrollView
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -16,79 +17,95 @@ export default function SignUp() {
   const router = useRouter();
 
   const handleSignUp = () => {
-    //To home page
     router.replace('/(home)');
   };
 
   const handleLogin = () => {
-    //To sign in page
     router.push('../(auth)/signin');
   };
 
   const handleBack = () => {
-    //Back to previous page(sign in page)
-    router.push('../(auth)/signin');
+    router.replace('../(auth)/signin');
+  };
+
+  const handleProfilePicUpload = () => {
+    alert('Upload Profile Picture (functionality to be added)');
   };
 
   return (
     <SafeAreaView style={styles.container}>
-      <KeyboardAvoidingView 
+      <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={styles.keyboardView}
+        keyboardVerticalOffset={100}
       >
-        <View style={styles.header}>
-          <TouchableOpacity onPress={handleBack} style={styles.backButton}>
-            <Ionicons name="arrow-back" size={24} color="#000" />
-          </TouchableOpacity>
-        </View>
-        
-        <View style={styles.contentContainer}>
-          <Text style={styles.title}>Create an Account</Text>
-          
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Username :</Text>
-            <TextInput
-              style={styles.input}
-              autoCapitalize="none"
-            />
-          </View>
-          
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Email :</Text>
-            <TextInput
-              style={styles.input}
-              keyboardType="email-address"
-              autoCapitalize="none"
-            />
-          </View>
-          
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Password :</Text>
-            <TextInput
-              style={styles.input}
-              secureTextEntry
-            />
-          </View>
-          
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Confirm Password :</Text>
-            <TextInput
-              style={styles.input}
-              secureTextEntry
-            />
-          </View>
-          
-          <TouchableOpacity style={styles.signupButton} onPress={handleSignUp}>
-            <Text style={styles.signupButtonText}>Sign Up</Text>
-          </TouchableOpacity>
-          
-          <View style={styles.loginContainer}>
-            <Text style={styles.haveAccountText}>Already have an Account? </Text>
-            <TouchableOpacity onPress={handleLogin}>
-              <Text style={styles.loginLink}>Login</Text>
+        <ScrollView contentContainerStyle={styles.scrollContainer}>
+          <View style={styles.header}>
+            <TouchableOpacity onPress={handleBack} style={styles.backButton}>
+              <Ionicons name="arrow-back" size={24} color="#000" />
             </TouchableOpacity>
           </View>
-        </View>
+
+          <View style={styles.contentContainer}>
+            <Text style={styles.title}>Create an Account</Text>
+
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>Username :</Text>
+              <TextInput style={styles.input} autoCapitalize="none" />
+            </View>
+
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>Email :</Text>
+              <TextInput
+                style={styles.input}
+                keyboardType="email-address"
+                autoCapitalize="none"
+              />
+            </View>
+
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>Password :</Text>
+              <TextInput style={styles.input} secureTextEntry />
+            </View>
+
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>Confirm Password :</Text>
+              <TextInput style={styles.input} secureTextEntry />
+            </View>
+
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>Course :</Text>
+              <TextInput style={styles.input} autoCapitalize="words" />
+            </View>
+
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>Upload Profile Picture :</Text>
+              <TouchableOpacity
+                style={styles.uploadButton}
+                onPress={handleProfilePicUpload}
+              >
+                <Text style={styles.uploadButtonText}>Choose File</Text>
+              </TouchableOpacity>
+            </View>
+
+            {/* ReCAPTCHA Verification */}
+            <View style={styles.recaptchaContainer}>
+              <View style={styles.checkbox} />
+              <Text style={styles.recaptchaText}>I'm not a robot</Text>
+            </View>
+
+            <TouchableOpacity style={styles.signupButton} onPress={handleSignUp}>
+              <Text style={styles.signupButtonText}>Sign Up</Text>
+            </TouchableOpacity>
+
+            <View style={styles.loginContainer}>
+              <Text style={styles.haveAccountText}>Already have an Account? </Text>
+              <TouchableOpacity onPress={handleLogin}>
+                <Text style={styles.loginLink}>Login</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
   );
@@ -101,6 +118,9 @@ const styles = StyleSheet.create({
   },
   keyboardView: {
     flex: 1,
+  },
+  scrollContainer: {
+    paddingBottom: 40,
   },
   header: {
     paddingHorizontal: 20,
@@ -119,7 +139,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 24,
     fontWeight: 'bold',
-    marginBottom: 50,
+    marginBottom: 40,
     alignSelf: 'center',
     letterSpacing: 1.4,
   },
@@ -143,6 +163,39 @@ const styles = StyleSheet.create({
     color: '#777777',
     letterSpacing: 1.0,
   },
+  uploadButton: {
+    backgroundColor: '#D9EFFF',
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 8,
+    alignSelf: 'flex-start',
+  },
+  uploadButtonText: {
+    color: '#075DB6',
+    fontSize: 14,
+    fontWeight: '500',
+  },
+  recaptchaContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    alignSelf: 'center',
+    marginBottom: 30,
+    marginTop: 10,
+  },
+  checkbox: {
+    width: 20,
+    height: 20,
+    borderRadius: 4,
+    borderWidth: 2,
+    borderColor: '#999',
+    backgroundColor: '#fff',
+    marginRight: 10,
+  },
+  recaptchaText: {
+    fontSize: 14,
+    color: '#333',
+  },
+  
   signupButton: {
     backgroundColor: '#075DB6',
     width: 160,
@@ -151,7 +204,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 20,
-    marginTop: 80,
+    marginTop: 20,
     alignSelf: 'center',
   },
   signupButtonText: {
