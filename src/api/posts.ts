@@ -1,4 +1,3 @@
-import { getProfileByUserId } from "./profile";
 import {supabase} from "./supabase"
 
 export const createPost = async (userId: string, content: string, imageUrl: string) => {
