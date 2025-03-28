@@ -145,7 +145,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     paddingHorizontal: 15,
     fontSize: 14,
-    color: '#777777',
+    color: '#000', // <-- this makes user input text black
     letterSpacing: 1.0,
   },
   forgotPassword: {
