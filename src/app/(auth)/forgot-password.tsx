@@ -1,33 +1,41 @@
-import React from 'react';
+import { useState } from 'react';
 import { 
-  View, 
-  Text, 
   StyleSheet, 
+  View, 
   TextInput, 
+  Text, 
   TouchableOpacity, 
-  Image, 
   SafeAreaView,
   KeyboardAvoidingView,
   Platform
 } from 'react-native';
 import { useRouter } from 'expo-router';
+import Constants from 'expo-constants';
 
-export default function SignIn() {
+export default function ForgotPasswordScreen() {
   const router = useRouter();
+  const [email, setEmail] = useState('');
+  const [errorMessage, setErrorMessage] = useState('');
 
-  const handleLogin = () => {
-    //To home page
-    router.replace('/(home)');
+  const handleSend = () => {
+    // 这里不实现实际的邮箱验证功能
+    // 仅做基本的空值检查
+    if (!email.trim()) {
+      setErrorMessage('请输入邮箱地址');
+      return;
+    }
+    
+    // 直接跳转到重置密码页面，稍后会实现
+    // 这里使用replace而不是push，与其他页面保持一致
+    router.replace('../(auth)/reset-password');
   };
 
-  const handleSignUp = () => {
-    //To sign up page
-    router.replace('../(auth)/signup');
+  const handleSignIn = () => {
+    router.replace('../(auth)/signin');
   };
 
-  const handleForgotPassword = () => {
-    //To forgot password page
-    router.replace('../(auth)/forgot-password');
+  const handleBack = () => {
+    router.replace('../(auth)/signin');
   };
 
   return (
@@ -36,6 +44,7 @@ export default function SignIn() {
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={styles.keyboardView}
       >
+        {/* Logo 部分 */}
         <View style={styles.logoContainer}>
           <View style={styles.logoGraphic}>
             <View style={styles.dot1} />
@@ -46,43 +55,56 @@ export default function SignIn() {
           </View>
           <Text style={styles.logoText}>Huddled</Text>
         </View>
-        
-        <View style={styles.formContainer}>
-          <Text style={styles.welcomeText}>Welcome Back</Text>
-          <Text style={styles.subText}>Login to your account</Text>
+
+        {/* 卡片主体 */}
+        <View style={styles.card}>
+          <Text style={styles.title}>Forgot Password?</Text>
+          
+          <Text style={styles.description}>
+            Please enter your registered email so that we can send you password reset link.
+          </Text>
           
           <View style={styles.inputGroup}>
             <Text style={styles.label}>Email :</Text>
             <TextInput
-              style={styles.input}
+              style={styles.input} 
+              placeholder="your@email.com"
+              placeholderTextColor="#999"
               keyboardType="email-address"
               autoCapitalize="none"
+              value={email}
+              onChangeText={setEmail}
             />
+            
+            {errorMessage ? (
+              <Text style={styles.errorText}>
+                Email does not exist. Try again.
+              </Text>
+            ) : null}
           </View>
           
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Password :</Text>
-            <TextInput
-              style={styles.input}
-              secureTextEntry
-            />
-          </View>
-          
-          <TouchableOpacity style={styles.forgotPassword} onPress={handleForgotPassword}>
-            <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
+          <TouchableOpacity 
+            style={styles.sendButton} 
+            onPress={handleSend}
+            activeOpacity={0.8}
+          >
+            <Text style={styles.sendButtonText}>Send</Text>
           </TouchableOpacity>
           
-          <TouchableOpacity style={styles.loginButton} onPress={handleLogin}>
-            <Text style={styles.loginButtonText}>Login</Text>
-          </TouchableOpacity>
-          
-          <View style={styles.signupContainer}>
-            <Text style={styles.noAccountText}>Don't have an Account? </Text>
-            <TouchableOpacity onPress={handleSignUp}>
-              <Text style={styles.signupLink}>Sign Up Here</Text>
-            </TouchableOpacity>
+          <View style={styles.footerContainer}>
+            <Text style={styles.footerText}>
+              Remember Password? <Text style={styles.signInLink} onPress={handleSignIn}>Sign in</Text>
+            </Text>
           </View>
         </View>
+        
+        {/* 返回按钮 */}
+        <TouchableOpacity 
+          style={styles.backButton} 
+          onPress={handleBack}
+        >
+          <Text style={styles.backButtonText}>← Back</Text>
+        </TouchableOpacity>
       </KeyboardAvoidingView>
     </SafeAreaView>
   );
@@ -95,6 +117,7 @@ const styles = StyleSheet.create({
   },
   keyboardView: {
     flex: 1,
+    position: 'relative',
   },
   logoContainer: {
     alignItems: 'center',
@@ -157,7 +180,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#80C1E0',
   },
-  formContainer: {
+  card: {
     flex: 1,
     backgroundColor: '#E5F3FD',
     borderTopLeftRadius: 30,
@@ -165,15 +188,19 @@ const styles = StyleSheet.create({
     padding: 30,
     alignItems: 'center',
   },
-  welcomeText: {
+  title: {
     fontSize: 24,
     fontWeight: 'bold',
-    marginBottom: 5,
+    textAlign: 'center',
+    marginBottom: 16,
   },
-  subText: {
+  description: {
     fontSize: 14,
-    color: '#777777',
-    marginBottom: 30,
+    textAlign: 'center',
+    marginBottom: 24,
+    color: '#555',
+    lineHeight: 22,
+    paddingHorizontal: 15,
   },
   inputGroup: {
     width: '100%',
@@ -191,39 +218,45 @@ const styles = StyleSheet.create({
     paddingHorizontal: 15,
     fontSize: 16,
   },
-  forgotPassword: {
-    alignSelf: 'flex-end',
-    marginBottom: 30,
-  },
-  forgotPasswordText: {
-    color: '#0066CC',
+  errorText: {
+    color: 'red',
+    marginTop: 8,
     fontSize: 14,
   },
-  loginButton: {
-    backgroundColor: '#0066CC',
+  sendButton: {
+    backgroundColor: '#3268c7',
+    borderRadius: 8,
+    padding: 15,
     width: '100%',
-    height: 50,
-    borderRadius: 25,
-    justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 20,
-  },
-  loginButtonText: {
-    color: '#fff',
-    fontSize: 18,
-    fontWeight: 'bold',
-  },
-  signupContainer: {
-    flexDirection: 'row',
     marginTop: 10,
   },
-  noAccountText: {
+  sendButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  footerContainer: {
+    marginTop: 20,
+    flexDirection: 'row',
+    justifyContent: 'center',
+  },
+  footerText: {
     fontSize: 14,
     color: '#555',
   },
-  signupLink: {
-    fontSize: 14,
-    color: '#0066CC',
+  signInLink: {
+    color: '#3268c7',
     fontWeight: 'bold',
   },
-});
+  backButton: {
+    position: 'absolute',
+    bottom: 30,
+    right: 30,
+  },
+  backButtonText: {
+    position: 'absolute',
+    fontSize: 16,
+    color: '#555',
+  },
+}); 
