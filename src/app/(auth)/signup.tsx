@@ -21,15 +21,11 @@ export default function SignUp() {
   };
 
   const handleLogin = () => {
-    router.push('../(auth)/signin');
+    router.replace('../(auth)/signin');
   };
 
   const handleBack = () => {
     router.replace('../(auth)/signin');
-  };
-
-  const handleProfilePicUpload = () => {
-    alert('Upload Profile Picture (functionality to be added)');
   };
 
   const handleProfilePicUpload = () => {
@@ -198,8 +194,7 @@ const styles = StyleSheet.create({
   recaptchaText: {
     fontSize: 14,
     color: '#333',
-  },
-  
+  },  
   signupButton: {
     backgroundColor: '#075DB6',
     width: 160,
@@ -208,7 +203,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 20,
-    marginTop: 20,
+    marginTop: 40,
     alignSelf: 'center',
   },
   signupButtonText: {
