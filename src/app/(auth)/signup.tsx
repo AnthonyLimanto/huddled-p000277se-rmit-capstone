@@ -160,7 +160,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     paddingHorizontal: 15,
     fontSize: 14,
-    color: '#777777',
+    color: '#000',
     letterSpacing: 1.0,
   },
   uploadButton: {
