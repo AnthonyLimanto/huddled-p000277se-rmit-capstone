@@ -32,6 +32,10 @@ export default function SignUp() {
     alert('Upload Profile Picture (functionality to be added)');
   };
 
+  const handleProfilePicUpload = () => {
+    alert('Upload Profile Picture (functionality to be added)');
+  };
+
   return (
     <SafeAreaView style={styles.container}>
       <KeyboardAvoidingView
