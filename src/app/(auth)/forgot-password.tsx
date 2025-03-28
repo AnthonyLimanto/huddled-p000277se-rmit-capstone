@@ -18,15 +18,12 @@ export default function ForgotPasswordScreen() {
   const [errorMessage, setErrorMessage] = useState('');
 
   const handleSend = () => {
-    // 这里不实现实际的邮箱验证功能
-    // 仅做基本的空值检查
+
     if (!email.trim()) {
-      setErrorMessage('请输入邮箱地址');
+      setErrorMessage('Please enter your email address');
       return;
     }
     
-    // 直接跳转到重置密码页面，稍后会实现
-    // 这里使用replace而不是push，与其他页面保持一致
     router.replace('../(auth)/reset-password');
   };
 
@@ -44,7 +41,6 @@ export default function ForgotPasswordScreen() {
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={styles.keyboardView}
       >
-        {/* Logo 部分 */}
         <View style={styles.logoContainer}>
           <View style={styles.logoGraphic}>
             <View style={styles.dot1} />
@@ -56,7 +52,6 @@ export default function ForgotPasswordScreen() {
           <Text style={styles.logoText}>Huddled</Text>
         </View>
 
-        {/* 卡片主体 */}
         <View style={styles.card}>
           <Text style={styles.title}>Forgot Password?</Text>
           
@@ -98,7 +93,6 @@ export default function ForgotPasswordScreen() {
           </View>
         </View>
         
-        {/* 返回按钮 */}
         <TouchableOpacity 
           style={styles.backButton} 
           onPress={handleBack}
