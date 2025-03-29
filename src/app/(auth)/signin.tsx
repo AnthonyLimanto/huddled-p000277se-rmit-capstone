@@ -1,22 +1,64 @@
-import React from 'react';
-import { 
-  View, 
-  Text, 
-  StyleSheet, 
-  TextInput, 
-  TouchableOpacity, 
-  Image, 
+import React, { useState } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  TextInput,
+  TouchableOpacity,
+  Image,
   SafeAreaView,
   KeyboardAvoidingView,
-  Platform
+  Platform,
+  Modal,
 } from 'react-native';
 import { useRouter } from 'expo-router';
+import { supabase } from '../../api/supabase';
 
 export default function SignIn() {
   const router = useRouter();
 
-  const handleLogin = () => {
-    router.replace('/(home)');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [emailError, setEmailError] = useState('');
+  const [passwordError, setPasswordError] = useState('');
+  const [successModalVisible, setSuccessModalVisible] = useState(false);
+
+  const validateEmail = (value: string) => {
+    const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!value) return 'Email is required';
+    if (!regex.test(value)) return 'Please enter a valid email address';
+    return '';
+  };
+
+  const validatePassword = (value: string) => {
+    if (!value) return 'Password is required';
+    return '';
+  };
+
+  const handleLogin = async () => {
+    const emailErr = validateEmail(email);
+    const passErr = validatePassword(password);
+    setEmailError(emailErr);
+    setPasswordError(passErr);
+    if (emailErr || passErr) return;
+
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
+
+    if (error) {
+      if (error.message.includes('Email not confirmed')) {
+        setPasswordError('Email pending verification. Check your email to verify.');
+      } else if (error.message.includes('Invalid login credentials')) {
+        setPasswordError('Incorrect email or password');
+      } else {
+        setPasswordError(error.message);
+      }
+    } else {
+      setSuccessModalVisible(true);
+      setTimeout(() => {
+        setSuccessModalVisible(false);
+        router.replace('/(home)');
+      }, 2000);
+    }
   };
 
   const handleSignUp = () => {
@@ -25,54 +67,64 @@ export default function SignIn() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <KeyboardAvoidingView 
+      <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={styles.keyboardView}
       >
         <View style={styles.logoContainer}>
-          <Image 
-            source={require('../../../assets/images/icon-only.png')} 
-            style={styles.logoIcon} 
+          <Image
+            source={require('../../../assets/images/icon-only.png')}
+            style={styles.logoIcon}
           />
-          <Image 
-            source={require('../../../assets/images/Huddled-wordmark.png')} 
-            style={styles.logoWordmark} 
+          <Image
+            source={require('../../../assets/images/Huddled-wordmark.png')}
+            style={styles.logoWordmark}
           />
         </View>
-        
+
         <View style={styles.formContainer}>
           <Text style={styles.welcomeText}>Welcome Back</Text>
           <Text style={styles.subText}>Login to your account</Text>
-          
+
           <View style={styles.inputGroup}>
             <Text style={styles.label}>Email :</Text>
             <TextInput
-              style={styles.input}
-              placeholder="someone@example.com"
-              placeholderTextColor="#777777"
-              keyboardType="email-address"
+              style={[styles.input, emailError ? styles.inputError : null]}
               autoCapitalize="none"
+              keyboardType="email-address"
+              value={email}
+              onChangeText={(text) => {
+                setEmail(text);
+                setEmailError(validateEmail(text));
+              }}
+              onBlur={() => setEmailError(validateEmail(email))}
             />
+            {emailError ? <Text style={styles.errorText}>{emailError}</Text> : null}
           </View>
 
           <View style={styles.inputGroup}>
             <Text style={styles.label}>Password :</Text>
             <TextInput
-              style={styles.input}
-              placeholder="Enter your password"
-              placeholderTextColor="#777777"
+              style={[styles.input, passwordError ? styles.inputError : null]}
               secureTextEntry
+              value={password}
+              onChangeText={(text) => {
+                setPassword(text);
+                setPasswordError(validatePassword(text));
+              }}
+              onBlur={() => setPasswordError(validatePassword(password))}
             />
+            {passwordError ? <Text style={styles.errorText}>{passwordError}</Text> : null}
           </View>
-          
+
           <TouchableOpacity style={styles.forgotPassword}>
             <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
           </TouchableOpacity>
-          
+
           <TouchableOpacity style={styles.loginButton} onPress={handleLogin}>
             <Text style={styles.loginButtonText}>Login</Text>
           </TouchableOpacity>
-          
+
           <View style={styles.signupContainer}>
             <Text style={styles.noAccountText}>Don't have an Account? </Text>
             <TouchableOpacity onPress={handleSignUp}>
@@ -81,6 +133,15 @@ export default function SignIn() {
           </View>
         </View>
       </KeyboardAvoidingView>
+
+      {/* Modal for Success */}
+      <Modal transparent visible={successModalVisible} animationType="fade">
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalBox}>
+            <Text style={styles.modalText}>Login Successful!</Text>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -131,11 +192,10 @@ const styles = StyleSheet.create({
   inputGroup: {
     width: '100%',
     marginBottom: 20,
-    letterSpacing: 1.0,
   },
   label: {
     fontSize: 14,
-    marginBottom: 10,
+    marginBottom: 5,
     letterSpacing: 1.0,
   },
   input: {
@@ -145,18 +205,25 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     paddingHorizontal: 15,
     fontSize: 14,
-    color: '#000', // <-- this makes user input text black
-    letterSpacing: 1.0,
+    color: '#000',
+    borderWidth: 1,
+    borderColor: 'transparent',
+  },
+  inputError: {
+    borderColor: '#FF5A5F',
+  },
+  errorText: {
+    color: '#FF5A5F',
+    fontSize: 13,
+    marginTop: 4,
   },
   forgotPassword: {
     alignSelf: 'flex-end',
     marginBottom: 30,
-    letterSpacing: 1.0,
   },
   forgotPasswordText: {
     color: '#075DB6',
     fontSize: 14,
-    letterSpacing: 1.0,
   },
   loginButton: {
     backgroundColor: '#075DB6',
@@ -171,7 +238,6 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 18,
     fontWeight: 'bold',
-    letterSpacing: 1.0,
   },
   signupContainer: {
     flexDirection: 'row',
@@ -180,12 +246,30 @@ const styles = StyleSheet.create({
   noAccountText: {
     fontSize: 14,
     color: '#555',
-    letterSpacing: 1.0,
   },
   signupLink: {
     fontSize: 14,
     color: '#075DB6',
     fontWeight: 'bold',
-    letterSpacing: 1.0,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: '#00000099',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalBox: {
+    backgroundColor: '#fff',
+    padding: 25,
+    borderRadius: 20,
+    shadowColor: '#000',
+    shadowOpacity: 0.25,
+    shadowRadius: 6,
+    elevation: 8,
+  },
+  modalText: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#075DB6',
   },
 });
