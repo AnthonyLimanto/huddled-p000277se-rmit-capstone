@@ -22,6 +22,7 @@ export default function SignUp() {
   const [degree, setDegree] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const [errors, setErrors] = useState({
     username: '',
@@ -65,15 +66,28 @@ export default function SignUp() {
     validateField('confirmPassword');
     validateField('degree');
 
-    const hasError = Object.values(errors).some(e => e !== '');
+    const currentErrors = {
+      username: username.trim() === '' || username.trim().length < 3 ? 'Minimum 3 characters' : '',
+      email: email.trim() === '' ? 'Email is required' : (!/\S+@\S+\.\S+/.test(email) ? 'Invalid email format' : ''),
+      password: password.length < 6 ? 'Minimum 6 characters' : '',
+      confirmPassword: confirmPassword !== password ? 'Passwords do not match' : '',
+      degree: degree.trim() === '' ? 'Course is required' : ''
+    };
+
+    setErrors(currentErrors);
+
+    const hasError = Object.values(currentErrors).some(e => e !== '');
     if (hasError) return;
 
     try {
+      setIsSubmitting(true);
       const user = await completeSignUp(email, password, username, degree);
       console.log('User created:', user);
       router.replace('/(home)');
     } catch (error: any) {
       Alert.alert('Signup Failed', error.message || 'Unknown error');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -83,6 +97,10 @@ export default function SignUp() {
 
   const handleProfilePicUpload = () => {
     alert('Upload Profile Picture (functionality to be added)');
+  };
+
+  const capitalizeFirst = (text: string) => {
+    return text.charAt(0).toUpperCase() + text.slice(1);
   };
 
   return (
@@ -102,19 +120,22 @@ export default function SignUp() {
           <View style={styles.contentContainer}>
             <Text style={styles.title}>Create an Account</Text>
 
-            {/** Username */}
+            {/* Username */}
             <View style={styles.inputGroup}>
               <Text style={styles.label}>Username :</Text>
               <TextInput
                 style={styles.input}
                 value={username}
-                onChangeText={setUsername}
+                onChangeText={text => {
+                  setUsername(text);
+                  if (text.length >= 3) setErrors(prev => ({ ...prev, username: '' }));
+                }}
                 onBlur={() => validateField('username')}
               />
               {errors.username ? <Text style={styles.error}>{errors.username}</Text> : null}
             </View>
 
-            {/** Email */}
+            {/* Email */}
             <View style={styles.inputGroup}>
               <Text style={styles.label}>Email :</Text>
               <TextInput
@@ -122,53 +143,61 @@ export default function SignUp() {
                 keyboardType="email-address"
                 autoCapitalize="none"
                 value={email}
-                onChangeText={setEmail}
+                onChangeText={text => {
+                  setEmail(text);
+                  if (/\S+@\S+\.\S+/.test(text)) setErrors(prev => ({ ...prev, email: '' }));
+                }}
                 onBlur={() => validateField('email')}
               />
               {errors.email ? <Text style={styles.error}>{errors.email}</Text> : null}
             </View>
 
-            {/** Password */}
+            {/* Password */}
             <View style={styles.inputGroup}>
               <Text style={styles.label}>Password :</Text>
               <TextInput
                 style={styles.input}
                 secureTextEntry
                 value={password}
-                onChangeText={setPassword}
+                onChangeText={text => {
+                  setPassword(text);
+                  if (text.length >= 6) setErrors(prev => ({ ...prev, password: '' }));
+                  if (confirmPassword === text) setErrors(prev => ({ ...prev, confirmPassword: '' }));
+                }}
                 onBlur={() => validateField('password')}
               />
               {errors.password ? <Text style={styles.error}>{errors.password}</Text> : null}
             </View>
 
-            {/** Confirm Password */}
+            {/* Confirm Password */}
             <View style={styles.inputGroup}>
               <Text style={styles.label}>Confirm Password :</Text>
               <TextInput
                 style={styles.input}
                 secureTextEntry
                 value={confirmPassword}
-                onChangeText={setConfirmPassword}
+                onChangeText={text => {
+                  setConfirmPassword(text);
+                  if (text === password) setErrors(prev => ({ ...prev, confirmPassword: '' }));
+                }}
                 onBlur={() => validateField('confirmPassword')}
               />
               {errors.confirmPassword ? <Text style={styles.error}>{errors.confirmPassword}</Text> : null}
             </View>
 
-            {/** Course */}
+            {/* Course */}
             <View style={styles.inputGroup}>
               <Text style={styles.label}>Course :</Text>
               <TextInput
                 style={styles.input}
                 value={degree}
-                onChangeText={(text) =>
-                  setDegree(text.charAt(0).toUpperCase() + text.slice(1))
-                }
+                onChangeText={text => setDegree(capitalizeFirst(text))}
                 onBlur={() => validateField('degree')}
               />
               {errors.degree ? <Text style={styles.error}>{errors.degree}</Text> : null}
             </View>
 
-            {/** Profile Picture Upload */}
+            {/* Upload */}
             <View style={styles.inputGroup}>
               <Text style={styles.label}>Upload Profile Picture :</Text>
               <TouchableOpacity
@@ -179,12 +208,16 @@ export default function SignUp() {
               </TouchableOpacity>
             </View>
 
-            {/** Sign Up */}
-            <TouchableOpacity style={styles.signupButton} onPress={handleSignUp}>
+            {/* Submit */}
+            <TouchableOpacity
+              style={[styles.signupButton, isSubmitting && { backgroundColor: '#ccc' }]}
+              onPress={handleSignUp}
+              disabled={isSubmitting}
+            >
               <Text style={styles.signupButtonText}>Sign Up</Text>
             </TouchableOpacity>
 
-            {/** Login Redirect */}
+            {/* Already have account */}
             <View style={styles.loginContainer}>
               <Text style={styles.haveAccountText}>Already have an Account? </Text>
               <TouchableOpacity onPress={handleBack}>
