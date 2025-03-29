@@ -1,23 +1,46 @@
-import React from 'react';
-import { 
-  View, 
-  Text, 
-  StyleSheet, 
-  TextInput, 
-  TouchableOpacity, 
+import React, { useState } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  TextInput,
+  TouchableOpacity,
   SafeAreaView,
   KeyboardAvoidingView,
   Platform,
-  ScrollView
+  ScrollView,
+  Alert
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import { completeSignUp } from '../../api/users';
 
 export default function SignUp() {
   const router = useRouter();
 
-  const handleSignUp = () => {
-    router.replace('/(home)');
+  const [username, setUsername] = useState('');
+  const [email, setEmail] = useState('');
+  const [degree, setDegree] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+
+  const handleProfilePicUpload = () => {
+    alert('Upload Profile Picture (functionality to be added)');
+  };
+
+  const handleSignUp = async () => {
+    if (password !== confirmPassword) {
+      Alert.alert('Error', 'Passwords do not match');
+      return;
+    }
+
+    try {
+      const user = await completeSignUp(email, password, username, degree);
+      console.log('User created:', user);
+      router.replace('/(home)');
+    } catch (error: any) {
+      Alert.alert('Signup Failed', error.message || 'Unknown error');
+    }
   };
 
   const handleLogin = () => {
@@ -26,10 +49,6 @@ export default function SignUp() {
 
   const handleBack = () => {
     router.replace('../(auth)/signin');
-  };
-
-  const handleProfilePicUpload = () => {
-    alert('Upload Profile Picture (functionality to be added)');
   };
 
   return (
@@ -51,7 +70,12 @@ export default function SignUp() {
 
             <View style={styles.inputGroup}>
               <Text style={styles.label}>Username :</Text>
-              <TextInput style={styles.input} autoCapitalize="none" />
+              <TextInput
+                style={styles.input}
+                autoCapitalize="none"
+                value={username}
+                onChangeText={setUsername}
+              />
             </View>
 
             <View style={styles.inputGroup}>
@@ -60,22 +84,39 @@ export default function SignUp() {
                 style={styles.input}
                 keyboardType="email-address"
                 autoCapitalize="none"
+                value={email}
+                onChangeText={setEmail}
               />
             </View>
 
             <View style={styles.inputGroup}>
               <Text style={styles.label}>Password :</Text>
-              <TextInput style={styles.input} secureTextEntry />
+              <TextInput
+                style={styles.input}
+                secureTextEntry
+                value={password}
+                onChangeText={setPassword}
+              />
             </View>
 
             <View style={styles.inputGroup}>
               <Text style={styles.label}>Confirm Password :</Text>
-              <TextInput style={styles.input} secureTextEntry />
+              <TextInput
+                style={styles.input}
+                secureTextEntry
+                value={confirmPassword}
+                onChangeText={setConfirmPassword}
+              />
             </View>
 
             <View style={styles.inputGroup}>
               <Text style={styles.label}>Course :</Text>
-              <TextInput style={styles.input} autoCapitalize="words" />
+              <TextInput
+                style={styles.input}
+                autoCapitalize="words"
+                value={degree}
+                onChangeText={setDegree}
+              />
             </View>
 
             <View style={styles.inputGroup}>
@@ -86,12 +127,6 @@ export default function SignUp() {
               >
                 <Text style={styles.uploadButtonText}>Choose File</Text>
               </TouchableOpacity>
-            </View>
-
-            {/* ReCAPTCHA Verification */}
-            <View style={styles.recaptchaContainer}>
-              <View style={styles.checkbox} />
-              <Text style={styles.recaptchaText}>I'm not a robot</Text>
             </View>
 
             <TouchableOpacity style={styles.signupButton} onPress={handleSignUp}>
@@ -175,26 +210,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '500',
   },
-  recaptchaContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    alignSelf: 'center',
-    marginBottom: 30,
-    marginTop: 10,
-  },
-  checkbox: {
-    width: 20,
-    height: 20,
-    borderRadius: 4,
-    borderWidth: 2,
-    borderColor: '#999',
-    backgroundColor: '#fff',
-    marginRight: 10,
-  },
-  recaptchaText: {
-    fontSize: 14,
-    color: '#333',
-  },  
   signupButton: {
     backgroundColor: '#075DB6',
     width: 160,
