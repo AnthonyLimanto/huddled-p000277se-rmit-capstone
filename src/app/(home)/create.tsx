@@ -1,8 +1,20 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { View, Text, StyleSheet, TextInput, TouchableOpacity, SafeAreaView, StatusBar } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { createPost } from '@/src/api/posts';
 
 export default function CreatePostScreen() {
+  const [text, setText] = useState("");
+
+  const getSessionUser = () => {
+    return "990fa42e-84cb-4deb-b632-ee87cbac092f" // Anthony's sample user ID
+  }
+  const handleSubmit = async () => {
+    let currentUser = getSessionUser();
+
+    let sentPost = await createPost(currentUser, text, "default");
+    console.log("Sent post:" + sentPost);
+  };
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" />
@@ -16,6 +28,8 @@ export default function CreatePostScreen() {
           placeholderTextColor="#999"
           multiline
           style={styles.postInput}
+          value={text}
+          onChangeText={(text) => setText(text)}
         />
         
         <View style={styles.mediaOptions}>
@@ -46,7 +60,7 @@ export default function CreatePostScreen() {
           </TouchableOpacity>
         </View>
         
-        <TouchableOpacity style={styles.postButton}>
+        <TouchableOpacity style={styles.postButton} onPress={handleSubmit}>
           <Text style={styles.postButtonText}>Post</Text>
         </TouchableOpacity>
       </View>

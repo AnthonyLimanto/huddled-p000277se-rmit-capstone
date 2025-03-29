@@ -5,6 +5,7 @@ import { fetchPosts } from "../../api/posts";
 import PostCard from "../../components/PostCard";
 import Header from "../../components/Header";
 import { Post } from '../../model/post';
+import { useFocusEffect } from '@react-navigation/native';
 
 const renderPost = ({item}) => (
   <PostCard post={item} />
@@ -15,7 +16,7 @@ const keyExtractor = (post) => post.id;
 export default function HomeScreen() {
   const [posts, setPosts] = useState<Post[]>([]);
 
-  useEffect(() => {
+  useFocusEffect(() => {
     const loadPosts = async () => {
       try {
         const fetchedPosts = await fetchPosts(); 
