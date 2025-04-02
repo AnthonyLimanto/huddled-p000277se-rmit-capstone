@@ -17,7 +17,7 @@ export const fetchPosts = async () => {
             id,
             content,
             created_at,
-            profile:users(username, degree, pfp_url)
+            profile:users(username, degree, pfp_url, email)
         `)
         .order('created_at', { ascending: false });
 
