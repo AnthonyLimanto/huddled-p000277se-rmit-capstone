@@ -1,61 +1,88 @@
 import { Ionicons } from '@expo/vector-icons';
-import { useCallback, useEffect, useState } from "react";
-import { FlatList, Platform, SafeAreaView, ScrollView, StatusBar, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { useEffect, useState, useCallback } from "react";
+import {
+  FlatList,
+  Platform,
+  SafeAreaView,
+  ScrollView,
+  StatusBar,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+  ActivityIndicator,
+} from 'react-native';
 import { fetchPosts } from "../../api/posts";
 import PostCard from "../../components/PostCard";
 import Header from "../../components/Header";
 import { Post } from '../../model/post';
 import { useFocusEffect } from '@react-navigation/native';
 
-const renderPost = ({item}) => (
-  <PostCard post={item} />
-)
-
-const keyExtractor = (post) => post.id;
+const renderPost = ({ item }) => <PostCard post={item} />;
+const keyExtractor = (post: Post) => post.id;
 
 export default function HomeScreen() {
   const [posts, setPosts] = useState<Post[]>([]);
+  const [page, setPage] = useState(1);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [hasMore, setHasMore] = useState(true);
 
-  const loadPosts = async () => {
+  const loadPosts = async (pageNum = 1, append = false) => {
     try {
-      const fetchedPosts = await fetchPosts();
-      setPosts(fetchedPosts);
+      const fetchedPosts = await fetchPosts(pageNum);
+      if (fetchedPosts.length === 0) {
+        setHasMore(false);
+        return;
+      }
+      if (append) {
+        setPosts(prev => [...prev, ...fetchedPosts]);
+      } else {
+        setPosts(fetchedPosts);
+      }
     } catch (error) {
       console.error('Failed to fetch posts:', error);
     }
   };
 
-  // Refresh posts when the screen is focused
   useFocusEffect(
     useCallback(() => {
       loadPosts();
     }, [])
   );
+
+  const handleLoadMore = async () => {
+    if (!isLoadingMore && hasMore) {
+      setIsLoadingMore(true);
+      const nextPage = page + 1;
+      await loadPosts(nextPage, true);
+      setPage(nextPage);
+      setIsLoadingMore(false);
+    }
+  };
+
+  const renderFooter = () => {
+    if (!isLoadingMore) return null;
+    return <ActivityIndicator style={{ marginVertical: 22 }} />;
+  };
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" />
       <ScrollView>
-        <Header/>
-        
+        <Header />
         <View style={styles.newPostsButton}>
           <Text style={styles.newPostsText}>New posts</Text>
         </View>
-        
+
         <View style={styles.feedContainer}>
-          <View
-            style={{
-              flex: 1,
-              justifyContent: "center",
-              alignItems: "center",
-            }}
-            >
-            <FlatList
-              data={posts}
-              renderItem={renderPost}
-              keyExtractor={keyExtractor}
-              ItemSeparatorComponent={() => <View style={{ height: 10 }} />}
-            />
-          </View>
+          <FlatList
+            data={posts}
+            renderItem={renderPost}
+            keyExtractor={keyExtractor}
+            ItemSeparatorComponent={() => <View style={{ height: 12 }} />}
+            onEndReached={handleLoadMore}
+            onEndReachedThreshold={0.5}
+            ListFooterComponent={renderFooter}
+          />
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -67,7 +94,6 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#FFF',
   },
-  
   newPostsButton: {
     width: 150,
     height: 40,
@@ -85,35 +111,5 @@ const styles = StyleSheet.create({
   },
   feedContainer: {
     padding: 10,
-  },
-  postItem: {
-    backgroundColor: '#F8F8F8',
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 16,
-  },
-  postHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 12,
-  },
-  avatar: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    backgroundColor: '#DDD',
-    marginRight: 12,
-  },
-  userName: {
-    fontWeight: 'bold',
-    fontSize: 16,
-  },
-  postTime: {
-    color: '#777',
-    fontSize: 14,
-  },
-  postContent: {
-    fontSize: 16,
-    lineHeight: 22,
   },
 });
