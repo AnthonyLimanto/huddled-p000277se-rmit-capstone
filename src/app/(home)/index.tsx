@@ -1,10 +1,11 @@
 import { Ionicons } from '@expo/vector-icons';
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { FlatList, Platform, SafeAreaView, ScrollView, StatusBar, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { fetchPosts } from "../../api/posts";
 import PostCard from "../../components/PostCard";
 import Header from "../../components/Header";
 import { Post } from '../../model/post';
+import { useFocusEffect } from '@react-navigation/native';
 
 const renderPost = ({item}) => (
   <PostCard post={item} />
@@ -15,19 +16,21 @@ const keyExtractor = (post) => post.id;
 export default function HomeScreen() {
   const [posts, setPosts] = useState<Post[]>([]);
 
-  useEffect(() => {
-    const loadPosts = async () => {
-      try {
-        const fetchedPosts = await fetchPosts(); 
-        setPosts(fetchedPosts);
-        // console.log(completeSignUp("examplasdasdsd12easdasdasda123s@domain.com", "password123ASD@", "usasderasdasdna123measdas1231", "EXAMPLE DEGREE", null))
-      } catch (error) {
-        console.error('Failed to fetch posts:', error);
-      }
-    };
+  const loadPosts = async () => {
+    try {
+      const fetchedPosts = await fetchPosts();
+      setPosts(fetchedPosts);
+    } catch (error) {
+      console.error('Failed to fetch posts:', error);
+    }
+  };
 
-    loadPosts(); 
-  }, []);
+  // Refresh posts when the screen is focused
+  useFocusEffect(
+    useCallback(() => {
+      loadPosts();
+    }, [])
+  );
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" />
