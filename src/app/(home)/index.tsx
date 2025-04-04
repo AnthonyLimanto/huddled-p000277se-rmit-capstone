@@ -1,10 +1,8 @@
 import { Ionicons } from '@expo/vector-icons';
-import { useEffect, useState, useCallback } from "react";
+import { useState, useCallback } from "react";
 import {
   FlatList,
-  Platform,
   SafeAreaView,
-  ScrollView,
   StatusBar,
   StyleSheet,
   Text,
@@ -18,8 +16,10 @@ import Header from "../../components/Header";
 import { Post } from '../../model/post';
 import { useFocusEffect } from '@react-navigation/native';
 
+const keyExtractor = (post: Post, index: number) =>
+  post?.id ? `${post.id}-${index}` : `${index}`;
+
 const renderPost = ({ item }) => <PostCard post={item} />;
-const keyExtractor = (post: Post) => post.id;
 
 export default function HomeScreen() {
   const [posts, setPosts] = useState<Post[]>([]);
@@ -34,8 +34,15 @@ export default function HomeScreen() {
         setHasMore(false);
         return;
       }
+
       if (append) {
-        setPosts(prev => [...prev, ...fetchedPosts]);
+        // Optional: Deduplicate posts if needed
+        const combined = [...posts, ...fetchedPosts];
+        const uniqueMap = new Map();
+        combined.forEach(post => {
+          if (post?.id) uniqueMap.set(post.id, post);
+        });
+        setPosts(Array.from(uniqueMap.values()));
       } else {
         setPosts(fetchedPosts);
       }
@@ -61,30 +68,42 @@ export default function HomeScreen() {
   };
 
   const renderFooter = () => {
-    if (!isLoadingMore) return null;
-    return <ActivityIndicator style={{ marginVertical: 22 }} />;
+    if (!isLoadingMore && !hasMore) {
+      return (
+        <View style={{ alignItems: 'center', marginVertical: 20 }}>
+          <Text style={{ color: '#888' }}>No more posts</Text>
+        </View>
+      );
+    }
+
+    if (isLoadingMore) {
+      return <ActivityIndicator style={{ marginVertical: 22 }} />;
+    }
+
+    return null;
   };
+
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" />
-      <ScrollView>
-        <Header />
-        <View style={styles.newPostsButton}>
-          <Text style={styles.newPostsText}>New posts</Text>
-        </View>
-
-        <View style={styles.feedContainer}>
-          <FlatList
-            data={posts}
-            renderItem={renderPost}
-            keyExtractor={keyExtractor}
-            ItemSeparatorComponent={() => <View style={{ height: 12 }} />}
-            onEndReached={handleLoadMore}
-            onEndReachedThreshold={0.5}
-            ListFooterComponent={renderFooter}
-          />
-        </View>
-      </ScrollView>
+      <FlatList
+        data={posts}
+        renderItem={renderPost}
+        keyExtractor={keyExtractor}
+        onEndReached={handleLoadMore}
+        onEndReachedThreshold={0.5}
+        ListFooterComponent={renderFooter}
+        ListHeaderComponent={
+          <>
+            <Header />
+            <View style={styles.newPostsButton}>
+              <Text style={styles.newPostsText}>New posts</Text>
+            </View>
+          </>
+        }
+        ItemSeparatorComponent={() => <View style={{ height: 12 }} />}
+        contentContainerStyle={styles.feedContainer}
+      />
     </SafeAreaView>
   );
 }
