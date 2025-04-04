@@ -1,12 +1,14 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, Text, Image, StyleSheet } from 'react-native';
+import { Avatar } from '@rneui/themed';
 import { Post } from '../model/post';
-import { getProfileByUserId } from '../api/profile';
-import { Profile } from '../model/profile';
+import { downloadPfp } from '../helper/bucketHelper'; // Adjust the import path as necessary
+
 
 type PostCardProps = {
   post: Post;
 };
+
 
 
 const howLongAgo = (postTime: Date) => {
@@ -26,17 +28,75 @@ const howLongAgo = (postTime: Date) => {
 };
 
 const PostCard = ({ post }: PostCardProps) => {
+  const [pfpUrl, setPfpUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    
+    const fetchPfp = async () => {
+      try {
+        const url = await downloadPfp(post.profile.email);
+        setPfpUrl(url);
+        console.log('Profile picture URL:', url);
+      } catch (error) {
+        console.error('Error downloading profile picture:', error);
+      }
+    };
+
+    fetchPfp();
+
+    // Cleanup the temporary URL when the component unmounts
+    return () => {
+      if (pfpUrl) {
+        URL.revokeObjectURL(pfpUrl);
+      }
+    };
+  }, []);
   let postDate = new Date(post.created_at)
   
   if (!post) {
     return <Text>No post data available.</Text>; 
   }
+
+  const pfp = () => {
+    if (pfpUrl != "default") {
+      // Render Avatar with the profile picture
+      return (
+        <Avatar
+          size={40}
+          rounded
+          source={{ uri: pfpUrl }} 
+          containerStyle={{
+            backgroundColor: '#fff', 
+          }}
+          key={post.id}
+        />
+      );
+    } else {
+      // Render Avatar with the first letter of the username
+      return (
+        <Avatar
+          size={40}
+          rounded
+          title={post.profile.username[0].toUpperCase()} // First letter of the username
+          containerStyle={{
+            backgroundColor: '#ccc', 
+          }}
+          titleStyle={{
+            color: '#fff', 
+            fontWeight: 'bold',
+          }}
+          key={post.id}
+        />
+      );
+    }
+  };
   return (
 
     <View style={styles.card}>
       <View style={styles.userInfo}>
         <View style={styles.leftGroup}>
-          <View style={styles.profilePic} />
+          <View />
+          {pfp()}
           <View>
             <Text style={styles.username}>{post.profile.username}</Text>
             <Text style={styles.degree}>{post.profile.degree}</Text>
@@ -54,6 +114,7 @@ const PostCard = ({ post }: PostCardProps) => {
     
   ); 
 };
+
 
 const styles = StyleSheet.create({
   card: {

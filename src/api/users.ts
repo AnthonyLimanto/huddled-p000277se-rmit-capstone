@@ -70,7 +70,8 @@ export const completeSignUp = async (
           user_id: data.user.id,  // Using the user ID returned from auth
           username,           // Storing the username
           pfp_url: pfpUrl,     // Storing the profile picture URL
-          degree
+          degree,
+          email
         }]);
   
       if (usersTableError) throw usersTableError;

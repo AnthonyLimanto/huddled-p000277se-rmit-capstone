@@ -2,11 +2,13 @@ import { Ionicons } from '@expo/vector-icons';
 import { useEffect, useState, useCallback } from "react";
 import {
   FlatList,
+  Platform,
   SafeAreaView,
   ScrollView,
   StatusBar,
   StyleSheet,
   Text,
+  TouchableOpacity,
   View,
   ActivityIndicator,
 } from 'react-native';
@@ -14,6 +16,7 @@ import { fetchPosts } from "../../api/posts";
 import PostCard from "../../components/PostCard";
 import Header from "../../components/Header";
 import { Post } from '../../model/post';
+import { useFocusEffect } from '@react-navigation/native';
 
 const renderPost = ({ item }) => <PostCard post={item} />;
 const keyExtractor = (post: Post) => post.id;
@@ -31,7 +34,6 @@ export default function HomeScreen() {
         setHasMore(false);
         return;
       }
-
       if (append) {
         setPosts(prev => [...prev, ...fetchedPosts]);
       } else {
@@ -62,7 +64,6 @@ export default function HomeScreen() {
     if (!isLoadingMore) return null;
     return <ActivityIndicator style={{ marginVertical: 22 }} />;
   };
-
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" />
