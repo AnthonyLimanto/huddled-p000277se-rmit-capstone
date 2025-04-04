@@ -9,10 +9,12 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
-  Alert
+  Alert,
+  Image,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import * as ImagePicker from 'expo-image-picker';
 import { completeSignUp } from '../../api/users';
 
 export default function SignUp() {
@@ -23,6 +25,7 @@ export default function SignUp() {
   const [degree, setDegree] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [pfpFile, setPfpFile] = useState<File | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const [errors, setErrors] = useState({
@@ -30,7 +33,7 @@ export default function SignUp() {
     email: '',
     password: '',
     confirmPassword: '',
-    degree: ''
+    degree: '',
   });
 
   const validateField = (field: string) => {
@@ -60,6 +63,27 @@ export default function SignUp() {
     setErrors(prev => ({ ...prev, [field]: error }));
   };
 
+  const handlePickImage = async () => {
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      quality: 1,
+    });
+
+    if (!result.canceled && result.assets && result.assets.length > 0) {
+      const file = result.assets[0];
+      const uriParts = file.uri.split('.');
+      const fileType = uriParts[uriParts.length - 1];
+
+      const fetchedFile = {
+        uri: file.uri,
+        name: `profile-picture.${fileType}`,
+        type: `image/${fileType}`,
+      } as unknown as File;
+
+      setPfpFile(fetchedFile);
+    }
+  };
+
   const handleSignUp = async () => {
     validateField('username');
     validateField('email');
@@ -72,7 +96,7 @@ export default function SignUp() {
       email: email.trim() === '' ? 'Email is required' : (!/\S+@\S+\.\S+/.test(email) ? 'Invalid email format' : ''),
       password: password.length < 6 ? 'Minimum 6 characters' : '',
       confirmPassword: confirmPassword !== password ? 'Passwords do not match' : '',
-      degree: degree.trim() === '' ? 'Course is required' : ''
+      degree: degree.trim() === '' ? 'Course is required' : '',
     };
 
     setErrors(currentErrors);
@@ -82,8 +106,9 @@ export default function SignUp() {
 
     try {
       setIsSubmitting(true);
-      const user = await completeSignUp(email, password, username, degree);
+      const user = await completeSignUp(email, password, username, degree, pfpFile);
       console.log('User created:', user);
+      Alert.alert('Success', 'Account created successfully!');
       router.replace('/(home)');
     } catch (error: any) {
       Alert.alert('Signup Failed', error.message || 'Unknown error');
@@ -94,10 +119,6 @@ export default function SignUp() {
 
   const handleBack = () => {
     router.replace('../(auth)/signin');
-  };
-
-  const handleProfilePicUpload = () => {
-    alert('Upload Profile Picture (functionality to be added)');
   };
 
   const capitalizeFirst = (text: string) => {
@@ -127,10 +148,7 @@ export default function SignUp() {
               <TextInput
                 style={styles.input}
                 value={username}
-                onChangeText={text => {
-                  setUsername(text);
-                  if (text.length >= 3) setErrors(prev => ({ ...prev, username: '' }));
-                }}
+                onChangeText={text => setUsername(text)}
                 onBlur={() => validateField('username')}
               />
               {errors.username ? <Text style={styles.error}>{errors.username}</Text> : null}
@@ -144,10 +162,7 @@ export default function SignUp() {
                 keyboardType="email-address"
                 autoCapitalize="none"
                 value={email}
-                onChangeText={text => {
-                  setEmail(text);
-                  if (/\S+@\S+\.\S+/.test(text)) setErrors(prev => ({ ...prev, email: '' }));
-                }}
+                onChangeText={text => setEmail(text)}
                 onBlur={() => validateField('email')}
               />
               {errors.email ? <Text style={styles.error}>{errors.email}</Text> : null}
@@ -160,11 +175,7 @@ export default function SignUp() {
                 style={styles.input}
                 secureTextEntry
                 value={password}
-                onChangeText={text => {
-                  setPassword(text);
-                  if (text.length >= 6) setErrors(prev => ({ ...prev, password: '' }));
-                  if (confirmPassword === text) setErrors(prev => ({ ...prev, confirmPassword: '' }));
-                }}
+                onChangeText={text => setPassword(text)}
                 onBlur={() => validateField('password')}
               />
               {errors.password ? <Text style={styles.error}>{errors.password}</Text> : null}
@@ -177,10 +188,7 @@ export default function SignUp() {
                 style={styles.input}
                 secureTextEntry
                 value={confirmPassword}
-                onChangeText={text => {
-                  setConfirmPassword(text);
-                  if (text === password) setErrors(prev => ({ ...prev, confirmPassword: '' }));
-                }}
+                onChangeText={text => setConfirmPassword(text)}
                 onBlur={() => validateField('confirmPassword')}
               />
               {errors.confirmPassword ? <Text style={styles.error}>{errors.confirmPassword}</Text> : null}
@@ -198,18 +206,23 @@ export default function SignUp() {
               {errors.degree ? <Text style={styles.error}>{errors.degree}</Text> : null}
             </View>
 
-            {/* Upload */}
+            {/* Upload Profile Picture */}
             <View style={styles.inputGroup}>
               <Text style={styles.label}>Upload Profile Picture :</Text>
-              <TouchableOpacity
-                style={styles.uploadButton}
-                onPress={handleProfilePicUpload}
-              >
+              <TouchableOpacity style={styles.uploadButton} onPress={handlePickImage}>
                 <Text style={styles.uploadButtonText}>Choose File</Text>
               </TouchableOpacity>
+
+              {/* Show thumbnail preview */}
+              {pfpFile && (
+                <Image
+                  source={{ uri: pfpFile.uri }}
+                  style={{ width: 100, height: 100, borderRadius: 10, marginTop: 10 }}
+                />
+              )}
             </View>
 
-            {/* Submit */}
+            {/* Sign Up Button */}
             <TouchableOpacity
               style={[styles.signupButton, isSubmitting && { backgroundColor: '#ccc' }]}
               onPress={handleSignUp}
@@ -218,13 +231,14 @@ export default function SignUp() {
               <Text style={styles.signupButtonText}>Sign Up</Text>
             </TouchableOpacity>
 
-            {/* Already have account */}
+            {/* Login Redirect */}
             <View style={styles.loginContainer}>
               <Text style={styles.haveAccountText}>Already have an Account? </Text>
               <TouchableOpacity onPress={handleBack}>
                 <Text style={styles.loginLink}>Login</Text>
               </TouchableOpacity>
             </View>
+
           </View>
         </ScrollView>
       </KeyboardAvoidingView>

@@ -1,23 +1,43 @@
+// src/app/create.tsx
+
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TextInput, TouchableOpacity, SafeAreaView, StatusBar } from 'react-native';
+import { View, Text, StyleSheet, TextInput, TouchableOpacity, SafeAreaView, StatusBar, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { createPost } from '@/src/api/posts';
+import { supabase } from '@/src/api/supabase'; // 👈 import Supabase client
 
 export default function CreatePostScreen() {
   const [text, setText] = useState("");
 
-  const getSessionUser = () => {
-    return "990fa42e-84cb-4deb-b632-ee87cbac092f" // Anthony's sample user ID
-  }
-  const handleSubmit = async () => {
-    let currentUser = getSessionUser();
-
-    let sentPost = await createPost(currentUser, text, "default");
-    console.log("Sent post:" + sentPost);
+  // 🔥 Fetch the currently logged in user
+  const getSessionUser = async () => {
+    const { data, error } = await supabase.auth.getUser();
+    if (error || !data?.user?.id) {
+      throw new Error('No user session found');
+    }
+    return data.user.id;
   };
+
+  // 📨 Handle posting
+  const handleSubmit = async () => {
+    try {
+      const currentUserId = await getSessionUser(); // ✅ Get real logged-in user's ID
+
+      const sentPost = await createPost(currentUserId, text, "default"); // ✅ Save post with correct user
+      console.log("Sent post:", sentPost);
+
+      Alert.alert('Success', 'Post created successfully!');
+      setText(""); // Clear input after posting
+    } catch (error) {
+      console.error("Error creating post:", error);
+      Alert.alert('Error', 'Failed to create post.');
+    }
+  };
+
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" />
+      
       <View style={styles.header}>
         <Text style={styles.title}>Create Post</Text>
       </View>
@@ -68,6 +88,7 @@ export default function CreatePostScreen() {
   );
 }
 
+// 🎨 Styles
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -147,3 +168,4 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
 });
+
