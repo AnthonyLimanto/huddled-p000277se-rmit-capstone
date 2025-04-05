@@ -20,10 +20,11 @@ export const fetchUsers = async () => {
     return data; 
 } 
 
-export const fetchUser = async (username: string) => {
+export const fetchUser = async (email: string) => {
     const {data, error} = await supabase
         .from('Users')
-        .select('username')
+        .select('*')
+        .eq('email', email)
         .order('created_at', { ascending: false });
     
     if (error) throw error;
