@@ -3,50 +3,63 @@ import {supabase} from "./supabase"
 export const createGroup = async (name: string, users: string[]) => {
     try {
       
-      const { data: groupData, error: groupError } = await supabase
-        .from("groups")
-        .insert([{ name }])
-        .select("id")
-        .single(); 
+        const { data: groupData, error: groupError } = await supabase
+            .from("groups")
+            .insert([{ name }])
+            .select("id")
+            .single(); 
   
-      if (groupError) throw groupError;
+        if (groupError) throw groupError;
   
-      const groupId = groupData.id;
+        const groupId = groupData.id;
   
 
-      const members = users.map((userId) => ({
-        group_id: groupId, 
-        user_id: userId, 
-      }));
-  
-      const { data: membersData, error: membersError } = await supabase
-        .from("group_members")
-        .insert(members);
-  
-      if (membersError) throw membersError;
-  
-      return { group: groupData, members: membersData };
+        const members = users.map((userId) => ({
+            group_id: groupId, 
+            user_id: userId, 
+        }));
+    
+        const { data: membersData, error: membersError } = await supabase
+            .from("group_members")
+            .insert(members);
+    
+        if (membersError) throw membersError;
+    
+        return { group: groupData, members: membersData };
     } catch (error) {
-      console.error("Error creating group:", error);
-      throw error;
+        console.error("Error creating group:", error);
+        throw error;
     }
   };
 
-export const fetchGroups = async () => {
-    const { data, error } = await supabase
-        .from('posts')
-        .select(`
-            id,
-            content,
-            created_at,
-            profile:users(username, degree, pfp_url, email)
-        `)
-        .order('created_at', { ascending: false });
+export const fetchGroups = async (user_id: string) => {
+    const { data: groupData, error } = await supabase
+        .from('group_members')
+        .select('user_id, joined_at, groups:groups(id, name, created_at)')
+        .eq('user_id', user_id)
+        .order('joined_at', { ascending: false });
 
         if (error) {
-            console.error("Error fetching posts:", error);
+            console.error("Error fetching groups:", error);
         } else {
-            console.log("Posts with profile info:", data);
+            console.log("groups:", groupData);
         }
-    return data; 
+
+    return groupData;
+} 
+
+export const fetchGroupMembers = async (group_id: string) => {
+    const { data: groupMemberData, error } = await supabase
+        .from('group_members')
+        .select('group_id, joined_at, profile:users(username, degree, pfp_url, email)')
+        .eq('group_id', group_id)
+        .order('joined_at', { ascending: false });
+
+        if (error) {
+            console.error("Error fetching group members:", error);
+        } else {
+            console.log("groups:", groupMemberData);
+        }
+
+    return groupMemberData;
 } 
