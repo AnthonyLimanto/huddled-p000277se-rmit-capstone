@@ -1,54 +1,39 @@
-import React from 'react';
+import React, { useCallback, useState } from 'react';
 import { View, Text, StyleSheet, FlatList, TouchableOpacity, SafeAreaView, StatusBar, TextInput } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { GroupCard } from '@/src/components/GroupCard';
 import { Group } from '@/src/model/group';
+import { useAuth } from '@/src/context/AuthContext';
+import { useFocusEffect } from '@react-navigation/native';
+import { fetchGroups } from '@/src/api/group';
 
-
-// Sample data for chat list
-const SAMPLE_CHATS: Group[] = [
-  {
-    id: '1',
-    groupName: 'Jovie Jing Sin',
-    lastMessage: 'Thanks for sharing the tutorial!',
-    time: '10 mins',
-    unread: 2,
-  },
-  {
-    id: '2',
-    groupName: 'Nicholas Owen Putra',
-    lastMessage: 'Do you have experience with Supabase?',
-    time: '15 mins',
-    unread: 0,
-  },
-  {
-    id: '3',
-    groupName: 'Sarah Johnson',
-    lastMessage: 'When is our next team meeting?',
-    time: '2 hours',
-    unread: 1,
-  },
-  {
-    id: '4',
-    groupName: 'Tech Support',
-    lastMessage: 'Your issue has been resolved.',
-    time: '1 day',
-    unread: 0,
-  },
-  {
-    id: '5',
-    groupName: 'React Native Group',
-    lastMessage: 'Alex: Has anyone tried Expo Router yet?',
-    time: '2 days',
-    unread: 3,
-  },
-];
 
 export default function MessagesScreen() {
+  const [groups, setGroups] = useState<Group[]>([]);
   const renderGroupCard = ({ item }: { item: Group }) => (
     <GroupCard group={item} />
   );
+  const { user, signOut } = useAuth();
 
+  useFocusEffect(
+      useCallback(() => {
+        try{
+          if (user) {
+            fetchGroups(user.id)
+              .then((fetchedGroups) => {
+                if (fetchedGroups) {
+                  setGroups(fetchedGroups);
+                }
+              })
+              .catch((error) => {
+                console.error('Failed to fetch groups:', error);
+              });
+          }
+        }catch (error) {
+          console.error('Failed to fetch groups:', error);
+        }
+      }, [])
+    );
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" />
