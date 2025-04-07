@@ -12,10 +12,20 @@ export const createGroup = async (name: string, users: string[]) => {
         if (groupError) throw groupError;
   
         const groupId = groupData.id;
-  
+    
+        const membersData = await addGroupMembers(groupId, users);
+    
+        return { group: groupData, members: membersData };
+    } catch (error) {
+        console.error("Error creating group:", error);
+        throw error;
+    }
+  };
 
+export const addGroupMembers = async (group_id: string, users: string[]) => {
+    try {
         const members = users.map((userId) => ({
-            group_id: groupId, 
+            group_id: group_id, 
             user_id: userId, 
         }));
     
@@ -25,12 +35,12 @@ export const createGroup = async (name: string, users: string[]) => {
     
         if (membersError) throw membersError;
     
-        return { group: groupData, members: membersData };
+        return membersData;
     } catch (error) {
-        console.error("Error creating group:", error);
+        console.error("Error adding group members:", error);
         throw error;
     }
-  };
+}
 
 export const fetchGroups = async (user_id: string) => {
     const { data: groupData, error } = await supabase
