@@ -1,20 +1,24 @@
 import React from 'react';
 import { View, Text, StyleSheet, FlatList, TouchableOpacity } from 'react-native';
 import { Group } from '../model/group';
+import { Pfp } from './Pfp';
 
 interface GroupCardProps {
   group: Group;
 }
 
 export const GroupCard = ({ group }: GroupCardProps) => {  
+  console.log('given group prop:', group);
     return (
         <TouchableOpacity style={styles.chatItem}>
-              <View style={styles.avatar} />
+              <View >
+                <Pfp email={group.group.id} name={group.group.name} style={styles.avatar} size={60} />
+              </View>
               
               <View style={styles.chatDetails}>
                 <View style={styles.chatHeader}>
-                  <Text style={styles.chatName}>{group.groupName}</Text>
-                  <Text style={styles.timeText}>{group.time}</Text>
+                  <Text style={styles.chatName}>{group.group.name}</Text>
+                  <Text style={styles.timeText}>{"hardcoded time"}</Text>
                 </View>
                 
                 <View style={styles.messageRow}>
@@ -22,11 +26,11 @@ export const GroupCard = ({ group }: GroupCardProps) => {
                     {"hardcoded"}
                   </Text>
                   
-                  {group.unread > 0 && (
+                  {/* {group.unread > 0 && (
                     <View style={styles.unreadBadge}>
                       <Text style={styles.unreadText}>{"hardcoded"}</Text>
                     </View>
-                  )}
+                  )} */}
                 </View>
               </View>
             </TouchableOpacity>

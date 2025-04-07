@@ -3,37 +3,37 @@ import { View, Text, StyleSheet, FlatList, TouchableOpacity, SafeAreaView, Statu
 import { Ionicons } from '@expo/vector-icons';
 import { GroupCard } from '@/src/components/GroupCard';
 import { Group } from '@/src/model/group';
-import { useAuth } from '@/src/context/AuthContext';
 import { useFocusEffect } from '@react-navigation/native';
 import { fetchGroups } from '@/src/api/group';
+import { getSessionUser } from '@/src/api/users';
 
 
 export default function MessagesScreen() {
   const [groups, setGroups] = useState<Group[]>([]);
-  const renderGroupCard = ({ item }: { item: Group }) => (
-    <GroupCard group={item} />
-  );
-  const { user, signOut } = useAuth();
+  const renderGroupCard = ({ item }) => <GroupCard group={item} />;
 
   useFocusEffect(
-      useCallback(() => {
-        try{
-          if (user) {
-            fetchGroups(user.id)
-              .then((fetchedGroups) => {
-                if (fetchedGroups) {
-                  setGroups(fetchedGroups);
-                }
-              })
-              .catch((error) => {
-                console.error('Failed to fetch groups:', error);
-              });
+    useCallback(() => {
+      const fetchUserAndGroups = async () => {
+        try {
+          const currentUser = await getSessionUser(); // Fetch the current session user
+          if (currentUser) {
+            console.log('Current User:', currentUser);
+            const userGroups = await fetchGroups(currentUser); 
+            console.log('Fetched Groups:', userGroups);
+            // Fetch groups for the current user
+            setGroups(userGroups);
+          } else {
+            console.error('No user session found.');
           }
-        }catch (error) {
-          console.error('Failed to fetch groups:', error);
+        } catch (error) {
+          console.error('Error fetching user or groups:', error);
         }
-      }, [])
-    );
+      };
+
+      fetchUserAndGroups();
+    }, [])
+  );
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" />
@@ -56,7 +56,7 @@ export default function MessagesScreen() {
       </View>
       
       <FlatList
-        data={SAMPLE_CHATS}
+        data={groups}
         renderItem={renderGroupCard}
         keyExtractor={item => item.id}
         style={styles.chatList}
