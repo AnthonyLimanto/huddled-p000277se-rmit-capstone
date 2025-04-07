@@ -20,7 +20,7 @@ export const fetchPosts = async () => {
       id,
       content,
       created_at,
-      users ( username, degree, pfp_url, email )  -- 👈 correct relation to users table
+      profile:users(username, degree, pfp_url, email)  
     `)
     .order('created_at', { ascending: false });
 

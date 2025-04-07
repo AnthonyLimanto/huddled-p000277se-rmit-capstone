@@ -85,3 +85,12 @@ export const completeSignUp = async (
     throw error;
   }
 };
+
+  // 🔥 Fetch the currently logged in user
+  export const getSessionUser = async () => {
+    const { data, error } = await supabase.auth.getUser();
+    if (error || !data?.user?.id) {
+      throw new Error('No user session found');
+    }
+    return data.user.id;
+  };

@@ -5,18 +5,10 @@ import { View, Text, StyleSheet, TextInput, TouchableOpacity, SafeAreaView, Stat
 import { Ionicons } from '@expo/vector-icons';
 import { createPost } from '@/src/api/posts';
 import { supabase } from '@/src/api/supabase'; // 👈 import Supabase client
+import { getSessionUser } from '@/src/api/users';
 
 export default function CreatePostScreen() {
   const [text, setText] = useState("");
-
-  // 🔥 Fetch the currently logged in user
-  const getSessionUser = async () => {
-    const { data, error } = await supabase.auth.getUser();
-    if (error || !data?.user?.id) {
-      throw new Error('No user session found');
-    }
-    return data.user.id;
-  };
 
   // 📨 Handle posting
   const handleSubmit = async () => {

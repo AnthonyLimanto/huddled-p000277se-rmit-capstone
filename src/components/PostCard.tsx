@@ -40,10 +40,10 @@ const postDate = new Date(post.created_at);
           <Pfp email={post.profile.email} name={post.profile.username} />
           <View>
             <Text style={styles.username}>
-              {post.users?.username || 'Unknown User'}
+              {post.profile?.username || 'Unknown User'}
             </Text>
             <Text style={styles.degree}>
-              {post.users?.degree || ''}
+              {post.profile?.degree || ''}
             </Text>
           </View>
         </View>
@@ -52,7 +52,7 @@ const postDate = new Date(post.created_at);
         </Text>
       </View>
       <View>
-        <Text>From User ID: {post.users?.username || 'Unknown'}</Text>
+        <Text>From User ID: {post.profile?.username || 'Unknown'}</Text>
         <Text>Post ID: {post.id}</Text>
         <Text>Message: {post.content}</Text>
       </View>
