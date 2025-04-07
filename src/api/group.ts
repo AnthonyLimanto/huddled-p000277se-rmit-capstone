@@ -45,7 +45,7 @@ export const addGroupMembers = async (group_id: string, users: string[]) => {
 export const fetchGroups = async (user_id: string) => {
     const { data: groupData, error } = await supabase
         .from('group_members')
-        .select('user_id, joined_at, groups:groups(id, name, created_at)')
+        .select('group:groups(id, name, created_at)')
         .eq('user_id', user_id)
         .order('joined_at', { ascending: false });
 

@@ -1,54 +1,39 @@
-import React from 'react';
+import React, { useCallback, useState } from 'react';
 import { View, Text, StyleSheet, FlatList, TouchableOpacity, SafeAreaView, StatusBar, TextInput } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { GroupCard } from '@/src/components/GroupCard';
 import { Group } from '@/src/model/group';
+import { useFocusEffect } from '@react-navigation/native';
+import { fetchGroups } from '@/src/api/group';
+import { getSessionUser } from '@/src/api/users';
 
-
-// Sample data for chat list
-const SAMPLE_CHATS: Group[] = [
-  {
-    id: '1',
-    groupName: 'Jovie Jing Sin',
-    lastMessage: 'Thanks for sharing the tutorial!',
-    time: '10 mins',
-    unread: 2,
-  },
-  {
-    id: '2',
-    groupName: 'Nicholas Owen Putra',
-    lastMessage: 'Do you have experience with Supabase?',
-    time: '15 mins',
-    unread: 0,
-  },
-  {
-    id: '3',
-    groupName: 'Sarah Johnson',
-    lastMessage: 'When is our next team meeting?',
-    time: '2 hours',
-    unread: 1,
-  },
-  {
-    id: '4',
-    groupName: 'Tech Support',
-    lastMessage: 'Your issue has been resolved.',
-    time: '1 day',
-    unread: 0,
-  },
-  {
-    id: '5',
-    groupName: 'React Native Group',
-    lastMessage: 'Alex: Has anyone tried Expo Router yet?',
-    time: '2 days',
-    unread: 3,
-  },
-];
 
 export default function MessagesScreen() {
-  const renderGroupCard = ({ item }: { item: Group }) => (
-    <GroupCard group={item} />
-  );
+  const [groups, setGroups] = useState<Group[]>([]);
+  const renderGroupCard = ({ item }) => <GroupCard group={item} />;
 
+  useFocusEffect(
+    useCallback(() => {
+      const fetchUserAndGroups = async () => {
+        try {
+          const currentUser = await getSessionUser(); // Fetch the current session user
+          if (currentUser) {
+            console.log('Current User:', currentUser);
+            const userGroups = await fetchGroups(currentUser); 
+            console.log('Fetched Groups:', userGroups);
+            // Fetch groups for the current user
+            setGroups(userGroups);
+          } else {
+            console.error('No user session found.');
+          }
+        } catch (error) {
+          console.error('Error fetching user or groups:', error);
+        }
+      };
+
+      fetchUserAndGroups();
+    }, [])
+  );
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" />
@@ -71,7 +56,7 @@ export default function MessagesScreen() {
       </View>
       
       <FlatList
-        data={SAMPLE_CHATS}
+        data={groups}
         renderItem={renderGroupCard}
         keyExtractor={item => item.id}
         style={styles.chatList}

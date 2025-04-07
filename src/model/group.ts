@@ -1,7 +1,5 @@
 export type Group = {
     id: string;
-  groupName: string;
-  lastMessage: string;
-  time: string;
-  unread: number;
+    name: string;
+    created_at: Date;
 }
