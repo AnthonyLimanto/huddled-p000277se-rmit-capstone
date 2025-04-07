@@ -79,8 +79,8 @@ export default function HomeScreen() {
             renderItem={renderPost}
             keyExtractor={keyExtractor}
             ItemSeparatorComponent={() => <View style={{ height: 12 }} />}
-            onEndReached={handleLoadMore}
-            onEndReachedThreshold={0.5}
+            // onEndReached={handleLoadMore}
+            // onEndReachedThreshold={0.5}
             ListFooterComponent={renderFooter}
           />
         </View>

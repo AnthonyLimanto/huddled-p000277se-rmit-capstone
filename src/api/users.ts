@@ -22,16 +22,16 @@ export const fetchUsers = async () => {
   return data;
 };
 
-// ✨ Fetch a specific user by username
-export const fetchUser = async (username: string) => {
-  const { data, error } = await supabase
-    .from('Users')
-    .select('username')
-    .eq('username', username); // ⚡ Only fetch matching username
+export const fetchUser = async (email: string) => {
+    const {data, error} = await supabase
+        .from('Users')
+        .select('*')
+        .eq('email', email)
+    
+    if (error) throw error;
+    return data; 
+} 
 
-  if (error) throw error;
-  return data;
-};
 
 // ✨ Full signup with PFP upload
 export const completeSignUp = async (

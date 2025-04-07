@@ -1,49 +1,43 @@
 import React from 'react';
 import { View, Text, StyleSheet, FlatList, TouchableOpacity, SafeAreaView, StatusBar, TextInput } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { GroupCard } from '@/src/components/GroupCard';
+import { Group } from '@/src/model/group';
 
-// Define the chat item interface
-interface ChatItem {
-  id: string;
-  name: string;
-  lastMessage: string;
-  time: string;
-  unread: number;
-}
 
 // Sample data for chat list
-const SAMPLE_CHATS: ChatItem[] = [
+const SAMPLE_CHATS: Group[] = [
   {
     id: '1',
-    name: 'Jovie Jing Sin',
+    groupName: 'Jovie Jing Sin',
     lastMessage: 'Thanks for sharing the tutorial!',
     time: '10 mins',
     unread: 2,
   },
   {
     id: '2',
-    name: 'Nicholas Owen Putra',
+    groupName: 'Nicholas Owen Putra',
     lastMessage: 'Do you have experience with Supabase?',
     time: '15 mins',
     unread: 0,
   },
   {
     id: '3',
-    name: 'Sarah Johnson',
+    groupName: 'Sarah Johnson',
     lastMessage: 'When is our next team meeting?',
     time: '2 hours',
     unread: 1,
   },
   {
     id: '4',
-    name: 'Tech Support',
+    groupName: 'Tech Support',
     lastMessage: 'Your issue has been resolved.',
     time: '1 day',
     unread: 0,
   },
   {
     id: '5',
-    name: 'React Native Group',
+    groupName: 'React Native Group',
     lastMessage: 'Alex: Has anyone tried Expo Router yet?',
     time: '2 days',
     unread: 3,
@@ -51,29 +45,8 @@ const SAMPLE_CHATS: ChatItem[] = [
 ];
 
 export default function MessagesScreen() {
-  const renderChatItem = ({ item }: { item: ChatItem }) => (
-    <TouchableOpacity style={styles.chatItem}>
-      <View style={styles.avatar} />
-      
-      <View style={styles.chatDetails}>
-        <View style={styles.chatHeader}>
-          <Text style={styles.chatName}>{item.name}</Text>
-          <Text style={styles.timeText}>{item.time}</Text>
-        </View>
-        
-        <View style={styles.messageRow}>
-          <Text numberOfLines={1} style={styles.messageText}>
-            {item.lastMessage}
-          </Text>
-          
-          {item.unread > 0 && (
-            <View style={styles.unreadBadge}>
-              <Text style={styles.unreadText}>{item.unread}</Text>
-            </View>
-          )}
-        </View>
-      </View>
-    </TouchableOpacity>
+  const renderGroupCard = ({ item }: { item: Group }) => (
+    <GroupCard group={item} />
   );
 
   return (
@@ -99,7 +72,7 @@ export default function MessagesScreen() {
       
       <FlatList
         data={SAMPLE_CHATS}
-        renderItem={renderChatItem}
+        renderItem={renderGroupCard}
         keyExtractor={item => item.id}
         style={styles.chatList}
       />
