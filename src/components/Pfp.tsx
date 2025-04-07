@@ -1,13 +1,16 @@
 import React, { useEffect, useState } from "react";
 import { Avatar } from "@rneui/base";
 import { downloadPfp } from "../helper/bucketHelper"; // Adjust the import path as necessary
+import { StyleProp, ViewStyle } from "react-native";
 
 interface PfpProps {
-  email: string; 
-  name: string; 
+  email: string;
+  name: string;
+  style?: StyleProp<ViewStyle>; // Accept a style prop
+  size?: number;
 }
 
-export const Pfp = ({ email, name }: PfpProps) => {
+export const Pfp = ({ email, name, style, size = 40 }: PfpProps) => {
   const [pfpUrl, setPfpUrl] = useState<string | null>(null);
 
   useEffect(() => {
@@ -35,27 +38,24 @@ export const Pfp = ({ email, name }: PfpProps) => {
     // Render Avatar with the profile picture
     return (
       <Avatar
-        size={40}
+        size={size || 50} // Default size if not provided
         rounded
         source={{ uri: pfpUrl }}
-        containerStyle={{
-          backgroundColor: "#fff",
-        }}
+        containerStyle={[{ backgroundColor: "#fff" }, style]} 
       />
     );
   } else {
     // Render Avatar with the first letter of the username
     return (
       <Avatar
-        size={40}
+        size={size || 50}
         rounded
-        title={name[0].toUpperCase()} 
-        containerStyle={{
-          backgroundColor: "#ccc",
-        }}
+        title={name[0].toUpperCase()} // First letter of the username
+        containerStyle={[{ backgroundColor: "#ccc" }, style]} 
         titleStyle={{
           color: "#fff",
           fontWeight: "bold",
+          fontSize: size * 0.9, 
         }}
       />
     );
