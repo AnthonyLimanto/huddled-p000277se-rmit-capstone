@@ -1,23 +1,35 @@
+// src/app/create.tsx
+
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TextInput, TouchableOpacity, SafeAreaView, StatusBar } from 'react-native';
+import { View, Text, StyleSheet, TextInput, TouchableOpacity, SafeAreaView, StatusBar, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { createPost } from '@/src/api/posts';
+import { supabase } from '@/src/api/supabase'; // 👈 import Supabase client
+import { getSessionUser } from '@/src/api/users';
 
 export default function CreatePostScreen() {
   const [text, setText] = useState("");
 
-  const getSessionUser = () => {
-    return "990fa42e-84cb-4deb-b632-ee87cbac092f" // Anthony's sample user ID
-  }
+  // 📨 Handle posting
   const handleSubmit = async () => {
-    let currentUser = getSessionUser();
+    try {
+      const currentUserId = await getSessionUser(); // ✅ Get real logged-in user's ID
 
-    let sentPost = await createPost(currentUser, text, "default");
-    console.log("Sent post:" + sentPost);
+      const sentPost = await createPost(currentUserId, text, "default"); // ✅ Save post with correct user
+      console.log("Sent post:", sentPost);
+
+      Alert.alert('Success', 'Post created successfully!');
+      setText(""); // Clear input after posting
+    } catch (error) {
+      console.error("Error creating post:", error);
+      Alert.alert('Error', 'Failed to create post.');
+    }
   };
+
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" />
+      
       <View style={styles.header}>
         <Text style={styles.title}>Create Post</Text>
       </View>
@@ -68,6 +80,7 @@ export default function CreatePostScreen() {
   );
 }
 
+// 🎨 Styles
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -147,3 +160,4 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
 });
+

@@ -29,7 +29,7 @@ export default function HomeScreen() {
 
   const loadPosts = async (pageNum = 1, append = false) => {
     try {
-      const fetchedPosts = await fetchPosts(pageNum);
+      const fetchedPosts = await fetchPosts();
       if (fetchedPosts.length === 0) {
         setHasMore(false);
         return;

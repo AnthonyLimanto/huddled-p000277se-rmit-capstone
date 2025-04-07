@@ -1,5 +1,5 @@
+import { View, Text, StyleSheet } from 'react-native';
 import React from "react";
-import { View, Text, StyleSheet } from "react-native";
 import { Pfp } from "./Pfp"; 
 import { Post } from "../model/post";
 
@@ -7,8 +7,10 @@ type PostCardProps = {
   post: Post;
 };
 
+
+// Calculate "how long ago" the post was made
 const howLongAgo = (postTime: Date) => {
-  const timeInMins = Math.abs(Math.round((Date.now() - postTime.getTime()) / (1000 * 60))) - 660; // Minus 11 hours because of time difference in the database
+  const timeInMins = Math.abs(Math.round((Date.now() - postTime.getTime()) / (1000 * 60))) - 660; // Minus 11 hours (timezone diff)
 
   if (timeInMins < 60) {
     return `${timeInMins} minute${timeInMins === 1 ? "" : "s"}`;
@@ -24,7 +26,8 @@ const howLongAgo = (postTime: Date) => {
 };
 
 const PostCard = ({ post }: PostCardProps) => {
-  const postDate = new Date(post.created_at);
+
+const postDate = new Date(post.created_at);
 
   if (!post) {
     return <Text>No post data available.</Text>;
@@ -36,14 +39,20 @@ const PostCard = ({ post }: PostCardProps) => {
         <View style={styles.leftGroup}>
           <Pfp email={post.profile.email} name={post.profile.username} />
           <View>
-            <Text style={styles.username}>{post.profile.username}</Text>
-            <Text style={styles.degree}>{post.profile.degree}</Text>
+            <Text style={styles.username}>
+              {post.profile?.username || 'Unknown User'}
+            </Text>
+            <Text style={styles.degree}>
+              {post.profile?.degree || ''}
+            </Text>
           </View>
         </View>
-        <Text style={styles.timestamp}>{howLongAgo(postDate)} ago</Text>
+        <Text style={styles.timestamp}>
+          {howLongAgo(postDate)} ago
+        </Text>
       </View>
       <View>
-        <Text>From User ID: {post.profile.username}</Text>
+        <Text>From User ID: {post.profile?.username || 'Unknown'}</Text>
         <Text>Post ID: {post.id}</Text>
         <Text>Message: {post.content}</Text>
       </View>
@@ -61,21 +70,21 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 5,
     elevation: 3,
-    width: "100%", // Makes card fill container width
-    marginHorizontal: 0, // Removes side margins
-    alignSelf: "stretch", // Ensures full width in flex containers
+    width: '100%',
+    marginHorizontal: 0,
+    alignSelf: 'stretch',
   },
   userInfo: {
-    flexDirection: "row", // Horizontal layout
-    justifyContent: "space-between", // Push timestamp to far right
-    alignItems: "flex-end", // Align timestamp to bottom
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-end',
     marginBottom: 8,
   },
   leftGroup: {
-    flexDirection: "row", // PFP and username in a row
-    alignItems: "center", // Center vertically
+    flexDirection: 'row',
+    alignItems: 'center',
     marginRight: 20,
-    gap: 8, // Space between PFP and username
+    gap: 8,
   },
   timestamp: {
     color: "#777",
