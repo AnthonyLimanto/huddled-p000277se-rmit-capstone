@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, TextInput, TouchableOpacity, Image } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, Image, StyleSheet } from 'react-native';
 import React, { useEffect, useState } from "react";
 import { MaterialIcons } from '@expo/vector-icons';
 import { Pfp } from "./Pfp"; 
@@ -9,12 +9,16 @@ type PostCardProps = {
   post: Post;
 };
 
+type Reply = {
+  text: string;
+  children: Reply[];
+};
+
 const howLongAgo = (postTime: Date) => {
   const postDate = new Date(postTime);
   const now = new Date();
   const diffMs = now.getTime() - postDate.getTime();
   const diffMinutes = Math.floor(diffMs / (1000 * 60));
-
   if (diffMinutes < 1) return 'Just now';
   if (diffMinutes < 60) return `${diffMinutes} min${diffMinutes === 1 ? '' : 's'}`;
   const diffHours = Math.floor(diffMinutes / 60);
@@ -30,7 +34,10 @@ const PostCard = ({ post }: PostCardProps) => {
   const [commentText, setCommentText] = useState('');
   const [comments, setComments] = useState<string[]>([]);
   const [showComments, setShowComments] = useState(true);
-
+  const [commentLikes, setCommentLikes] = useState<{ [key: number]: boolean }>({});
+  const [replyingTo, setReplyingTo] = useState<number | null>(null);
+  const [replyText, setReplyText] = useState('');
+  const [replies, setReplies] = useState<{ [key: number]: Reply[] }>({});
   const postDate = new Date(post.created_at);
 
   useEffect(() => {
@@ -57,11 +64,37 @@ const PostCard = ({ post }: PostCardProps) => {
     }
   };
 
+  const handleCommentLike = (index: number) => {
+    setCommentLikes(prev => ({
+      ...prev,
+      [index]: !prev[index]
+    }));
+  };
+
+  const handleReplyToggle = (index: number) => {
+    if (replyingTo === index) {
+      setReplyingTo(null); // close if already open
+    } else {
+      setReplyingTo(index); // open reply box under comment
+    }
+  };
+
+  const handleSendReply = (index: number) => {
+    if (replyText.trim()) {
+      setReplies(prev => ({
+        ...prev,
+        [index]: [...(prev[index] || []), replyText.trim()]
+      }));
+      setReplyText('');
+      setReplyingTo(null); // close input after sending
+    }
+  };
+
   if (!post) return <Text>No post data available.</Text>;
 
   return (
     <View style={styles.card}>
-      {/* Header */}
+      {/* Post Header */}
       <View style={styles.userInfo}>
         <View style={styles.leftGroup}>
           <Pfp email={post.profile.email} name={post.profile.username} />
@@ -73,21 +106,22 @@ const PostCard = ({ post }: PostCardProps) => {
         <Text style={styles.timestamp}>{howLongAgo(postDate)}</Text>
       </View>
 
-      {/* Content */}
+      {/* Post Content */}
       <View style={styles.contentContainer}>
         <Text style={styles.postContent}>{post.content}</Text>
         {postImageUrl && (
-          <Image
-          source={{ uri: postImageUrl }}
-          style={styles.postImage}
-          resizeMode="contain"  
-        />
+          <View style={styles.imageContainer}>
+            <Image
+              source={{ uri: postImageUrl }}
+              style={styles.postImage}
+              resizeMode="contain"
+            />
+          </View>
         )}
       </View>
 
-      {/* Like + Comment */}
+      {/* Like + Comment Buttons */}
       <View style={styles.actionsContainer}>
-        {/* Like */}
         <TouchableOpacity
           onPress={handleLike}
           style={[styles.iconPill, { backgroundColor: likes > 0 ? '#fde8e8' : 'transparent' }]}
@@ -100,7 +134,6 @@ const PostCard = ({ post }: PostCardProps) => {
           <Text style={[styles.iconPillText, { color: likes > 0 ? '#1f1f1f' : '#999' }]}>{likes}</Text>
         </TouchableOpacity>
 
-        {/* Comment */}
         <View style={[styles.iconPill, { backgroundColor: comments.length > 0 ? '#e6f0ff' : 'transparent' }]}>
           <MaterialIcons
             name="chat-bubble-outline"
@@ -110,35 +143,16 @@ const PostCard = ({ post }: PostCardProps) => {
           <Text style={[styles.iconPillText, { color: comments.length > 0 ? '#1f1f1f' : '#999' }]}>{comments.length}</Text>
         </View>
 
-        {/* View/Hide Comments */}
-        <TouchableOpacity onPress={() => setShowComments(prev => !prev)}>
-          <Text style={styles.viewHideText}>
-            {showComments ? 'Hide all' : 'View all comments'}
-          </Text>
-        </TouchableOpacity>
-      </View>
-
-      {/* Comment Input */}
-      <View style={styles.commentBox}>
-        <TextInput
-          style={styles.commentInput}
-          value={commentText}
-          onChangeText={setCommentText}
-          placeholder="Leave your thoughts here ..."
-          placeholderTextColor="#bbb"
-          multiline
-          underlineColorAndroid="transparent"
-          autoCorrect={false}
-          autoCapitalize="none"
-        />
-        {commentText.trim().length > 0 && (
-          <TouchableOpacity onPress={handlePostComment} style={styles.postButton}>
-            <Text style={styles.postButtonText}>Post</Text>
+        {comments.length > 0 && (
+          <TouchableOpacity onPress={() => setShowComments(prev => !prev)}>
+            <Text style={styles.viewHideText}>
+              {showComments ? 'Hide all' : 'View all comments'}
+            </Text>
           </TouchableOpacity>
         )}
       </View>
 
-      {/* Comments List */}
+      {/* Comments Section */}
       {showComments && comments.map((comment, idx) => (
         <View key={idx} style={styles.commentRow}>
           <Pfp email={post.profile.email} name={post.profile.username} />
@@ -150,18 +164,93 @@ const PostCard = ({ post }: PostCardProps) => {
               </View>
               <Text style={styles.commentText}>{comment}</Text>
             </View>
+
+            {/* Like + Reply under each comment */}
             <View style={styles.commentActions}>
-              <TouchableOpacity style={styles.commentActionButton}>
-                <MaterialIcons name="favorite" size={14} color="#e53935" />
-                <Text style={styles.commentActionText}>2</Text>
+              <TouchableOpacity
+                onPress={() => handleCommentLike(idx)}
+                style={styles.commentActionButton}
+              >
+                <MaterialIcons
+                  name={commentLikes[idx] ? 'favorite' : 'favorite-border'}
+                  size={14}
+                  color={commentLikes[idx] ? '#e53935' : '#999'}
+                />
+                <Text style={styles.commentActionText}>
+                  {commentLikes[idx] ? '1' : '0'}
+                </Text>
               </TouchableOpacity>
-              <TouchableOpacity>
-                <Text style={styles.commentActionText}>Hide Replies</Text>
+
+              <TouchableOpacity onPress={() => handleReplyToggle(idx)}>
+                <Text style={styles.commentActionText}>Reply</Text>
               </TouchableOpacity>
             </View>
+
+            {/* Reply Input Box */}
+            {replyingTo === idx && (
+              <View style={styles.replyBox}>
+                <TextInput
+                  style={styles.replyInput}
+                  placeholder="Write a reply..."
+                  placeholderTextColor="#bbb"
+                  value={replyText}
+                  onChangeText={setReplyText}
+                  multiline
+                />
+                {replyText.trim().length > 0 && (
+                  <TouchableOpacity
+                    onPress={() => handleSendReply(idx)}
+                    style={styles.replyPostButton}
+                  >
+                    <Text style={styles.replyPostButtonText}>Post</Text>
+                  </TouchableOpacity>
+                )}
+              </View>
+            )}
+
+            {/* Replies under this comment */}
+            {replies[idx]?.map((reply, rIdx) => (
+              <View key={rIdx} style={styles.replyRow}>
+                <Pfp email={post.profile.email} name={post.profile.username} />
+                <View style={styles.replyBubble}>
+                  <Text style={styles.replyText}>{reply}</Text>
+                </View>
+              </View>
+            ))}
           </View>
         </View>
       ))}
+
+      {/* Leave your thoughts Input at Bottom */}
+      {showComments && (
+        <View style={styles.commentBox}>
+          <TextInput
+            style={styles.commentInput}
+            value={commentText}
+            onChangeText={setCommentText}
+            placeholder="Leave your thoughts here ..."
+            placeholderTextColor="#bbb"
+            multiline
+            underlineColorAndroid="transparent"
+            autoCorrect={false}
+            autoCapitalize="none"
+          />
+          {commentText.trim().length > 0 && (
+            <TouchableOpacity onPress={handlePostComment} style={styles.postButton}>
+              <Text style={styles.postButtonText}>Post</Text>
+            </TouchableOpacity>
+          )}
+        </View>
+      )}
+
+      {/* Hide All at Bottom */}
+      {comments.length > 0 && showComments && (
+        <View style={styles.hideAllContainer}>
+          <TouchableOpacity onPress={() => setShowComments(false)}>
+            <Text style={styles.viewHideText}>Hide all</Text>
+          </TouchableOpacity>
+        </View>
+      )}
     </View>
   );
 };
@@ -210,12 +299,18 @@ const styles = StyleSheet.create({
     color: '#333',
     lineHeight: 22,
   },
+  imageContainer: {
+    marginTop: 10,
+    borderWidth: 1,
+    borderColor: '#fff', 
+    borderRadius: 10,
+    overflow: 'hidden',
+    padding: 4, // gap between border and image
+  },
   postImage: {
     width: '100%',
-    height: 200,
-    borderRadius: 10,
-    marginTop: 10,
-    overflow: 'hidden',
+    height: 220,
+    borderRadius: 8,
   },
   actionsContainer: {
     flexDirection: 'row',
@@ -238,7 +333,7 @@ const styles = StyleSheet.create({
   },
   viewHideText: {
     fontSize: 13,
-    color: '#999',
+    color: '#666',
     fontWeight: '600',
   },
   commentBox: {
@@ -321,6 +416,77 @@ const styles = StyleSheet.create({
     color: '#999',
     fontWeight: '600',
   },
+  hideAllContainer: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    marginTop: 8,
+  },
+  replyBox: {
+    backgroundColor: '#F0F9FF',
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    marginTop: 8,
+  },
+  replyInput: {
+    fontSize: 13,
+    color: '#333',
+  },
+  replyInputBox: {
+    backgroundColor: '#f0f9ff',
+    borderRadius: 15,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    marginTop: 8,
+    marginLeft: 45, 
+    minHeight: 40,
+    position: 'relative',
+  },
+  replyButton: {
+    backgroundColor: '#1357DA',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 20,
+    marginTop: 6,
+    alignSelf: 'flex-end',
+  },
+  replyButtonText: {
+    color: '#fff',
+    fontSize: 12,
+    fontWeight: 'bold',
+  },
+  replyRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    marginTop: 8,
+    marginLeft: 40, // indent reply under comment
+    gap: 8,
+  },
+  replyBubble: {
+    backgroundColor: '#F0F9FF',
+    borderRadius: 12,
+    padding: 8,
+    flex: 1,
+  },
+  replyPostButton: {
+    position: 'absolute',
+    right: 10,
+    bottom: 8,
+    backgroundColor: '#1357DA',
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 20,
+  },
+  replyPostButtonText: {
+    color: '#fff',
+    fontSize: 11,
+    fontWeight: 'bold',
+  },
+  replyText: {
+    fontSize: 13,
+    color: '#333',
+  },
 });
+
 
 export default PostCard;
