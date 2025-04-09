@@ -1,8 +1,6 @@
-import { useState } from 'react';
 import { 
   StyleSheet, 
   View, 
-  TextInput, 
   Text, 
   TouchableOpacity, 
   SafeAreaView,
@@ -10,29 +8,13 @@ import {
   Platform
 } from 'react-native';
 import { useRouter } from 'expo-router';
-import Constants from 'expo-constants';
 
-export default function ForgotPasswordScreen() {
+export default function ResetDoneScreen() {
   const router = useRouter();
-  const [email, setEmail] = useState('');
-  const [errorMessage, setErrorMessage] = useState('');
 
-  const handleSend = () => {
-
-    if (!email.trim()) {
-      setErrorMessage('Please enter your email address');
-      return;
-    }
-    
-    router.replace('../(auth)/reset-password');
-  };
-
-  const handleSignIn = () => {
-    router.replace('../(auth)/signin');
-  };
-
-  const handleBack = () => {
-    router.replace('../(auth)/signin');
+  const handleLogin = () => {
+    // TODO: Replace with actual login screen   
+    router.replace('../(auth)/reset-fail');
   };
 
   return (
@@ -53,52 +35,18 @@ export default function ForgotPasswordScreen() {
         </View>
 
         <View style={styles.card}>
-          <Text style={styles.title}>Forgot Password?</Text>
-          
+          <Text style={styles.title}>Successful Reset</Text>
           <Text style={styles.description}>
-            Please enter your registered email so that we can send you password reset link.
+            You can now use your new password to log in into your account.
           </Text>
-          
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Email :</Text>
-            <TextInput
-              style={styles.input} 
-              placeholder="your@email.com"
-              placeholderTextColor="#999"
-              keyboardType="email-address"
-              autoCapitalize="none"
-              value={email}
-              onChangeText={setEmail}
-            />
-            
-            {errorMessage ? (
-              <Text style={styles.errorText}>
-                Email does not exist. Try again.
-              </Text>
-            ) : null}
-          </View>
-          
           <TouchableOpacity 
-            style={styles.sendButton} 
-            onPress={handleSend}
+            style={styles.loginButton} 
+            onPress={handleLogin}
             activeOpacity={0.8}
           >
-            <Text style={styles.sendButtonText}>Send</Text>
+            <Text style={styles.loginButtonText}>Login</Text>
           </TouchableOpacity>
-          
-          <View style={styles.footerContainer}>
-            <Text style={styles.footerText}>
-              Remember Password? <Text style={styles.signInLink} onPress={handleSignIn}>Sign in</Text>
-            </Text>
-          </View>
         </View>
-        
-        <TouchableOpacity 
-          style={styles.backButton} 
-          onPress={handleBack}
-        >
-          <Text style={styles.backButtonText}>← Back</Text>
-        </TouchableOpacity>
       </KeyboardAvoidingView>
     </SafeAreaView>
   );
@@ -196,28 +144,7 @@ const styles = StyleSheet.create({
     lineHeight: 22,
     paddingHorizontal: 15,
   },
-  inputGroup: {
-    width: '100%',
-    marginBottom: 20,
-  },
-  label: {
-    fontSize: 14,
-    marginBottom: 5,
-  },
-  input: {
-    backgroundColor: '#fff',
-    width: '100%',
-    height: 50,
-    borderRadius: 8,
-    paddingHorizontal: 15,
-    fontSize: 16,
-  },
-  errorText: {
-    color: 'red',
-    marginTop: 8,
-    fontSize: 14,
-  },
-  sendButton: {
+  loginButton: {
     backgroundColor: '#3268c7',
     borderRadius: 8,
     padding: 15,
@@ -225,32 +152,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginTop: 10,
   },
-  sendButtonText: {
+  loginButtonText: {
     color: '#fff',
     fontSize: 16,
     fontWeight: 'bold',
-  },
-  footerContainer: {
-    marginTop: 20,
-    flexDirection: 'row',
-    justifyContent: 'center',
-  },
-  footerText: {
-    fontSize: 14,
-    color: '#555',
-  },
-  signInLink: {
-    color: '#3268c7',
-    fontWeight: 'bold',
-  },
-  backButton: {
-    position: 'absolute',
-    bottom: 30,
-    right: 20,
-    zIndex: 1,
-  },
-  backButtonText: {
-    fontSize: 16,
-    color: '#555',
   },
 }); 
