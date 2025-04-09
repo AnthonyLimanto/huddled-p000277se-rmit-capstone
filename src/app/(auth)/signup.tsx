@@ -25,7 +25,7 @@ export default function SignUp() {
   const [degree, setDegree] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [pfpFile, setPfpFile] = useState<File | null>(null);
+  const [pfpFile, setPfpFile] = useState<{ uri: string; name: string; type: string; } | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const [errors, setErrors] = useState({
@@ -78,7 +78,7 @@ export default function SignUp() {
         uri: file.uri,
         name: `profile-picture.${fileType}`,
         type: `image/${fileType}`,
-      } as unknown as File;
+      };
 
       setPfpFile(fetchedFile);
     }
@@ -146,6 +146,7 @@ export default function SignUp() {
             <View style={styles.inputGroup}>
               <Text style={styles.label}>Username :</Text>
               <TextInput
+                testID="username-input"
                 style={styles.input}
                 value={username}
                 onChangeText={text => setUsername(text)}
@@ -158,6 +159,7 @@ export default function SignUp() {
             <View style={styles.inputGroup}>
               <Text style={styles.label}>Email :</Text>
               <TextInput
+                testID="email-input"
                 style={styles.input}
                 keyboardType="email-address"
                 autoCapitalize="none"
@@ -172,6 +174,7 @@ export default function SignUp() {
             <View style={styles.inputGroup}>
               <Text style={styles.label}>Password :</Text>
               <TextInput
+                testID="password-input"
                 style={styles.input}
                 secureTextEntry
                 value={password}
@@ -185,6 +188,7 @@ export default function SignUp() {
             <View style={styles.inputGroup}>
               <Text style={styles.label}>Confirm Password :</Text>
               <TextInput
+                testID="confirm-password-input"
                 style={styles.input}
                 secureTextEntry
                 value={confirmPassword}
@@ -198,6 +202,7 @@ export default function SignUp() {
             <View style={styles.inputGroup}>
               <Text style={styles.label}>Course :</Text>
               <TextInput
+                testID="degree-input"
                 style={styles.input}
                 value={degree}
                 onChangeText={text => setDegree(capitalizeFirst(text))}
@@ -209,13 +214,18 @@ export default function SignUp() {
             {/* Upload Profile Picture */}
             <View style={styles.inputGroup}>
               <Text style={styles.label}>Upload Profile Picture :</Text>
-              <TouchableOpacity style={styles.uploadButton} onPress={handlePickImage}>
+              <TouchableOpacity 
+                testID="upload-button"
+                style={styles.uploadButton} 
+                onPress={handlePickImage}
+              >
                 <Text style={styles.uploadButtonText}>Choose File</Text>
               </TouchableOpacity>
 
               {/* Show thumbnail preview */}
               {pfpFile && (
                 <Image
+                  testID="pfp-preview"
                   source={{ uri: pfpFile.uri }}
                   style={{ width: 100, height: 100, borderRadius: 10, marginTop: 10 }}
                 />
@@ -224,6 +234,7 @@ export default function SignUp() {
 
             {/* Sign Up Button */}
             <TouchableOpacity
+              testID="signup-button"
               style={[styles.signupButton, isSubmitting && { backgroundColor: '#ccc' }]}
               onPress={handleSignUp}
               disabled={isSubmitting}
@@ -234,7 +245,7 @@ export default function SignUp() {
             {/* Login Redirect */}
             <View style={styles.loginContainer}>
               <Text style={styles.haveAccountText}>Already have an Account? </Text>
-              <TouchableOpacity onPress={handleBack}>
+              <TouchableOpacity testID="login-link" onPress={handleBack}>
                 <Text style={styles.loginLink}>Login</Text>
               </TouchableOpacity>
             </View>
