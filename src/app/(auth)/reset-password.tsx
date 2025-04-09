@@ -7,7 +7,8 @@ import {
   TouchableOpacity, 
   SafeAreaView,
   KeyboardAvoidingView,
-  Platform
+  Platform,
+  Image
 } from 'react-native';
 import { useRouter } from 'expo-router';
 
@@ -33,14 +34,7 @@ export default function ResetPasswordScreen() {
         style={styles.keyboardView}
       >
         <View style={styles.logoContainer}>
-          <View style={styles.logoGraphic}>
-            <View style={styles.dot1} />
-            <View style={styles.dot2} />
-            <View style={styles.dot3} />
-            <View style={styles.dot4} />
-            <View style={styles.dot5} />
-          </View>
-          <Text style={styles.logoText}>Huddled</Text>
+          <Image source={require('../../../assets/images/icon-only.png')} style={styles.logoImage} />
         </View>
 
         <View style={styles.card}>
@@ -102,61 +96,10 @@ const styles = StyleSheet.create({
     marginTop: 60,
     marginBottom: 30,
   },
-  logoGraphic: {
-    position: 'relative',
-    width: 70,
-    height: 70,
-    marginBottom: 10,
-  },
-  dot1: {
-    position: 'absolute',
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-    backgroundColor: '#80C1E0',
-    left: 10,
-    top: 25,
-  },
-  dot2: {
-    position: 'absolute',
-    width: 15,
-    height: 15,
-    borderRadius: 7.5,
-    backgroundColor: '#80C1E0',
-    left: 35,
-    top: 15,
-  },
-  dot3: {
-    position: 'absolute',
-    width: 12,
-    height: 12,
-    borderRadius: 6,
-    backgroundColor: '#80C1E0',
-    right: 12,
-    top: 10,
-  },
-  dot4: {
-    position: 'absolute',
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-    backgroundColor: '#80C1E0',
-    right: 5,
-    top: 25,
-  },
-  dot5: {
-    position: 'absolute',
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: '#80C1E0',
-    right: 18,
-    top: 40,
-  },
-  logoText: {
-    fontSize: 32,
-    fontWeight: 'bold',
-    color: '#80C1E0',
+  logoImage: {
+    width: 100,
+    height: 100,
+    marginBottom: 20,
   },
   card: {
     flex: 1,
