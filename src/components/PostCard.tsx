@@ -1,7 +1,8 @@
-import { View, Text, StyleSheet } from 'react-native';
-import React from "react";
+import { View, Text, StyleSheet, Image } from 'react-native';
+import React, { useEffect, useState } from "react";
 import { Pfp } from "./Pfp"; 
 import { Post } from "../model/post";
+import { downloadPostImage } from '../helper/bucketHelper';
 
 type PostCardProps = {
   post: Post;
@@ -10,7 +11,7 @@ type PostCardProps = {
 
 // Calculate "how long ago" the post was made
 const howLongAgo = (postTime: Date) => {
-  const timeInMins = Math.abs(Math.round((Date.now() - postTime.getTime()) / (1000 * 60))) - 660; // Minus 11 hours (timezone diff)
+  const timeInMins = Math.abs(Math.round((Date.now() - postTime.getTime()) / (1000 * 60))) - 600; // Minus 11 hours (timezone diff)
 
   if (timeInMins < 60) {
     return `${timeInMins} minute${timeInMins === 1 ? "" : "s"}`;
@@ -26,6 +27,27 @@ const howLongAgo = (postTime: Date) => {
 };
 
 const PostCard = ({ post }: PostCardProps) => {
+  const [postImageUrl, setPostImageUrl] = useState<string | null>(null);
+  useEffect(() => {
+      const fetchPostImage = async () => {
+        try {
+          const url = await downloadPostImage(post.id); 
+          setPostImageUrl(url);
+          console.log("Post Image URL:", url);
+        } catch (error) {
+          console.error("Error downloading Post Image:", error);
+        }
+      };
+  
+      fetchPostImage();
+  
+      // Cleanup the temporary URL when the component unmounts
+      return () => {
+        if (postImageUrl) {
+          URL.revokeObjectURL(postImageUrl);
+        }
+      };
+    }, [post.id]);
 
 const postDate = new Date(post.created_at);
 
@@ -55,6 +77,15 @@ const postDate = new Date(post.created_at);
         <Text>From User ID: {post.profile?.username || 'Unknown'}</Text>
         <Text>Post ID: {post.id}</Text>
         <Text>Message: {post.content}</Text>
+        {postImageUrl && (
+          <View>
+            <Text>Post Image:</Text>
+            <Image
+              source={{ uri: postImageUrl }}
+              style={{ width: 100, height: 100, borderRadius: 10 }}
+            />
+          </View>
+        )}
       </View>
     </View>
   );
