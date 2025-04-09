@@ -6,8 +6,8 @@ export const createPost = async (userId: string, content: string, imageUrl: stri
     .from("posts")
     .insert([
       { user_id: userId, content: content, image_url: imageUrl }
-    ]);
-  
+    ])
+    .select();;
   if (error) throw error;
   return data;
 };
