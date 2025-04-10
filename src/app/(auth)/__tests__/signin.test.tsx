@@ -6,7 +6,7 @@ import { supabase } from '../../../api/supabase';
 import { jest } from '@jest/globals';
 
 
-// 类型定义
+// Type definitions
 type SupabaseSignInResponse = {
     error: { message: string } | null;
     data?: {
@@ -21,9 +21,9 @@ describe('SignIn Component', () => {
     };
   
     beforeEach(() => {
-      // 改为直接重置模拟而不调用mockReturnValue
+      // Reset mocks directly instead of calling mockReturnValue
       jest.clearAllMocks();
-      // 确保useRouter返回我们需要的模拟
+      // Ensure useRouter returns the mock we need
       (useRouter as jest.Mock).mockReturnValue(mockRouter);
       // Reset mock timers before each test
       jest.useFakeTimers();
@@ -33,7 +33,7 @@ describe('SignIn Component', () => {
       jest.useRealTimers();
     });
 
-// 1. 表单验证测试
+// 1. Form Validation Tests
 describe('Form Validation', () => {
     it('should show error when email is empty', async () => {
         const { getByText, getByPlaceholderText } = render(<SignIn />);
@@ -95,7 +95,7 @@ describe('Form Validation', () => {
     });
     });
 
-  // 2. UI 渲染测试
+  // 2. UI Rendering Tests
   describe('UI Rendering', () => {
     it('should render all necessary elements', () => {
       const { getByPlaceholderText, getByText, getByTestId } = render(<SignIn />);
@@ -117,7 +117,7 @@ describe('Form Validation', () => {
     });
   });
 
-  // 3. 用户交互测试
+  // 3. User Interaction Tests
   describe('User Interactions', () => {
     it('should call handleLogin when login button is pressed', async () => {
       // @ts-ignore
@@ -166,7 +166,7 @@ describe('Form Validation', () => {
     });
   });
 
-  // 4. 状态更新测试
+  // 4. State Update Tests
   describe('State Updates', () => {
     it('should update email state when input changes', () => {
       const { getByPlaceholderText } = render(<SignIn />);
@@ -209,7 +209,7 @@ describe('Form Validation', () => {
     });
   });
 
-  // 5. 登录逻辑测试
+  // 5. Login Logic Tests
   describe('Login Logic', () => {
     it('should show success modal and navigate on successful login', async () => {
       // @ts-ignore
@@ -327,7 +327,7 @@ describe('Form Validation', () => {
     });
   });
 
-  // 6. 模态窗口测试
+  // 6. Modal Window Tests
   describe('Modal Window', () => {
     it('should show success modal after successful login', async () => {
       // @ts-ignore

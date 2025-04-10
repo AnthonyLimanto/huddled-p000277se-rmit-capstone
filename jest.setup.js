@@ -11,7 +11,7 @@ jest.mock('expo-font', () => ({
   }
 }));
   
-// 模拟 @expo/vector-icons
+// mock @expo/vector-icons
 jest.mock('@expo/vector-icons', () => ({
   Ionicons: (props) => {
     const React = require('react');
@@ -32,12 +32,12 @@ jest.mock('@expo/vector-icons', () => ({
   }
 }));
   
-// 模拟路由
+// mock @react-navigation/native
 jest.mock('@react-navigation/native', () => ({
   useNavigation: () => ({
     navigate: jest.fn(),
   }),
-  // 添加 useFocusEffect 的模拟
+  // mock useFocusEffect
   useFocusEffect: jest.fn((callback) => callback()),
 }));
 
@@ -45,7 +45,7 @@ jest.mock('react-native', () => {
   const rn = jest.requireActual('react-native');
   rn.Platform.select = jest.fn(obj => obj.default || obj.ios || obj.android || {});
   
-  // 模拟所有主要的 React Native 组件
+  // mock all major react native components
   rn.SafeAreaView = rn.View;
   rn.KeyboardAvoidingView = rn.View;
   rn.ScrollView = rn.View;
@@ -57,7 +57,7 @@ jest.mock('react-native', () => {
   return rn;
 });
 
-// 模拟 expo-router
+// mock expo-router
 jest.mock('expo-router', () => {
   const React = require('react');
   const { View, Text } = require('react-native');
@@ -118,17 +118,17 @@ jest.mock('expo-image-picker', () => ({
   },
 }));
 
-// 模拟 Alert
+// mock Alert
 jest.mock('react-native/Libraries/Alert/Alert', () => ({
   alert: jest.fn(),
 }));
 
-// 模拟 API 调用
+// mock api/users.ts
 jest.mock('./src/api/users.ts', () => ({
   completeSignUp: jest.fn(),
 }));
 
-// 添加对 supabase 的模拟
+// mock api/supabase
 jest.mock('./src/api/supabase', () => ({
   supabase: {
     auth: {
@@ -146,7 +146,7 @@ jest.mock('./src/api/supabase', () => ({
   }
 }));
 
-// 模拟 fetchPosts 和 createPost API
+// mock api/posts.ts
 jest.mock('./src/api/posts', () => ({
   fetchPosts: jest.fn().mockResolvedValue([
     { id: '1', title: 'Post 1', content: 'Content 1', author: { name: 'User 1' } },
@@ -161,7 +161,7 @@ jest.mock('./src/api/posts', () => ({
   })
 }));
 
-// 模拟 PostCard 组件
+// mock src/components/PostCard.tsx
 jest.mock('./src/components/PostCard', () => {
   const React = require('react');
   const { View } = require('react-native');
@@ -174,7 +174,7 @@ jest.mock('./src/components/PostCard', () => {
   };
 });
 
-// 模拟 Header 组件
+// mock src/components/Header.tsx
 jest.mock('./src/components/Header', () => {
   const React = require('react');
   const { View } = require('react-native');

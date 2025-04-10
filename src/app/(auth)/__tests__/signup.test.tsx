@@ -47,7 +47,7 @@ describe('SignUp Component', () => {
     jest.clearAllMocks();
   });
 
-  // 表单验证测试
+  // Form Validation Tests
   describe('Form Validation', () => {
     it('should show error when email is empty', async () => {
       const { getByTestId, getByText } = render(<SignUp />);
@@ -143,7 +143,7 @@ describe('SignUp Component', () => {
       });
     });
 
-    // 确认密码验证测试
+    // Password Confirmation Validation Tests
     it('should show error when passwords do not match', async () => {
       const { getByTestId, getByText } = render(<SignUp />);
       
@@ -174,7 +174,7 @@ describe('SignUp Component', () => {
       });
     });
 
-    // 课程验证测试
+    // Course Validation Tests
     it('should show error when course is empty', async () => {
       const { getByTestId, getByText } = render(<SignUp />);
       
@@ -198,8 +198,8 @@ describe('SignUp Component', () => {
       });
     });
 
-    // 组合验证测试
-    it('should validate all fields together', async () => {
+    // Combined Validation Tests
+    it('should show multiple errors when multiple fields are invalid', async () => {
       const { getByTestId, getByText } = render(<SignUp />);
       
       // Submit without filling any fields
@@ -218,7 +218,7 @@ describe('SignUp Component', () => {
     });
   });
 
-  // UI 组件测试
+  // UI Component Tests
   describe('UI Components', () => {
     it('should render all necessary elements', () => {
       const { getByTestId } = render(<SignUp />);
@@ -290,7 +290,7 @@ describe('SignUp Component', () => {
       expect(queryByTestId('pfp-preview')).toBeNull();
     });
 
-    // 返回按钮功能测试
+    // Back Button Functionality Test
     it('should call back button handler when back button is pressed', () => {
       const { getByTestId } = render(<SignUp />);
       
@@ -300,7 +300,7 @@ describe('SignUp Component', () => {
       expect(mockRouter.replace).toHaveBeenCalledWith('../(auth)/signin');
     });
 
-    // 提交按钮禁用状态测试
+    // Submit Button Disabled State Test
     it('should disable signup button when submitting', async () => {
       // Mock completeSignUp to delay resolution
       (completeSignUp as jest.Mock).mockImplementation(() => {
@@ -336,7 +336,7 @@ describe('SignUp Component', () => {
     });
   });
 
-  // 表单输入测试
+  // Form Input Tests
   describe('Form Input', () => {
     it('should update email state when input changes', () => {
       const { getByTestId } = render(<SignUp />);
@@ -367,7 +367,7 @@ describe('SignUp Component', () => {
       });
     });
 
-    // 表单文本首字母大写测试
+    // First Letter Capitalization Test
     it('should capitalize first letter of degree input', () => {
       const { getByTestId } = render(<SignUp />);
       
@@ -378,7 +378,7 @@ describe('SignUp Component', () => {
     });
   });
 
-  // 业务逻辑测试
+  // Business Logic Tests
   describe('Sign Up Logic', () => {
     it('should handle successful sign up', async () => {
       const mockUser = { id: '1', email: 'test@example.com' };
@@ -434,7 +434,7 @@ describe('SignUp Component', () => {
       });
     });
 
-    // 错误处理边界测试
+    // Error Handling Edge Case Tests
     it('should handle unknown error during sign up', async () => {
       (completeSignUp as jest.Mock).mockRejectedValue(new Error());
 
@@ -457,7 +457,7 @@ describe('SignUp Component', () => {
       });
     });
 
-    // 表单提交验证测试
+    // Form Submission Validation Test
     it('should prevent form submission when validation fails', async () => {
       const { getByTestId } = render(<SignUp />);
       
