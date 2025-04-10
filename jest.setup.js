@@ -21,6 +21,8 @@ jest.mock('@react-navigation/native', () => ({
   useNavigation: () => ({
     navigate: jest.fn(),
   }),
+  // 添加 useFocusEffect 的模拟
+  useFocusEffect: jest.fn((callback) => callback()),
 }));
 
 jest.mock('react-native', () => {
@@ -83,5 +85,36 @@ jest.mock('./src/api/supabase', () => ({
     }
   }
 }));
+
+// 模拟 fetchPosts API
+jest.mock('./src/api/posts', () => ({
+  fetchPosts: jest.fn().mockResolvedValue([
+    { id: '1', title: 'Post 1', content: 'Content 1', author: { name: 'User 1' } },
+    { id: '2', title: 'Post 2', content: 'Content 2', author: { name: 'User 2' } },
+  ]),
+}));
+
+// 模拟 PostCard 组件
+jest.mock('./src/components/PostCard', () => {
+  const React = require('react');
+  const { View } = require('react-native');
+  
+  return function MockPostCard({ post }) {
+    return React.createElement(View, { 
+      testID: `post-${post.id}`,
+      'data-post': JSON.stringify(post)
+    });
+  };
+});
+
+// 模拟 Header 组件
+jest.mock('./src/components/Header', () => {
+  const React = require('react');
+  const { View } = require('react-native');
+  
+  return function MockHeader() {
+    return React.createElement(View, { testID: "mock-header" });
+  };
+});
 
 console.log('✅ jest.setup.js loaded');
