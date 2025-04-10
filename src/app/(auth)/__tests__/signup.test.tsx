@@ -3,7 +3,7 @@ import { render, fireEvent, waitFor, act } from '@testing-library/react-native';
 import SignUp from '../signup';
 import { useRouter } from 'expo-router';
 import { completeSignUp } from '../../../api/users';
-import { Alert } from 'react-native';
+import { Alert, Platform } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 
 // Mock expo-router
@@ -22,6 +22,11 @@ jest.mock('expo-image-picker', () => ({
   MediaTypeOptions: {
     Images: 'Images',
   },
+}));
+
+// Mock Platform
+jest.mock('react-native/Libraries/Utilities/Platform', () => ({
+  OS: 'ios',
 }));
 
 // Mock users API
@@ -137,6 +142,80 @@ describe('SignUp Component', () => {
         expect(queryByText('Minimum 3 characters')).toBeNull();
       });
     });
+
+    // 确认密码验证测试
+    it('should show error when passwords do not match', async () => {
+      const { getByTestId, getByText } = render(<SignUp />);
+      
+      const passwordInput = getByTestId('password-input');
+      const confirmPasswordInput = getByTestId('confirm-password-input');
+      
+      fireEvent.changeText(passwordInput, 'password123');
+      fireEvent.changeText(confirmPasswordInput, 'differentpassword');
+      fireEvent(confirmPasswordInput, 'blur');
+      
+      await waitFor(() => {
+        expect(getByText('Passwords do not match')).toBeTruthy();
+      });
+    });
+
+    it('should clear error when passwords match', async () => {
+      const { getByTestId, queryByText } = render(<SignUp />);
+      
+      const passwordInput = getByTestId('password-input');
+      const confirmPasswordInput = getByTestId('confirm-password-input');
+      
+      fireEvent.changeText(passwordInput, 'password123');
+      fireEvent.changeText(confirmPasswordInput, 'password123');
+      fireEvent(confirmPasswordInput, 'blur');
+      
+      await waitFor(() => {
+        expect(queryByText('Passwords do not match')).toBeNull();
+      });
+    });
+
+    // 课程验证测试
+    it('should show error when course is empty', async () => {
+      const { getByTestId, getByText } = render(<SignUp />);
+      
+      const degreeInput = getByTestId('degree-input');
+      fireEvent(degreeInput, 'blur');
+      
+      await waitFor(() => {
+        expect(getByText('Course is required')).toBeTruthy();
+      });
+    });
+
+    it('should clear error for valid course', async () => {
+      const { getByTestId, queryByText } = render(<SignUp />);
+      
+      const degreeInput = getByTestId('degree-input');
+      fireEvent.changeText(degreeInput, 'Computer Science');
+      fireEvent(degreeInput, 'blur');
+      
+      await waitFor(() => {
+        expect(queryByText('Course is required')).toBeNull();
+      });
+    });
+
+    // 组合验证测试
+    it('should validate all fields together', async () => {
+      const { getByTestId, getByText } = render(<SignUp />);
+      
+      // Submit without filling any fields
+      const signupButton = getByTestId('signup-button');
+      
+      await act(async () => {
+        fireEvent.press(signupButton);
+      });
+      
+      await waitFor(() => {
+        expect(getByText('Minimum 3 characters')).toBeTruthy();
+        expect(getByText('Email is required')).toBeTruthy();
+        expect(getByText('Minimum 6 characters')).toBeTruthy();
+        expect(getByText('Course is required')).toBeTruthy();
+      });
+    });
   });
 
   // UI 组件测试
@@ -210,6 +289,51 @@ describe('SignUp Component', () => {
       
       expect(queryByTestId('pfp-preview')).toBeNull();
     });
+
+    // 返回按钮功能测试
+    it('should call back button handler when back button is pressed', () => {
+      const { getByTestId } = render(<SignUp />);
+      
+      const backButton = getByTestId('back-button');
+      fireEvent.press(backButton);
+      
+      expect(mockRouter.replace).toHaveBeenCalledWith('../(auth)/signin');
+    });
+
+    // 提交按钮禁用状态测试
+    it('should disable signup button when submitting', async () => {
+      // Mock completeSignUp to delay resolution
+      (completeSignUp as jest.Mock).mockImplementation(() => {
+        return new Promise(resolve => {
+          setTimeout(() => {
+            resolve({ id: '1', email: 'test@example.com' });
+          }, 100);
+        });
+      });
+
+      const { getByTestId } = render(<SignUp />);
+      
+      // Fill all required fields
+      fireEvent.changeText(getByTestId('username-input'), 'testuser');
+      fireEvent.changeText(getByTestId('email-input'), 'test@example.com');
+      fireEvent.changeText(getByTestId('password-input'), 'password123');
+      fireEvent.changeText(getByTestId('confirm-password-input'), 'password123');
+      fireEvent.changeText(getByTestId('degree-input'), 'Computer Science');
+      
+      const signupButton = getByTestId('signup-button');
+      
+      await act(async () => {
+        fireEvent.press(signupButton);
+      });
+      
+      // Button should be disabled during submission
+      expect(signupButton.props.accessibilityState.disabled).toBe(true);
+      
+      // Wait for submission to complete
+      await waitFor(() => {
+        expect(signupButton.props.accessibilityState.disabled).toBe(false);
+      });
+    });
   });
 
   // 表单输入测试
@@ -241,6 +365,16 @@ describe('SignUp Component', () => {
       await waitFor(() => {
         expect(getByText('Email is required')).toBeTruthy();
       });
+    });
+
+    // 表单文本首字母大写测试
+    it('should capitalize first letter of degree input', () => {
+      const { getByTestId } = render(<SignUp />);
+      
+      const degreeInput = getByTestId('degree-input');
+      fireEvent.changeText(degreeInput, 'computer science');
+      
+      expect(degreeInput.props.value).toBe('Computer science');
     });
   });
 
@@ -298,6 +432,42 @@ describe('SignUp Component', () => {
       await waitFor(() => {
         expect(Alert.alert).toHaveBeenCalledWith('Signup Failed', errorMessage);
       });
+    });
+
+    // 错误处理边界测试
+    it('should handle unknown error during sign up', async () => {
+      (completeSignUp as jest.Mock).mockRejectedValue(new Error());
+
+      const { getByTestId } = render(<SignUp />);
+      
+      // Fill in form
+      fireEvent.changeText(getByTestId('username-input'), 'testuser');
+      fireEvent.changeText(getByTestId('email-input'), 'test@example.com');
+      fireEvent.changeText(getByTestId('password-input'), 'password123');
+      fireEvent.changeText(getByTestId('confirm-password-input'), 'password123');
+      fireEvent.changeText(getByTestId('degree-input'), 'Computer Science');
+
+      // Submit form
+      await act(async () => {
+        fireEvent.press(getByTestId('signup-button'));
+      });
+
+      await waitFor(() => {
+        expect(Alert.alert).toHaveBeenCalledWith('Signup Failed', 'Unknown error');
+      });
+    });
+
+    // 表单提交验证测试
+    it('should prevent form submission when validation fails', async () => {
+      const { getByTestId } = render(<SignUp />);
+      
+      // Submit form without filling any fields
+      await act(async () => {
+        fireEvent.press(getByTestId('signup-button'));
+      });
+      
+      // Ensure API was not called
+      expect(completeSignUp).not.toHaveBeenCalled();
     });
   });
 }); 

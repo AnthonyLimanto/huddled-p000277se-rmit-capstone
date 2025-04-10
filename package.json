@@ -19,7 +19,8 @@
     },
     "testPathIgnorePatterns": [
       "<rootDir>/node_modules/",
-      "<rootDir>/app-example/components/__tests__/ThemedText-test.tsx"
+      "<rootDir>/app-example/components/__tests__/ThemedText-test.tsx",
+      "node_modules/(?!(jest-)?react-native|@react-native|react-clone-referenced-element|@react-native-community|react-navigation|@react-navigation|@expo|expo-router|expo-image-picker)"
     ]
   },
   "dependencies": {
