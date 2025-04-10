@@ -3,8 +3,8 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, TextInput, TouchableOpacity, SafeAreaView, StatusBar, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { createPost } from '@/src/api/posts';
-import { supabase } from '@/src/api/supabase'; // 👈 import Supabase client
+import { createPost } from '../../api/posts';
+import { supabase } from '../../api/supabase'; // 👈 import Supabase client
 
 export default function CreatePostScreen() {
   const [text, setText] = useState("");

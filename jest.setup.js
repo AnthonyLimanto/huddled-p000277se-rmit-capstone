@@ -82,16 +82,32 @@ jest.mock('./src/api/supabase', () => ({
   supabase: {
     auth: {
       signInWithPassword: jest.fn().mockResolvedValue({ error: null }),
+      getUser: jest.fn().mockResolvedValue({ 
+        data: { 
+          user: { 
+            id: 'test-user-id', 
+            email: 'test@example.com' 
+          } 
+        }, 
+        error: null 
+      })
     }
   }
 }));
 
-// 模拟 fetchPosts API
+// 模拟 fetchPosts 和 createPost API
 jest.mock('./src/api/posts', () => ({
   fetchPosts: jest.fn().mockResolvedValue([
     { id: '1', title: 'Post 1', content: 'Content 1', author: { name: 'User 1' } },
     { id: '2', title: 'Post 2', content: 'Content 2', author: { name: 'User 2' } },
   ]),
+  createPost: jest.fn().mockResolvedValue({
+    id: 'new-post-id',
+    content: 'Test post content',
+    authorId: 'test-user-id',
+    type: 'default',
+    createdAt: new Date().toISOString()
+  })
 }));
 
 // 模拟 PostCard 组件
