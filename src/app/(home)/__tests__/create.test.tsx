@@ -12,42 +12,42 @@ jest.spyOn(Alert, 'alert');
 const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
 
 describe('CreatePostScreen Component', () => {
-  // 在每个测试前重置所有的模拟
+  // Reset all mocks before each test
   beforeEach(() => {
     jest.clearAllMocks();
   });
 
-  // 测试结束后恢复console.error
+  // Restore console.error after tests
   afterAll(() => {
     consoleErrorSpy.mockRestore();
   });
 
-  // 组件渲染测试
+  // Component rendering tests
   describe('Component Rendering', () => {
     it('should render all major UI elements correctly', () => {
       const { getByText, getByPlaceholderText } = render(<CreatePostScreen />);
       
-      // 验证标题
+      // Verify title
       expect(getByText('Create Post')).toBeTruthy();
       
-      // 验证输入框
+      // Verify input field
       expect(getByPlaceholderText("What's on your mind?")).toBeTruthy();
       
-      // 验证媒体选项
+      // Verify media options
       expect(getByText('Photo')).toBeTruthy();
       expect(getByText('Video')).toBeTruthy();
       expect(getByText('File')).toBeTruthy();
       
-      // 验证隐私选项
+      // Verify privacy options
       expect(getByText('Who can see this?')).toBeTruthy();
       expect(getByText('Everyone')).toBeTruthy();
       
-      // 验证发布按钮
+      // Verify post button
       expect(getByText('Post')).toBeTruthy();
     });
   });
 
-  // 状态管理测试
+  // State management tests
   describe('State Management', () => {
     it('should initialize with empty text', () => {
       const { getByPlaceholderText } = render(<CreatePostScreen />);
@@ -66,22 +66,22 @@ describe('CreatePostScreen Component', () => {
     });
   });
 
-  // 用户会话测试
+  // User session tests
   describe('User Session', () => {
     it('should get user session correctly when logged in', async () => {
       const { getByText } = render(<CreatePostScreen />);
       
-      // 触发获取用户会话的操作
+      // Trigger the operation to get user session
       fireEvent.press(getByText('Post'));
       
-      // 验证supabase.auth.getUser被调用
+      // Verify supabase.auth.getUser was called
       await waitFor(() => {
         expect(supabase.auth.getUser).toHaveBeenCalled();
       });
     });
 
     it('should handle error when user is not logged in', async () => {
-      // 模拟用户未登录情况
+      // Mock scenario where user is not logged in
       (supabase.auth.getUser as jest.Mock).mockResolvedValueOnce({
         data: { user: null },
         error: { message: 'Not authenticated' }
@@ -89,10 +89,10 @@ describe('CreatePostScreen Component', () => {
       
       const { getByText } = render(<CreatePostScreen />);
       
-      // 触发发布操作
+      // Trigger the post operation
       fireEvent.press(getByText('Post'));
       
-      // 验证错误处理
+      // Verify error handling
       await waitFor(() => {
         expect(Alert.alert).toHaveBeenCalledWith(
           'Error',
@@ -102,10 +102,10 @@ describe('CreatePostScreen Component', () => {
     });
   });
 
-  // 发布功能测试
+  // Post creation tests
   describe('Post Creation', () => {
     it('should handle successful post creation', async () => {
-      // 模拟用户已登录和成功创建帖子
+      // Mock logged-in user and successful post creation
       (supabase.auth.getUser as jest.Mock).mockResolvedValueOnce({
         data: { user: { id: 'test-user-id' } },
         error: null
@@ -113,14 +113,14 @@ describe('CreatePostScreen Component', () => {
       
       const { getByText, getByPlaceholderText } = render(<CreatePostScreen />);
       
-      // 输入帖子内容
+      // Enter post content
       const textInput = getByPlaceholderText("What's on your mind?");
       fireEvent.changeText(textInput, 'Test post content');
       
-      // 点击发布
+      // Click publish
       fireEvent.press(getByText('Post'));
       
-      // 验证createPost被正确调用
+      // Verify createPost was called correctly
       await waitFor(() => {
         expect(createPost).toHaveBeenCalledWith(
           'test-user-id',
@@ -129,30 +129,30 @@ describe('CreatePostScreen Component', () => {
         );
       });
       
-      // 验证发布成功消息
+      // Verify success message
       expect(Alert.alert).toHaveBeenCalledWith(
         'Success', 
         'Post created successfully!'
       );
       
-      // 验证输入框被清空
+      // Verify input field was cleared
       expect(textInput.props.value).toBe('');
     });
 
     it('should handle post creation failure', async () => {
-      // 模拟创建帖子失败
+      // Mock post creation failure
       (createPost as jest.Mock).mockRejectedValueOnce(new Error('Failed to create post'));
       
       const { getByText, getByPlaceholderText } = render(<CreatePostScreen />);
       
-      // 输入帖子内容
+      // Enter post content
       const textInput = getByPlaceholderText("What's on your mind?");
       fireEvent.changeText(textInput, 'Test post content');
       
-      // 点击发布
+      // Click publish
       fireEvent.press(getByText('Post'));
       
-      // 验证错误处理
+      // Verify error handling
       await waitFor(() => {
         expect(Alert.alert).toHaveBeenCalledWith(
           'Error',
@@ -160,22 +160,22 @@ describe('CreatePostScreen Component', () => {
         );
       });
       
-      // 验证控制台错误日志
+      // Verify console error log
       await waitFor(() => {
         expect(console.error).toHaveBeenCalled();
       });
     });
   });
 
-  // 用户交互测试
+  // User interaction tests
   describe('User Interactions', () => {
     it('should trigger handleSubmit when post button is clicked', async () => {
       const { getByText } = render(<CreatePostScreen />);
       
-      // 点击发布按钮
+      // Click the post button
       fireEvent.press(getByText('Post'));
       
-      // 验证supabase.auth.getUser被调用（表明handleSubmit被触发）
+      // Verify supabase.auth.getUser was called (indicating handleSubmit was triggered)
       await waitFor(() => {
         expect(supabase.auth.getUser).toHaveBeenCalled();
       });
@@ -184,11 +184,11 @@ describe('CreatePostScreen Component', () => {
     it('should update UI when text is entered', () => {
       const { getByPlaceholderText } = render(<CreatePostScreen />);
       
-      // 获取输入框并输入文本
+      // Get input field and enter text
       const textInput = getByPlaceholderText("What's on your mind?");
       fireEvent.changeText(textInput, 'New post content');
       
-      // 验证UI更新
+      // Verify UI update
       expect(textInput.props.value).toBe('New post content');
     });
   });

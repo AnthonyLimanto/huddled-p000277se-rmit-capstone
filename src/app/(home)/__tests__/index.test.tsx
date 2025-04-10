@@ -5,8 +5,8 @@ import { fetchPosts } from '../../../api/posts';
 import { useFocusEffect } from '@react-navigation/native';
 import { View, Text } from 'react-native';
 
-// 不再需要这些mock，因为已经移到了jest.setup.js
-// mock已整合到全局jest.setup.js中
+// No longer need these mocks, as they have been moved to jest.setup.js
+// Mocks have been integrated into the global jest.setup.js
 
 describe('HomeScreen Component', () => {
   const mockPosts = [
@@ -19,7 +19,7 @@ describe('HomeScreen Component', () => {
     (fetchPosts as jest.Mock).mockResolvedValue(mockPosts);
   });
 
-  // 组件渲染测试
+  // Component rendering tests
   describe('Component Rendering', () => {
     it('should render the basic structure correctly', async () => {
       const { getByTestId } = render(<HomeScreen />);
@@ -50,7 +50,7 @@ describe('HomeScreen Component', () => {
     });
   });
 
-  // 状态管理测试
+  // State management tests
   describe('State Management', () => {
     it('should initialize with correct state', () => {
       // We'll need to expose state for testing
@@ -73,7 +73,7 @@ describe('HomeScreen Component', () => {
     });
   });
 
-  // 数据获取测试
+  // Data fetching tests
   describe('Data Fetching', () => {
     it('should call loadPosts on component mount', async () => {
       render(<HomeScreen />);
@@ -88,10 +88,10 @@ describe('HomeScreen Component', () => {
         // useFocusEffect should have been called
         expect(useFocusEffect).toHaveBeenCalled();
        
-        // 获取回调，需要在清除前获取
+        // Get callback before clearing mocks
         const callback = (useFocusEffect as jest.Mock).mock.calls[0][0];
        
-        // 清除mock后再次测试
+        // Clear mocks and test again
         jest.clearAllMocks();
         
         act(() => {
@@ -120,7 +120,7 @@ describe('HomeScreen Component', () => {
     });
   });
 
-  // 分页加载测试
+  // Pagination tests
   describe('Pagination', () => {
     it('should call handleLoadMore when reaching the end of the list', async () => {
       const { getByTestId } = render(<HomeScreen />);
@@ -183,7 +183,7 @@ describe('HomeScreen Component', () => {
     });
   });
 
-  // FlatList 配置测试
+  // FlatList configuration tests
   describe('FlatList Configuration', () => {
     it('should render posts correctly using renderItem', async () => {
       const { queryAllByTestId } = render(<HomeScreen />);
@@ -212,7 +212,7 @@ describe('HomeScreen Component', () => {
     });
   });
 
-  // 组件交互测试
+  // Component interaction tests
   describe('Component Interactions', () => {
     it('should show loading indicator when loading more posts', async () => {
       // Make fetchPosts delay a bit to show loading indicator

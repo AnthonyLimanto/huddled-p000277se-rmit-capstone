@@ -1,27 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<coverage generated="1744285432044" clover="3.2.0">
-  <project timestamp="1744285432044" name="All files">
-    <metrics statements="18" coveredstatements="18" conditionals="4" coveredconditionals="4" methods="4" coveredmethods="4" elements="26" coveredelements="26" complexity="0" loc="18" ncloc="18" packages="1" files="1" classes="1"/>
-    <file name="create.tsx" path="C:\Users\Goddy\Desktop\huddled-p000277se-rmit-capstone\src\app\(home)\create.tsx">
-      <metrics statements="18" coveredstatements="18" conditionals="4" coveredconditionals="4" methods="4" coveredmethods="4"/>
-      <line num="10" count="14" type="stmt"/>
-      <line num="13" count="14" type="stmt"/>
-      <line num="14" count="5" type="stmt"/>
-      <line num="15" count="5" type="cond" truecount="4" falsecount="0"/>
-      <line num="16" count="1" type="stmt"/>
-      <line num="18" count="4" type="stmt"/>
-      <line num="22" count="14" type="stmt"/>
-      <line num="23" count="5" type="stmt"/>
-      <line num="24" count="5" type="stmt"/>
-      <line num="26" count="4" type="stmt"/>
-      <line num="27" count="3" type="stmt"/>
-      <line num="29" count="3" type="stmt"/>
-      <line num="30" count="3" type="stmt"/>
-      <line num="32" count="2" type="stmt"/>
-      <line num="33" count="2" type="stmt"/>
-      <line num="37" count="14" type="stmt"/>
-      <line num="52" count="4" type="stmt"/>
-      <line num="92" count="1" type="stmt"/>
+<coverage generated="1744289385393" clover="3.2.0">
+  <project timestamp="1744289385393" name="All files">
+    <metrics statements="6" coveredstatements="6" conditionals="0" coveredconditionals="0" methods="6" coveredmethods="6" elements="12" coveredelements="12" complexity="0" loc="6" ncloc="6" packages="1" files="1" classes="1"/>
+    <file name="_layout.tsx" path="C:\Users\Goddy\Desktop\huddled-p000277se-rmit-capstone\src\app\(home)\_layout.tsx">
+      <metrics statements="6" coveredstatements="6" conditionals="0" coveredconditionals="0" methods="6" coveredmethods="6"/>
+      <line num="7" count="3" type="stmt"/>
+      <line num="25" count="3" type="stmt"/>
+      <line num="33" count="3" type="stmt"/>
+      <line num="41" count="3" type="stmt"/>
+      <line num="49" count="3" type="stmt"/>
+      <line num="57" count="3" type="stmt"/>
     </file>
   </project>
 </coverage>

@@ -13,7 +13,23 @@ jest.mock('expo-font', () => ({
   
 // 模拟 @expo/vector-icons
 jest.mock('@expo/vector-icons', () => ({
-  Ionicons: 'Ionicons',
+  Ionicons: (props) => {
+    const React = require('react');
+    const { View, Text } = require('react-native');
+    return React.createElement(
+      View, 
+      { 
+        testID: props.testID, 
+        accessibilityLabel: props.name,
+        style: { 
+          width: props.size, 
+          height: props.size, 
+          backgroundColor: props.color 
+        }
+      },
+      props.name
+    );
+  }
 }));
   
 // 模拟路由
@@ -41,12 +57,47 @@ jest.mock('react-native', () => {
   return rn;
 });
 
-// 修改 expo-router 模拟，使用 jest.fn() 创建可配置的模拟函数
-jest.mock('expo-router', () => ({
-  useRouter: jest.fn().mockReturnValue({
+// 模拟 expo-router
+jest.mock('expo-router', () => {
+  const React = require('react');
+  const { View, Text } = require('react-native');
+  
+  const mockUseRouter = jest.fn().mockReturnValue({
     replace: jest.fn(),
-  }),
-}));
+    push: jest.fn(),
+  });
+  
+  // Create a valid Tabs component
+  const MockTabs = ({ children, screenOptions }) => {
+    return React.createElement(View, { testID: 'tabs-container' }, children);
+  };
+  
+  // Add Screen subcomponent
+  MockTabs.Screen = ({ name, options }) => {
+    // Store test properties directly in props instead of a special testProps property
+    return React.createElement(
+      View, 
+      { 
+        testID: `screen-${name}`,
+        // Store test properties directly in props
+        title: options.title,
+        accessibilityLabel: options.tabBarAccessibilityLabel
+      },
+      // Add key to the icon element to eliminate the React warning
+      options.tabBarIcon ? 
+        React.createElement(
+          React.Fragment,
+          { key: `icon-${name}` },
+          options.tabBarIcon({ color: 'black', size: 24 })
+        ) : null
+    );
+  };
+  
+  return {
+    useRouter: mockUseRouter,
+    Tabs: MockTabs
+  };
+});
 
 jest.mock('expo-image-picker', () => ({
   launchImageLibraryAsync: jest.fn().mockResolvedValue({

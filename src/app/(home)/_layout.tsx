@@ -21,35 +21,40 @@ export default function TabLayout() {
         name="index"
         options={{
           title: 'Home',
-          tabBarIcon: ({ color, size }) => <Ionicons name="home" size={size} color={color} />,
+          tabBarAccessibilityLabel: "Home Tab",
+          tabBarIcon: ({ color, size }) => <Ionicons testID="home-icon" name="home" size={size} color={color} />,
         }}
       />
       <Tabs.Screen
         name="search"
         options={{
           title: 'Search',
-          tabBarIcon: ({ color, size }) => <Ionicons name="search" size={size} color={color} />,
+          tabBarAccessibilityLabel: "Search Tab",
+          tabBarIcon: ({ color, size }) => <Ionicons testID="search-icon" name="search" size={size} color={color} />,
         }}
       />
       <Tabs.Screen
         name="create"
         options={{
           title: 'Post',
-          tabBarIcon: ({ color, size }) => <Ionicons name="add-circle" size={size + 4} color={color} />,
+          tabBarAccessibilityLabel: "Create Post Tab",
+          tabBarIcon: ({ color, size }) => <Ionicons testID="create-icon" name="add-circle" size={size + 4} color={color} />,
         }}
       />
       <Tabs.Screen
         name="messages"
         options={{
           title: 'Messages',
-          tabBarIcon: ({ color, size }) => <Ionicons name="chatbubble" size={size} color={color} />,
+          tabBarAccessibilityLabel: "Messages Tab",
+          tabBarIcon: ({ color, size }) => <Ionicons testID="messages-icon" name="chatbubble" size={size} color={color} />,
         }}
       />
       <Tabs.Screen
         name="profile"
         options={{
           title: 'Profile',
-          tabBarIcon: ({ color, size }) => <Ionicons name="person" size={size} color={color} />,
+          tabBarAccessibilityLabel: "Profile Tab",
+          tabBarIcon: ({ color, size }) => <Ionicons testID="profile-icon" name="person" size={size} color={color} />,
         }}
       />
     </Tabs>
