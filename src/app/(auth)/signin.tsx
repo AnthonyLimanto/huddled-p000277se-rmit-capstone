@@ -93,6 +93,7 @@ export default function SignIn() {
               autoCapitalize="none"
               keyboardType="email-address"
               value={email}
+              placeholder="Email"
               onChangeText={(text) => {
                 setEmail(text);
                 setEmailError(validateEmail(text));
@@ -108,6 +109,7 @@ export default function SignIn() {
               style={[styles.input, passwordError ? styles.inputError : null]}
               secureTextEntry
               value={password}
+              placeholder="Password"
               onChangeText={(text) => {
                 setPassword(text);
                 setPasswordError(validatePassword(text));
@@ -117,17 +119,17 @@ export default function SignIn() {
             {passwordError ? <Text style={styles.errorText}>{passwordError}</Text> : null}
           </View>
 
-          <TouchableOpacity style={styles.forgotPassword}>
+          <TouchableOpacity style={styles.forgotPassword} testID="forgot-password">
             <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.loginButton} onPress={handleLogin}>
+          <TouchableOpacity style={styles.loginButton} testID="login-button" onPress={handleLogin}>
             <Text style={styles.loginButtonText}>Login</Text>
           </TouchableOpacity>
 
           <View style={styles.signupContainer}>
             <Text style={styles.noAccountText}>Don't have an Account? </Text>
-            <TouchableOpacity onPress={handleSignUp}>
+            <TouchableOpacity testID="signup-link" onPress={handleSignUp}>
               <Text style={styles.signupLink}>Sign Up Here</Text>
             </TouchableOpacity>
           </View>

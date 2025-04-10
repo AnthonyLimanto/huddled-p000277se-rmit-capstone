@@ -14,13 +14,35 @@ jest.mock('expo-font', () => ({
 // 模拟 @expo/vector-icons
 jest.mock('@expo/vector-icons', () => ({
   Ionicons: 'Ionicons',
-  // 添加你在项目中使用的其他图标库
 }));
   
 // 模拟路由
 jest.mock('@react-navigation/native', () => ({
   useNavigation: () => ({
     navigate: jest.fn(),
+  }),
+}));
+
+jest.mock('react-native', () => {
+  const rn = jest.requireActual('react-native');
+  rn.Platform.select = jest.fn(obj => obj.default || obj.ios || obj.android || {});
+  
+  // 模拟所有主要的 React Native 组件
+  rn.SafeAreaView = rn.View;
+  rn.KeyboardAvoidingView = rn.View;
+  rn.ScrollView = rn.View;
+  rn.TouchableOpacity = rn.View;
+  rn.Image = rn.View;
+  rn.TextInput = rn.View;
+  rn.Modal = rn.View;
+  
+  return rn;
+});
+
+// 修改 expo-router 模拟，使用 jest.fn() 创建可配置的模拟函数
+jest.mock('expo-router', () => ({
+  useRouter: jest.fn().mockReturnValue({
+    replace: jest.fn(),
   }),
 }));
 
@@ -37,33 +59,7 @@ jest.mock('expo-image-picker', () => ({
         fileSize: 12345
       }
     ]
-  })
-}));
-
-jest.mock('react-native', () => {
-  const rn = jest.requireActual('react-native');
-  rn.Platform.select = jest.fn(obj => obj.default || obj.ios || obj.android || {});
-  
-  // 模拟所有主要的 React Native 组件
-  rn.SafeAreaView = rn.View;
-  rn.KeyboardAvoidingView = rn.View;
-  rn.ScrollView = rn.View;
-  rn.TouchableOpacity = rn.View;
-  rn.Image = rn.View;
-  rn.TextInput = rn.View;
-  
-  return rn;
-});
-
-// 模拟 Expo 相关模块
-jest.mock('expo-router', () => ({
-  useRouter: () => ({
-    replace: jest.fn(),
   }),
-}));
-
-jest.mock('expo-image-picker', () => ({
-  launchImageLibraryAsync: jest.fn(),
   MediaTypeOptions: {
     Images: 'images',
   },
@@ -79,9 +75,13 @@ jest.mock('./src/api/users.ts', () => ({
   completeSignUp: jest.fn(),
 }));
 
-// 如果日志显示你使用的第三方图标库也需要模拟
-jest.mock('@expo/vector-icons', () => ({
-  Ionicons: 'Ionicons-Mock',
+// 添加对 supabase 的模拟
+jest.mock('./src/api/supabase', () => ({
+  supabase: {
+    auth: {
+      signInWithPassword: jest.fn().mockResolvedValue({ error: null }),
+    }
+  }
 }));
 
 console.log('✅ jest.setup.js loaded');
