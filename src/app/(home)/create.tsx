@@ -1,12 +1,17 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TextInput, TouchableOpacity, SafeAreaView, StatusBar, Alert } from 'react-native';
+import { View, Text, StyleSheet, TextInput, TouchableOpacity, SafeAreaView, StatusBar, Alert, Image } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { createPost } from '@/src/api/posts';
-import { supabase } from '@/src/api/supabase';
+import { createPost, Post } from '@/src/api/posts';
+import { supabase } from '@/src/api/supabase'; 
+import { getSessionUser } from '@/src/api/users';
+import * as ImagePicker from 'expo-image-picker';
+import { uploadPostImage } from '@/src/helper/bucketHelper'; 
 
 export default function CreatePostScreen() {
   const MAX_CHAR = 300;
   const [text, setText] = useState("");
+  const [postFile, setPostFile] = useState<string | null>(null);
+
 
   const getSessionUser = async () => {
     const { data, error } = await supabase.auth.getUser();
@@ -15,11 +20,29 @@ export default function CreatePostScreen() {
     }
     return data.user.id;
   };
+  
+  // Need to refactor later to consolidate with the pfp image picker
+  const handlePickImage = async () => {
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      base64: true, // Include base64 data
+    });
+  
+    if (!result.canceled && result.assets && result.assets.length > 0) {
+      const base64Data = result.assets[0].base64; // Get base64 data
+  
+      setPostFile(base64Data ?? null);
+      }
+    };
 
   const handleSubmit = async () => {
     try {
       const currentUserId = await getSessionUser();
       const sentPost = await createPost(currentUserId, text, "default");
+      console.log("Post file created:", postFile, sentPost);
+      if (postFile && sentPost) {
+        await uploadPostImage(postFile, sentPost[0].id); // ✅ Upload image to bucket
+      }
       console.log("Sent post:", sentPost);
 
       Alert.alert('Success', 'Post created successfully!');
@@ -56,7 +79,7 @@ export default function CreatePostScreen() {
         </View>
 
         <View style={styles.mediaOptions}>
-          <TouchableOpacity style={styles.mediaButton}>
+          <TouchableOpacity style={styles.mediaButton} onPress={handlePickImage}>
             <Ionicons name="image" size={24} color="#0066CC" />
             <Text style={styles.mediaButtonText}>Photo</Text>
           </TouchableOpacity>
@@ -69,7 +92,13 @@ export default function CreatePostScreen() {
             <Text style={styles.mediaButtonText}>File</Text>
           </TouchableOpacity>
         </View>
-
+        {/* Show thumbnail preview */}
+        {postFile && (
+          <Image
+            source={{ uri: `data:image/png;base64,${postFile}` }}
+            style={{ width: 250, height: 250, marginTop: 10 }}
+          />
+        )}
         <View style={styles.divider} />
         
         <View style={styles.privacySelector}>

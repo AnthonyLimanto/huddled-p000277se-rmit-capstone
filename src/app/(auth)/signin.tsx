@@ -65,6 +65,10 @@ export default function SignIn() {
     router.replace('../(auth)/signup');
   };
 
+  const handleForgotPassword = () => {
+    router.replace('../(auth)/forgot-password');
+  };
+
   return (
     <SafeAreaView style={styles.container}>
       <KeyboardAvoidingView
@@ -117,7 +121,7 @@ export default function SignIn() {
             {passwordError ? <Text style={styles.errorText}>{passwordError}</Text> : null}
           </View>
 
-          <TouchableOpacity style={styles.forgotPassword}>
+          <TouchableOpacity style={styles.forgotPassword} onPress={handleForgotPassword}>
             <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
           </TouchableOpacity>
 
