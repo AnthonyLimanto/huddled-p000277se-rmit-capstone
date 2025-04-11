@@ -10,10 +10,10 @@ import {
   View,
   ActivityIndicator,
 } from 'react-native';
-import { fetchPosts } from "../../api/posts";
-import PostCard from "../../components/PostCard";
-import Header from "../../components/Header";
-import { Post } from '../../model/post';
+import { fetchPosts } from "../../../api/posts";
+import PostCard from "../../../components/PostCard";
+import Header from "../../../components/Header";
+import { Post } from '../../../model/post';
 import { useFocusEffect } from '@react-navigation/native';
 
 const keyExtractor = (post: Post, index: number) =>
