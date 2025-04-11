@@ -3,5 +3,5 @@ export type Profile = {
     username: string,
     degree: string,
     created_at: Date
-
+    email: string,
 }

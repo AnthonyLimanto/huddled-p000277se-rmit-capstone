@@ -6,8 +6,8 @@ export const createPost = async (userId: string, content: string, imageUrl: stri
     .from("posts")
     .insert([
       { user_id: userId, content: content, image_url: imageUrl }
-    ]);
-  
+    ])
+    .select();;
   if (error) throw error;
   return data;
 };
@@ -20,7 +20,7 @@ export const fetchPosts = async () => {
       id,
       content,
       created_at,
-      users ( username, degree, pfp_url, email )  -- 👈 correct relation to users table
+      profile:users(username, degree, pfp_url, email)  
     `)
     .order('created_at', { ascending: false });
 

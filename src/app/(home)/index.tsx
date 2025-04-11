@@ -29,7 +29,7 @@ export default function HomeScreen() {
 
   const loadPosts = async (pageNum = 1, append = false) => {
     try {
-      const fetchedPosts = await fetchPosts(pageNum);
+      const fetchedPosts = await fetchPosts();
       if (fetchedPosts.length === 0) {
         setHasMore(false);
         return;
@@ -111,7 +111,7 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FFF',
+    backgroundColor: '#F0F9FF',
   },
   newPostsButton: {
     width: 150,
