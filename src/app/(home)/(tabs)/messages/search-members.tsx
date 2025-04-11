@@ -6,6 +6,7 @@ import {
   TouchableOpacity,
   SafeAreaView,
   StatusBar,
+  ScrollView,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter, useLocalSearchParams } from 'expo-router';
@@ -52,6 +53,18 @@ export default function SearchMembersScreen() {
       name: "Alex",
       title: "Master of CS",
       email: "s123456@gmail.com"
+    },
+    {
+      id: "user3",
+      name: "Sarah Chen",
+      title: "Master of Data Science",
+      email: "s789012@rmit.edu.au"
+    },
+    {
+      id: "user4",
+      name: "Mike Johnson",
+      title: "PhD in AI",
+      email: "s345678@rmit.edu.au"
     }
   ];
 
@@ -63,29 +76,26 @@ export default function SearchMembersScreen() {
     }
   }, [currentMembers]);
 
-  const searchResult = useMemo(() => {
-    const foundUser = dummyUsers.find(user => user.email === email);
-    if (foundUser) {
-      // 检查用户是否已经在群组中
-      const isExisting = existingMembers.some(
-        (member: { id: string }) => member.id === foundUser.id
+  const searchResults = useMemo(() => {
+    if (email === '999') {
+      // Return all unadded users
+      return dummyUsers.filter(user => 
+        !existingMembers.some((member: { id: string }) => member.id === user.id)
       );
-      setIsAdded(isExisting);
-      return foundUser;
     }
-    return dummyUsers[0];
+    // Return single matching user
+    const foundUser = dummyUsers.find(user => user.email === email);
+    return foundUser ? [foundUser] : [];
   }, [email, existingMembers]);
 
   const handleBack = () => {
     router.back();
   };
 
-  const handleAddMember = () => {
-    setIsAdded(true);
-    
+  const handleAddMember = (user: typeof dummyUsers[0]) => {
     const updatedMembers = [...existingMembers];
-    if (!updatedMembers.some(member => member.id === searchResult.id)) {
-      updatedMembers.push(searchResult);
+    if (!updatedMembers.some(member => member.id === user.id)) {
+      updatedMembers.push(user);
     }
     
     router.replace({
@@ -109,24 +119,31 @@ export default function SearchMembersScreen() {
 
       <View style={styles.searchResult}>
         <Text style={styles.searchEmail}>{email}</Text>
-        <View style={styles.userCard}>
-          <View style={styles.userInfo}>
-            <View style={styles.avatar} />
-            <View style={styles.userDetails}>
-              <Text style={styles.userName}>{searchResult.name}</Text>
-              <Text style={styles.userTitle}>{searchResult.title}</Text>
+        <ScrollView>
+          {searchResults.map(user => (
+            <View key={user.id} style={styles.userCard}>
+              <View style={styles.userInfo}>
+                <View style={styles.avatar} />
+                <View style={styles.userDetails}>
+                  <Text style={styles.userName}>{user.name}</Text>
+                  <Text style={styles.userTitle}>{user.title}</Text>
+                </View>
+              </View>
+              {existingMembers.some((member: { id: string }) => member.id === user.id) ? (
+                <View style={styles.addedButton}>
+                  <Text style={styles.addedButtonText}>Added</Text>
+                </View>
+              ) : (
+                <TouchableOpacity 
+                  style={styles.addButton} 
+                  onPress={() => handleAddMember(user)}
+                >
+                  <Text style={styles.addButtonText}>Add</Text>
+                </TouchableOpacity>
+              )}
             </View>
-          </View>
-          {isAdded ? (
-            <View style={styles.addedButton}>
-              <Text style={styles.addedButtonText}>Added</Text>
-            </View>
-          ) : (
-            <TouchableOpacity style={styles.addButton} onPress={handleAddMember}>
-              <Text style={styles.addButtonText}>Add</Text>
-            </TouchableOpacity>
-          )}
-        </View>
+          ))}
+        </ScrollView>
       </View>
     </SafeAreaView>
   );
@@ -154,6 +171,7 @@ const styles = StyleSheet.create({
     marginLeft: 8,
   },
   searchResult: {
+    flex: 1,
     padding: 16,
   },
   searchEmail: {

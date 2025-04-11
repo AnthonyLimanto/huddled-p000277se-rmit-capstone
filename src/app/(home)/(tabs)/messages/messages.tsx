@@ -58,54 +58,46 @@ export default function MessagesScreen() {
   const params = useLocalSearchParams();
   const categories: Category[] = ['All', 'Chats', 'Groups', 'Unread'];
 
-  // 从本地存储加载群组
-  useEffect(() => {
-    const loadGroups = async () => {
-      try {
-        const storedGroups = await AsyncStorage.getItem(GROUPS_STORAGE_KEY);
-        if (storedGroups) {
-          const parsedGroups = JSON.parse(storedGroups);
-          setGroups(parsedGroups.map((group: any) => ({
-            ...group,
-            created_at: new Date(group.created_at)
-          })));
-        }
-      } catch (error) {
-        console.error('Error loading groups:', error);
+  // Load groups from local storage
+  const loadGroups = useCallback(async () => {
+    try {
+      const storedGroups = await AsyncStorage.getItem(GROUPS_STORAGE_KEY);
+      if (storedGroups) {
+        const parsedGroups = JSON.parse(storedGroups);
+        setGroups(parsedGroups.map((group: any) => ({
+          ...group,
+          created_at: new Date(group.created_at)
+        })));
       }
-    };
-
-    loadGroups();
+    } catch (error) {
+      console.error('Error loading groups:', error);
+    }
   }, []);
 
-  // 处理新创建的群组
+  // Initial load and reload when params change
+  useEffect(() => {
+    loadGroups();
+  }, [loadGroups, params.timestamp]); // Add timestamp dependency to ensure reload
+
+  // Handle newly created groups
   useEffect(() => {
     if (params.newGroup) {
       try {
         const newGroup = JSON.parse(params.newGroup as string) as Group;
-        setGroups(prevGroups => {
-          const updatedGroups = prevGroups.some(group => group.id === newGroup.id)
-            ? prevGroups
-            : [newGroup, ...prevGroups];
-          
-          // 保存到本地存储
-          AsyncStorage.setItem(GROUPS_STORAGE_KEY, JSON.stringify(updatedGroups))
-            .catch(error => console.error('Error saving groups:', error));
-          
-          return updatedGroups;
-        });
+        // Reload all groups directly from local storage
+        loadGroups();
         setSelectedCategory('Groups');
       } catch (error) {
         console.error('Error parsing new group:', error);
       }
     }
-  }, [params.newGroup]);
+  }, [params.newGroup, loadGroups]);
 
-  // 更新示例消息，包含新创建的群组
+  // Update sample messages to include newly created groups
   const getMessages = useCallback(() => {
     const baseMessages = [...SAMPLE_MESSAGES];
     
-    // 将群组添加到消息列表
+    // Add groups to message list
     const groupMessages: Message[] = groups.map(group => ({
       id: `group-${group.id}`,
       sender: {

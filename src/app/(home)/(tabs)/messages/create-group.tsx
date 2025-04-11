@@ -12,6 +12,9 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter, useLocalSearchParams } from 'expo-router';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
+const GROUPS_STORAGE_KEY = '@groups_key';
 
 interface Member {
   id: string;
@@ -63,7 +66,7 @@ export default function CreateGroupScreen() {
   const handleCreateGroup = () => {
     if (members.length >= 2 && groupName.trim()) {
       setIsCreating(true);
-      // 显示遮罩层和成功提示
+      // Show overlay and success message
       Animated.timing(fadeAnim, {
         toValue: 1,
         duration: 200,
@@ -77,22 +80,33 @@ export default function CreateGroupScreen() {
         created_at: new Date(),
       };
 
-      // 1秒后隐藏提示并导航
-      setTimeout(() => {
-        Animated.timing(fadeAnim, {
-          toValue: 0,
-          duration: 200,
-          useNativeDriver: true,
-        }).start(() => {
-          // 使用 replace 而不是 push
-          router.replace({
-            pathname: '/(home)/(tabs)/messages/messages',
-            params: {
-              category: 'Groups',
-              newGroup: JSON.stringify(newGroup)
-            }
+      // Hide message and navigate after 1 second
+      setTimeout(async () => {
+        try {
+          // Save new group to local storage first
+          const storedGroupsStr = await AsyncStorage.getItem(GROUPS_STORAGE_KEY);
+          const storedGroups = storedGroupsStr ? JSON.parse(storedGroupsStr) : [];
+          const updatedGroups = [newGroup, ...storedGroups];
+          await AsyncStorage.setItem(GROUPS_STORAGE_KEY, JSON.stringify(updatedGroups));
+
+          // Then navigate and pass the new group data
+          Animated.timing(fadeAnim, {
+            toValue: 0,
+            duration: 200,
+            useNativeDriver: true,
+          }).start(() => {
+            router.replace({
+              pathname: '/(home)/(tabs)/messages/messages',
+              params: {
+                category: 'Groups',
+                newGroup: JSON.stringify(newGroup),
+                timestamp: Date.now() // Add timestamp to ensure params change
+              }
+            });
           });
-        });
+        } catch (error) {
+          console.error('Error saving group:', error);
+        }
       }, 1000);
     }
   };
@@ -201,7 +215,7 @@ export default function CreateGroupScreen() {
         </TouchableOpacity>
       </View>
 
-      {/* 成功提示遮罩层 */}
+      {/* Success Message Overlay */}
       {isCreating && (
         <Animated.View 
           style={[
