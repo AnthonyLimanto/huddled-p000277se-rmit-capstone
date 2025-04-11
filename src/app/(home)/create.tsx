@@ -8,9 +8,19 @@ import * as ImagePicker from 'expo-image-picker';
 import { uploadPostImage } from '@/src/helper/bucketHelper'; 
 
 export default function CreatePostScreen() {
+  const MAX_CHAR = 300;
   const [text, setText] = useState("");
   const [postFile, setPostFile] = useState<string | null>(null);
 
+
+  const getSessionUser = async () => {
+    const { data, error } = await supabase.auth.getUser();
+    if (error || !data?.user?.id) {
+      throw new Error('No user session found');
+    }
+    return data.user.id;
+  };
+  
   // Need to refactor later to consolidate with the pfp image picker
   const handlePickImage = async () => {
     const result = await ImagePicker.launchImageLibraryAsync({
@@ -25,12 +35,10 @@ export default function CreatePostScreen() {
       }
     };
 
-  // 📨 Handle posting
   const handleSubmit = async () => {
     try {
-      const currentUserId = await getSessionUser(); // ✅ Get real logged-in user's ID
-
-      const sentPost = await createPost(currentUserId, text, "default"); // ✅ Save post with correct user
+      const currentUserId = await getSessionUser();
+      const sentPost = await createPost(currentUserId, text, "default");
       console.log("Post file created:", postFile, sentPost);
       if (postFile && sentPost) {
         await uploadPostImage(postFile, sentPost[0].id); // ✅ Upload image to bucket
@@ -38,7 +46,7 @@ export default function CreatePostScreen() {
       console.log("Sent post:", sentPost);
 
       Alert.alert('Success', 'Post created successfully!');
-      setText(""); // Clear input after posting
+      setText("");
     } catch (error) {
       console.error("Error creating post:", error);
       Alert.alert('Error', 'Failed to create post.');
@@ -60,20 +68,25 @@ export default function CreatePostScreen() {
           multiline
           style={styles.postInput}
           value={text}
-          onChangeText={(text) => setText(text)}
+          onChangeText={(input) => {
+            if (input.length <= MAX_CHAR) setText(input);
+          }}
         />
-        
+        <View style={styles.charCounterContainer}>
+          <Text style={[styles.charCounter, text.length >= MAX_CHAR && { color: 'red' }]}>
+            {text.length} / {MAX_CHAR}
+          </Text>
+        </View>
+
         <View style={styles.mediaOptions}>
           <TouchableOpacity style={styles.mediaButton} onPress={handlePickImage}>
             <Ionicons name="image" size={24} color="#0066CC" />
             <Text style={styles.mediaButtonText}>Photo</Text>
           </TouchableOpacity>
-          
           <TouchableOpacity style={styles.mediaButton}>
             <Ionicons name="videocam" size={24} color="#0066CC" />
             <Text style={styles.mediaButtonText}>Video</Text>
           </TouchableOpacity>
-          
           <TouchableOpacity style={styles.mediaButton}>
             <Ionicons name="document" size={24} color="#0066CC" />
             <Text style={styles.mediaButtonText}>File</Text>
@@ -96,7 +109,7 @@ export default function CreatePostScreen() {
             <Ionicons name="chevron-down" size={20} color="#333" />
           </TouchableOpacity>
         </View>
-        
+
         <TouchableOpacity style={styles.postButton} onPress={handleSubmit}>
           <Text style={styles.postButtonText}>Post</Text>
         </TouchableOpacity>
@@ -105,25 +118,15 @@ export default function CreatePostScreen() {
   );
 }
 
-// 🎨 Styles
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#FFF',
-  },
+  container: { flex: 1, backgroundColor: '#FFF' },
   header: {
     padding: 20,
     borderBottomWidth: 1,
     borderBottomColor: '#F0F0F0',
   },
-  title: {
-    fontSize: 28,
-    fontWeight: 'bold',
-  },
-  createContainer: {
-    flex: 1,
-    padding: 16,
-  },
+  title: { fontSize: 28, fontWeight: 'bold' },
+  createContainer: { flex: 1, padding: 16 },
   postInput: {
     height: 150,
     fontSize: 18,
@@ -131,7 +134,16 @@ const styles = StyleSheet.create({
     padding: 12,
     backgroundColor: '#F8F8F8',
     borderRadius: 12,
-    marginBottom: 16,
+    marginBottom: 8,
+  },
+  charCounterContainer: {
+    alignItems: 'flex-end',
+    marginBottom: 10,
+    paddingRight: 4,
+  },
+  charCounter: {
+    fontSize: 14,
+    color: '#888',
   },
   mediaOptions: {
     flexDirection: 'row',
@@ -185,4 +197,3 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
 });
-
