@@ -1,13 +1,24 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useState, useEffect, useMemo } from 'react';
 import { View, Text, StyleSheet, FlatList, TouchableOpacity, SafeAreaView, StatusBar } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { GroupCard } from '@/src/components/GroupCard';
 import { MessageCard, Message } from '@/src/components/MessageCard';
-import { Group, GroupMember } from '@/src/model/group';
-import { useFocusEffect } from '@react-navigation/native';
-import { fetchGroups } from '@/src/api/group';
-import { getSessionUser } from '@/src/api/users';
-import { useRouter } from 'expo-router';
+import { useRouter, useLocalSearchParams } from 'expo-router';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
+interface GroupMember {
+  id: string;
+  name: string;
+  title: string;
+  email: string;
+}
+
+interface Group {
+  id: string;
+  name: string;
+  created_at: Date;
+  members: GroupMember[];
+}
 
 type Category = 'All' | 'Chats' | 'Groups' | 'Unread';
 
@@ -35,80 +46,102 @@ const SAMPLE_MESSAGES: Message[] = [
     timestamp: '4 mins',
     isRead: false,
     type: 'personal'
-  },
-  {
-    id: '3',
-    sender: {
-      id: 'group1',
-      name: 'Project Team',
-      email: 'project-team@example.com'
-    },
-    content: 'Meeting at 3 PM today',
-    timestamp: '4 mins',
-    isRead: true,
-    type: 'group'
   }
 ];
+
+const GROUPS_STORAGE_KEY = '@groups_key';
 
 export default function MessagesScreen() {
   const [selectedCategory, setSelectedCategory] = useState<Category>('All');
   const [groups, setGroups] = useState<Group[]>([]);
   const router = useRouter();
-
+  const params = useLocalSearchParams();
   const categories: Category[] = ['All', 'Chats', 'Groups', 'Unread'];
 
-  const filteredMessages = SAMPLE_MESSAGES.filter(message => {
+  // 从本地存储加载群组
+  useEffect(() => {
+    const loadGroups = async () => {
+      try {
+        const storedGroups = await AsyncStorage.getItem(GROUPS_STORAGE_KEY);
+        if (storedGroups) {
+          const parsedGroups = JSON.parse(storedGroups);
+          setGroups(parsedGroups.map((group: any) => ({
+            ...group,
+            created_at: new Date(group.created_at)
+          })));
+        }
+      } catch (error) {
+        console.error('Error loading groups:', error);
+      }
+    };
+
+    loadGroups();
+  }, []);
+
+  // 处理新创建的群组
+  useEffect(() => {
+    if (params.newGroup) {
+      try {
+        const newGroup = JSON.parse(params.newGroup as string) as Group;
+        setGroups(prevGroups => {
+          const updatedGroups = prevGroups.some(group => group.id === newGroup.id)
+            ? prevGroups
+            : [newGroup, ...prevGroups];
+          
+          // 保存到本地存储
+          AsyncStorage.setItem(GROUPS_STORAGE_KEY, JSON.stringify(updatedGroups))
+            .catch(error => console.error('Error saving groups:', error));
+          
+          return updatedGroups;
+        });
+        setSelectedCategory('Groups');
+      } catch (error) {
+        console.error('Error parsing new group:', error);
+      }
+    }
+  }, [params.newGroup]);
+
+  // 更新示例消息，包含新创建的群组
+  const getMessages = useCallback(() => {
+    const baseMessages = [...SAMPLE_MESSAGES];
+    
+    // 将群组添加到消息列表
+    const groupMessages: Message[] = groups.map(group => ({
+      id: `group-${group.id}`,
+      sender: {
+        id: group.id,
+        name: group.name,
+        email: 'group@example.com'
+      },
+      content: `${group.members.length} members`,
+      timestamp: '1 min',
+      isRead: true,
+      type: 'group'
+    }));
+
+    return [...groupMessages, ...baseMessages];
+  }, [groups]);
+
+  const filteredMessages = useMemo(() => {
+    const allMessages = getMessages();
     switch (selectedCategory) {
       case 'Chats':
-        return message.type === 'personal';
+        return allMessages.filter(message => message.type === 'personal');
       case 'Groups':
-        return message.type === 'group';
+        return allMessages.filter(message => message.type === 'group');
       case 'Unread':
-        return !message.isRead;
+        return allMessages.filter(message => !message.isRead);
       default:
-        return true;
+        return allMessages;
     }
-  });
-
-  const renderGroupCard = ({ item }: { item: Group }) => <GroupCard group={item} />;
-
-  useFocusEffect(
-    useCallback(() => {
-      const fetchUserAndGroups = async () => {
-        try {
-          const currentUser = await getSessionUser();
-          if (currentUser) {
-            console.log('Current User:', currentUser);
-            const userGroups = await fetchGroups(currentUser);
-            console.log('Fetched Groups:', userGroups);
-            if (userGroups) {
-              const formattedGroups: Group[] = userGroups.flatMap(groupMember => 
-                groupMember.group.map(g => ({
-                  id: g.id,
-                  name: g.name,
-                  created_at: new Date(g.created_at)
-                }))
-              );
-              setGroups(formattedGroups);
-            }
-          } else {
-            console.error('No user session found.');
-          }
-        } catch (error) {
-          console.error('Error fetching user or groups:', error);
-        }
-      };
-
-      fetchUserAndGroups();
-    }, [])
-  );
-
-  const renderMessage = ({ item }: { item: Message }) => {
-    return <MessageCard message={item} />;
-  };
+  }, [selectedCategory, getMessages]);
 
   const handleCreateGroup = () => {
     router.push('./create-group');
+  };
+
+  const renderMessage = ({ item }: { item: Message }) => {
+    return <MessageCard message={item} />;
   };
 
   return (
