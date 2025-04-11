@@ -1,23 +1,54 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TextInput, TouchableOpacity, SafeAreaView, StatusBar } from 'react-native';
+import { View, Text, StyleSheet, TextInput, TouchableOpacity, SafeAreaView, StatusBar, Alert, Image } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { createPost } from '@/src/api/posts';
+import { createPost, Post } from '@/src/api/posts';
+import { supabase } from '@/src/api/supabase'; 
+import { getSessionUser } from '@/src/api/users';
+import * as ImagePicker from 'expo-image-picker';
+import { uploadPostImage } from '@/src/helper/bucketHelper'; 
 
 export default function CreatePostScreen() {
   const [text, setText] = useState("");
+  const [postFile, setPostFile] = useState<string | null>(null);
 
-  const getSessionUser = () => {
-    return "990fa42e-84cb-4deb-b632-ee87cbac092f" // Anthony's sample user ID
-  }
+  // Need to refactor later to consolidate with the pfp image picker
+  const handlePickImage = async () => {
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      base64: true, // Include base64 data
+    });
+  
+    if (!result.canceled && result.assets && result.assets.length > 0) {
+      const base64Data = result.assets[0].base64; // Get base64 data
+  
+      setPostFile(base64Data ?? null);
+      }
+    };
+
+  // 📨 Handle posting
   const handleSubmit = async () => {
-    let currentUser = getSessionUser();
+    try {
+      const currentUserId = await getSessionUser(); // ✅ Get real logged-in user's ID
 
-    let sentPost = await createPost(currentUser, text, "default");
-    console.log("Sent post:" + sentPost);
+      const sentPost = await createPost(currentUserId, text, "default"); // ✅ Save post with correct user
+      console.log("Post file created:", postFile, sentPost);
+      if (postFile && sentPost) {
+        await uploadPostImage(postFile, sentPost[0].id); // ✅ Upload image to bucket
+      }
+      console.log("Sent post:", sentPost);
+
+      Alert.alert('Success', 'Post created successfully!');
+      setText(""); // Clear input after posting
+    } catch (error) {
+      console.error("Error creating post:", error);
+      Alert.alert('Error', 'Failed to create post.');
+    }
   };
+
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" />
+      
       <View style={styles.header}>
         <Text style={styles.title}>Create Post</Text>
       </View>
@@ -33,7 +64,7 @@ export default function CreatePostScreen() {
         />
         
         <View style={styles.mediaOptions}>
-          <TouchableOpacity style={styles.mediaButton}>
+          <TouchableOpacity style={styles.mediaButton} onPress={handlePickImage}>
             <Ionicons name="image" size={24} color="#0066CC" />
             <Text style={styles.mediaButtonText}>Photo</Text>
           </TouchableOpacity>
@@ -48,7 +79,13 @@ export default function CreatePostScreen() {
             <Text style={styles.mediaButtonText}>File</Text>
           </TouchableOpacity>
         </View>
-        
+        {/* Show thumbnail preview */}
+        {postFile && (
+          <Image
+            source={{ uri: `data:image/png;base64,${postFile}` }}
+            style={{ width: 250, height: 250, marginTop: 10 }}
+          />
+        )}
         <View style={styles.divider} />
         
         <View style={styles.privacySelector}>
@@ -68,6 +105,7 @@ export default function CreatePostScreen() {
   );
 }
 
+// 🎨 Styles
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -147,3 +185,4 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
 });
+
