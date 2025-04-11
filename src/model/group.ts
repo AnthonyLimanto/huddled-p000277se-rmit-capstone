@@ -3,3 +3,11 @@ export type Group = {
     name: string;
     created_at: Date;
 }
+
+export type GroupMember = {
+    group: {
+        id: string;
+        name: string;
+        created_at: string;
+    }[];
+}

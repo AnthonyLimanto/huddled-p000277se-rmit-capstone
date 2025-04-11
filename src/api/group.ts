@@ -1,4 +1,5 @@
 import {supabase} from "./supabase"
+import { Group, GroupMember } from "../model/group"
 
 export const createGroup = async (name: string, users: string[]) => {
     try {
@@ -42,7 +43,7 @@ export const addGroupMembers = async (group_id: string, users: string[]) => {
     }
 }
 
-export const fetchGroups = async (user_id: string) => {
+export const fetchGroups = async (user_id: string): Promise<GroupMember[] | null> => {
     const { data: groupData, error } = await supabase
         .from('group_members')
         .select('group:groups(id, name, created_at)')
@@ -51,12 +52,12 @@ export const fetchGroups = async (user_id: string) => {
 
         if (error) {
             console.error("Error fetching groups:", error);
+            return null;
         } else {
             console.log("groups:", groupData);
+            return groupData as GroupMember[];
         }
-
-    return groupData;
-} 
+}
 
 export const fetchGroupMembers = async (group_id: string) => {
     const { data: groupMemberData, error } = await supabase
