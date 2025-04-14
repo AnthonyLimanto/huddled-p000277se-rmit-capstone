@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -10,57 +10,85 @@ import {
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
-import { useLocalSearchParams } from 'expo-router';
-import MessageCard, { Message } from '@/src/components/MessageCard';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import MessageCard, { Message } from '@/src/components/MessageCard';
+import { fetchGroupMessages, sendGroupMessage } from '@/src/api/message';
+import { getSessionUser } from '@/src/api/users';
 
 export default function ChatScreen() {
-  const { id } = useLocalSearchParams(); // Get group ID from URL
-
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      id: '1',
-      sender: 'Sarah',
-      content: 'Hey everyone! What time is the meeting?',
-      isOwnMessage: false,
-    },
-    {
-      id: '2',
-      sender: 'You',
-      content: "Let's start at 3pm?",
-      isOwnMessage: true,
-    },
-    {
-      id: '3',
-      sender: 'Jovie',
-      content: "Sounds good! I'll send the agenda.",
-      isOwnMessage: false,
-    },
-  ]);
-
+  const { id } = useLocalSearchParams(); // groupId from route
+  const router = useRouter();
   const [input, setInput] = useState('');
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [currentUser, setCurrentUser] = useState<any>(null);
 
-  const handleSend = () => {
-    if (!input.trim()) return;
+  // 🔄 Load user and messages on mount
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        const user = await getSessionUser();
+        setCurrentUser(user);
 
-    const newMessage: Message = {
-      id: Date.now().toString(),
-      sender: 'You',
-      content: input,
-      isOwnMessage: true,
+        const rawMessages = await fetchGroupMessages(id as string);
+        setMessages(
+          rawMessages.map((m: any) => ({
+            id: m.id,
+            sender: m.users?.username || 'Unknown',
+            content: m.content,
+            isOwnMessage: m.user_id === user.id,
+          }))
+        );
+      } catch (err) {
+        console.error('Failed to load chat data:', err);
+      }
     };
 
-    setMessages((prev) => [newMessage, ...prev]); // push to top since list is inverted
-    setInput('');
+    loadData();
+  }, [id]);
+
+  // 💬 Send a message
+  const handleSend = async () => {
+    if (!input.trim() || !currentUser) return;
+
+    try {
+      const sent = await sendGroupMessage(id as string, currentUser.id, input);
+
+      const newMsg: Message = {
+        id: sent.id,
+        sender: currentUser.username || 'You',
+        content: sent.content,
+        isOwnMessage: true,
+      };
+
+      setMessages((prev) => [newMsg, ...prev]);
+      setInput('');
+    } catch (error) {
+      console.error('Send failed:', error);
+    }
   };
 
   return (
     <SafeAreaView style={styles.container}>
+      {/* 🔙 Header */}
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>Group Chat</Text>
-        <Text style={styles.subTitle}>Group ID: {id}</Text>
+        <TouchableOpacity onPress={() => router.back()}>
+          <Ionicons name="arrow-back" size={24} color="#333" />
+        </TouchableOpacity>
+        <View style={{ marginLeft: 12 }}>
+          <Text style={styles.headerTitle}>Group Chat</Text>
+          <Text style={styles.subTitle}>Group ID: {id}</Text>
+        </View>
+        {/* ➕ Invite button */}
+        <TouchableOpacity
+          onPress={() => router.push(`/chat/invite?groupId=${id}`)}
+          style={styles.inviteButton}
+        >
+          <Ionicons name="person-add-outline" size={22} color="#007aff" />
+        </TouchableOpacity>
       </View>
 
+      {/* 📨 Messages */}
       <FlatList
         data={messages}
         renderItem={({ item }) => <MessageCard message={item} />}
@@ -69,6 +97,7 @@ export default function ChatScreen() {
         inverted
       />
 
+      {/* 🔡 Message input */}
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         keyboardVerticalOffset={90}
@@ -90,29 +119,23 @@ export default function ChatScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#FFF',
-  },
+  container: { flex: 1, backgroundColor: '#FFF' },
   header: {
+    flexDirection: 'row',
+    alignItems: 'center',
     padding: 16,
     backgroundColor: '#F5F5F5',
     borderBottomWidth: 1,
     borderBottomColor: '#EAEAEA',
   },
-  headerTitle: {
-    fontSize: 22,
-    fontWeight: 'bold',
+  headerTitle: { fontSize: 22, fontWeight: 'bold' },
+  subTitle: { color: '#888', fontSize: 14, marginTop: 4 },
+  inviteButton: {
+    marginLeft: 'auto',
+    backgroundColor: 'transparent',
+    paddingHorizontal: 8,
   },
-  subTitle: {
-    color: '#888',
-    fontSize: 14,
-    marginTop: 4,
-  },
-  messages: {
-    padding: 16,
-    gap: 10,
-  },
+  messages: { padding: 16, gap: 10 },
   inputContainer: {
     flexDirection: 'row',
     padding: 10,
