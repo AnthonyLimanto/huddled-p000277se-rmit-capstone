@@ -58,13 +58,6 @@ const PostCard = ({ post }: PostCardProps) => {
     setLikes(prev => liked ? prev - 1 : prev + 1);
   };
 
-  const handleCommentLike = (id: string) => {
-    setCommentLikes(prev => ({
-      ...prev,
-      [id]: !prev[id]
-    }));
-  };
-
   const handlePostComment = () => {
     if (commentText.trim()) {
       const newComment: Reply = {
@@ -76,6 +69,13 @@ const PostCard = ({ post }: PostCardProps) => {
       setCommentText('');
       if (!showComments) setShowComments(true);
     }
+  };
+
+  const handleCommentLike = (id: string) => {
+    setCommentLikes(prev => ({
+      ...prev,
+      [id]: !prev[id]
+    }));
   };
 
   const handleReplyToggle = (id: string) => {
@@ -92,8 +92,7 @@ const PostCard = ({ post }: PostCardProps) => {
       const updatedComments = addReplyToComment(comments, parentId, newReply);
       setComments(updatedComments);
       setReplyText('');
-      // DONT auto-collapse replying box
-      // setReplyingTo(null);
+      setReplyingTo(null);
     }
   };
 
@@ -108,14 +107,16 @@ const PostCard = ({ post }: PostCardProps) => {
     });
   };
 
-  const renderReplies = (replies: Reply[]) => {
-    return replies.map((reply) => (
-      <View key={reply.id} style={styles.replyRow}>
-        <Pfp email={post.profile.email} name={post.profile.username} />
-        <View style={styles.commentContent}>
-          <View style={styles.commentBubble}>
-            <Text style={styles.commentText}>{reply.text}</Text>
+  const renderReplies = (replies: Reply[], level = 1) => {
+    if (level > 3) return null;
 
+    return replies.map((reply) => (
+      <View key={reply.id} style={[styles.replyWrapper]}>
+        <View style={styles.threadLine} />
+        <View style={styles.replyRow}>
+          <Pfp email={post.profile.email} name={post.profile.username} size={24} />
+          <View style={styles.replyBubble}>
+            <Text style={styles.commentText}>{reply.text}</Text>
             <View style={styles.commentActions}>
               <TouchableOpacity onPress={() => handleCommentLike(reply.id)} style={styles.commentActionButton}>
                 <MaterialIcons
@@ -125,10 +126,11 @@ const PostCard = ({ post }: PostCardProps) => {
                 />
                 <Text style={styles.commentActionText}>{commentLikes[reply.id] ? '1' : '0'}</Text>
               </TouchableOpacity>
-
-              <TouchableOpacity onPress={() => handleReplyToggle(reply.id)}>
-                <Text style={styles.commentActionText}>Reply</Text>
-              </TouchableOpacity>
+              {level < 3 && (
+                <TouchableOpacity onPress={() => handleReplyToggle(reply.id)}>
+                  <Text style={styles.commentActionText}>Reply</Text>
+                </TouchableOpacity>
+              )}
             </View>
 
             {replyingTo === reply.id && (
@@ -149,7 +151,7 @@ const PostCard = ({ post }: PostCardProps) => {
               </View>
             )}
 
-            {renderReplies(reply.children)}
+            {renderReplies(reply.children, level + 1)}
           </View>
         </View>
       </View>
@@ -180,23 +182,15 @@ const PostCard = ({ post }: PostCardProps) => {
         )}
       </View>
 
-      {/* Like and Comment */}
+      {/* Like + Comment */}
       <View style={styles.actionsContainer}>
         <TouchableOpacity onPress={handleLike} style={[styles.iconPill, { backgroundColor: likes > 0 ? '#fde8e8' : 'transparent' }]}>
-          <MaterialIcons
-            name={liked ? 'favorite' : 'favorite-border'}
-            size={20}
-            color={likes > 0 ? '#e53935' : '#999'}
-          />
+          <MaterialIcons name={liked ? 'favorite' : 'favorite-border'} size={20} color={likes > 0 ? '#e53935' : '#999'} />
           <Text style={[styles.iconPillText, { color: likes > 0 ? '#1f1f1f' : '#999' }]}>{likes}</Text>
         </TouchableOpacity>
 
         <View style={[styles.iconPill, { backgroundColor: comments.length > 0 ? '#e6f0ff' : 'transparent' }]}>
-          <MaterialIcons
-            name="chat-bubble-outline"
-            size={20}
-            color={comments.length > 0 ? '#1357DA' : '#999'}
-          />
+          <MaterialIcons name="chat-bubble-outline" size={20} color={comments.length > 0 ? '#1357DA' : '#999'} />
           <Text style={[styles.iconPillText, { color: comments.length > 0 ? '#1f1f1f' : '#999' }]}>{comments.length}</Text>
         </View>
 
@@ -216,17 +210,11 @@ const PostCard = ({ post }: PostCardProps) => {
           <View style={styles.commentContent}>
             <View style={styles.commentBubble}>
               <Text style={styles.commentText}>{comment.text}</Text>
-
               <View style={styles.commentActions}>
                 <TouchableOpacity onPress={() => handleCommentLike(comment.id)} style={styles.commentActionButton}>
-                  <MaterialIcons
-                    name={commentLikes[comment.id] ? 'favorite' : 'favorite-border'}
-                    size={14}
-                    color={commentLikes[comment.id] ? '#e53935' : '#999'}
-                  />
+                  <MaterialIcons name={commentLikes[comment.id] ? 'favorite' : 'favorite-border'} size={14} color={commentLikes[comment.id] ? '#e53935' : '#999'} />
                   <Text style={styles.commentActionText}>{commentLikes[comment.id] ? '1' : '0'}</Text>
                 </TouchableOpacity>
-
                 <TouchableOpacity onPress={() => handleReplyToggle(comment.id)}>
                   <Text style={styles.commentActionText}>Reply</Text>
                 </TouchableOpacity>
@@ -250,14 +238,14 @@ const PostCard = ({ post }: PostCardProps) => {
                 </View>
               )}
 
-              {/* Show replies */}
+              {/* Nested Replies */}
               {renderReplies(comment.children)}
             </View>
           </View>
         </View>
       ))}
 
-      {/* Always show comment box */}
+      {/* Input */}
       <View style={styles.commentBox}>
         <TextInput
           style={styles.commentInput}
@@ -281,7 +269,7 @@ export default PostCard;
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: '#ffffff',
+    backgroundColor: '#fff',
     padding: 18,
     borderRadius: 20,
     marginBottom: 12,
@@ -294,11 +282,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 10,
   },
-  leftGroup: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-  },
   username: {
     fontSize: 16,
     fontWeight: 'bold',
@@ -309,6 +292,11 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#777',
     marginTop: 2,
+  },  
+  leftGroup: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
   },
   timestamp: {
     fontSize: 12,
@@ -326,7 +314,7 @@ const styles = StyleSheet.create({
   imageContainer: {
     marginTop: 10,
     borderWidth: 1,
-    borderColor: '#fff',
+    borderColor: '#ddd',
     borderRadius: 10,
     overflow: 'hidden',
     padding: 4,
@@ -359,14 +347,12 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: '#666',
     fontWeight: '600',
-    marginTop: 4,
-    marginBottom: 8,
   },
   commentBox: {
     backgroundColor: '#F0F9FF',
     borderRadius: 20,
     paddingHorizontal: 16,
-    paddingVertical: 10,
+    paddingVertical: 8,
     marginTop: 10,
     minHeight: 45,
     justifyContent: 'center',
@@ -375,9 +361,6 @@ const styles = StyleSheet.create({
   commentInput: {
     fontSize: 13,
     color: '#333',
-    padding: 0,
-    margin: 0,
-    borderWidth: 0,
     backgroundColor: 'transparent',
   },
   postButton: {
@@ -395,11 +378,11 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   commentRow: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    marginTop: 10,
-    gap: 8,
-  },
+  flexDirection: 'row',
+  alignItems: 'flex-start',
+  marginTop: 14,
+  paddingLeft: 10,
+},
   commentContent: {
     flex: 1,
   },
@@ -408,19 +391,6 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     padding: 10,
   },
-  commentHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 4,
-  },
-  commentUsername: {
-    fontWeight: 'bold',
-    fontSize: 14,
-  },
-  commentTime: {
-    fontSize: 12,
-    color: '#999',
-  },
   commentText: {
     fontSize: 13,
     color: '#333',
@@ -428,7 +398,7 @@ const styles = StyleSheet.create({
   commentActions: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 16,
+    gap: 12,
     marginTop: 6,
   },
   commentActionButton: {
@@ -438,7 +408,7 @@ const styles = StyleSheet.create({
   },
   commentActionText: {
     fontSize: 12,
-    color: '#666',
+    color: '#999',
     fontWeight: '600',
   },
   replyBox: {
@@ -447,7 +417,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 8,
     marginTop: 8,
-    marginBottom: 4,
   },
   replyInput: {
     fontSize: 13,
@@ -467,11 +436,37 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontWeight: 'bold',
   },
-  replyRow: {
+  replyWrapper: {
     flexDirection: 'row',
     alignItems: 'flex-start',
     marginTop: 8,
+    marginLeft: 20,
+  },
+  threadLine: {
+    width: 2,
+    backgroundColor: '#ccc',
+    marginRight: 8,
+    borderRadius: 1,
+  },
+  replyRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
     gap: 8,
-    marginLeft: 40, 
+    marginBottom: 8,
+  },
+  replyBubble: {
+    backgroundColor: '#fff',
+    borderRadius: 16,
+    borderColor: '#e6e6e6',
+    borderWidth: 1,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    marginTop: 4,
+    marginBottom: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 1,
+    elevation: 1,
   },
 });
