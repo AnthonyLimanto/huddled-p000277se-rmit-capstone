@@ -1,7 +1,8 @@
-import React, { createContext, useContext, useEffect, useState, ReactNode } from "react";
+import React, { createContext, useContext, useEffect, useState, ReactNode, useMemo } from "react";
 import { supabase } from "../api/supabase";
+import { Text } from 'react-native';
 
-interface User {
+export interface User {
   id: string;
   email?: string; 
   [key: string]: any; 
@@ -13,7 +14,7 @@ interface AuthContextType {
   signOut: () => Promise<void>;
 }
 
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
+const AuthContext = createContext<AuthContextType>({user: null, isLoading: true, signOut: async () => {}});
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
@@ -51,9 +52,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setUser(null);
   };
 
+  const value = useMemo(() => ({ user, isLoading, signOut }), [user, isLoading]);
+
   return (
-    <AuthContext.Provider value={{ user, isLoading, signOut }}>
-      {children}
+    <AuthContext.Provider value={value}>
+      {!isLoading ? children : <Text>Loading</Text>}
     </AuthContext.Provider>
   );
 };
