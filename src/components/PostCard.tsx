@@ -231,6 +231,10 @@ const PostCard = ({ post }: PostCardProps) => {
       const content = (
         <View key={reply.id} style={level > 0 ? styles.replyRow : styles.commentRow}>
           <Pfp email={reply.user?.email ?? ''} name={reply.user?.username ?? ''} size={level > 0 ? 24 : undefined} />
+          <View>
+            <Text style={styles.username}>{reply.user?.username}</Text>
+            <Text style={styles.degree}>{reply.user?.degree}</Text>
+          </View>
           {level > 0 ? bubble : (
             <View style={styles.commentContent}>
               {bubble}
@@ -443,6 +447,7 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
     marginTop: 14,
     paddingLeft: 10,
+    gap: 8
   },
   commentContent: {
     flex: 1,
