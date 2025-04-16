@@ -7,4 +7,5 @@ export type Post = {
     image_url?: string
     created_at: Date
     profile: Profile
+    count?: {count: number}[]
 }

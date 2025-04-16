@@ -1,19 +1,18 @@
-import { View, Text, TextInput, TouchableOpacity, Image, StyleSheet } from 'react-native';
-import React, { useEffect, useState } from "react";
+import { View, Text, TextInput, TouchableOpacity, Image, StyleSheet, Platform } from 'react-native';
+import React, { useEffect, useMemo, useState } from "react";
 import { MaterialIcons } from '@expo/vector-icons';
-import { Pfp } from "./Pfp"; 
+import { Pfp } from "./Pfp";
 import { Post } from "../model/post";
 import { downloadPostImage } from '../helper/bucketHelper';
+import { useAuth } from '../context/AuthContext';
+import { Comment, CommentCreate } from '../model/comment';
+import { createComment, fetchComments, fetchCommentsByParentId } from '../api/comments';
 
 type PostCardProps = {
   post: Post;
 };
 
-type Reply = {
-  id: string;
-  text: string;
-  children: Reply[];
-};
+type Reply = Comment;
 
 const howLongAgo = (postTime: Date) => {
   const postDate = new Date(postTime);
@@ -29,7 +28,7 @@ const howLongAgo = (postTime: Date) => {
 };
 
 const PostCard = ({ post }: PostCardProps) => {
-  const [postImageUrl, setPostImageUrl] = useState<string | null>(null);
+  const [postImageUrl, setPostImageUrl] = useState<string[]>([]);
   const [liked, setLiked] = useState(false);
   const [likes, setLikes] = useState(0);
   const [comments, setComments] = useState<Reply[]>([]);
@@ -39,18 +38,77 @@ const PostCard = ({ post }: PostCardProps) => {
   const [commentLikes, setCommentLikes] = useState<{ [key: string]: boolean }>({});
   const [showComments, setShowComments] = useState(false);
 
-  const postDate = new Date(post.created_at);
+  const { user } = useAuth();
+
+  const { created_at, image_url, id } = post || {};
+
+  const postDate = new Date(created_at);
+
+  const postImageArr = useMemo(() => {
+    if (!image_url || image_url === 'default') {
+      return [];
+    }
+    return image_url.split(',');
+  }, [image_url]);
 
   useEffect(() => {
     const fetchPostImage = async () => {
       try {
-        const url = await downloadPostImage(post.id);
-        setPostImageUrl(url);
+        if (postImageArr.length === 0) {
+          return;
+        }
+        if (Platform.OS === 'web') {
+          const url = await downloadPostImage(post.id, postImageArr) as string[];
+          setPostImageUrl(url);
+        } else {
+          setPostImageUrl(postImageArr);
+        }
       } catch (error) {
         console.error("Error downloading Post Image:", error);
       }
     };
     fetchPostImage();
+  }, [post.id, postImageArr]);
+
+  const fetchCommentsForPost = async () => {
+    try {
+      const res = await fetchComments(post.id);
+      if (res) {
+        setComments(res as Reply[]);
+      }
+    } catch (error) {
+      console.error("Error fetching comments:", error);
+    }
+  };
+
+  const updateComments = (oldComments: Reply[], parentId: string, comments: Reply[]): Reply[] => {
+    const updatedComments = oldComments.map((comment: Reply) => {
+      if (comment.id === parentId) {
+        return { ...comment, children: comments };
+      } else if ((comment.children ?? []).length > 0) {
+        return { ...comment, children: updateComments(comment.children ?? [], parentId, comments) };
+      }
+      return comment;
+    });
+    return updatedComments
+  }
+
+  const fetchCommentsForComment = async (parentId: string) => {
+    try {
+      const res = await fetchCommentsByParentId(parentId);
+      if (res) {
+        setComments(prev => {
+          return updateComments(prev, parentId, res as Reply[]);
+        }
+        );
+      }
+    } catch (error) {
+      console.error("Error fetching comments:", error);
+    }
+  };
+
+  useEffect(() => {
+    fetchCommentsForPost();
   }, [post.id]);
 
   const handleLike = () => {
@@ -58,14 +116,15 @@ const PostCard = ({ post }: PostCardProps) => {
     setLikes(prev => liked ? prev - 1 : prev + 1);
   };
 
-  const handlePostComment = () => {
+  const handlePostComment = async () => {
     if (commentText.trim()) {
-      const newComment: Reply = {
-        id: Date.now().toString(),
-        text: commentText.trim(),
-        children: []
+      const newComment: CommentCreate = {
+        user_id: user?.id || '',
+        post_id: post.id,
+        content: commentText.trim(),
       };
-      setComments(prev => [...prev, newComment]);
+      await createComment(newComment);
+      fetchCommentsForPost();
       setCommentText('');
       if (!showComments) setShowComments(true);
     }
@@ -82,15 +141,19 @@ const PostCard = ({ post }: PostCardProps) => {
     setReplyingTo(replyingTo === id ? null : id);
   };
 
-  const handleSendReply = (parentId: string) => {
+  const handleSendReply = async (parentId: string, reply: Reply) => {
     if (replyText.trim()) {
-      const newReply: Reply = {
-        id: Date.now().toString(),
-        text: replyText.trim(),
-        children: []
+      const newReply: CommentCreate = {
+        content: replyText.trim(),
+        user_id: user?.id || '',
+        post_id: post.id,
+        parent_id: parentId,
       };
-      const updatedComments = addReplyToComment(comments, parentId, newReply);
-      setComments(updatedComments);
+      if (reply.count) {
+        reply.count[0].count += 1;
+      }
+      await createComment(newReply);
+      await fetchCommentsForComment(parentId);
       setReplyText('');
       setReplyingTo(null);
     }
@@ -99,63 +162,90 @@ const PostCard = ({ post }: PostCardProps) => {
   const addReplyToComment = (list: Reply[], parentId: string, replyToAdd: Reply): Reply[] => {
     return list.map(comment => {
       if (comment.id === parentId) {
-        return { ...comment, children: [...comment.children, replyToAdd] };
-      } else if (comment.children.length > 0) {
-        return { ...comment, children: addReplyToComment(comment.children, parentId, replyToAdd) };
+        return { ...comment, children: [...(comment.children ?? []), replyToAdd] };
+      } else if ((comment.children ?? []).length > 0) {
+        return { ...comment, children: addReplyToComment(comment.children ?? [], parentId, replyToAdd) };
       }
       return comment;
     });
   };
 
-  const renderReplies = (replies: Reply[], level = 1) => {
+  const allCommentsCount = useMemo(() => post.count?.[0].count || 0, [post.count]);
+
+  const renderReplies = (replies: Reply[], level = 0) => {
     if (level > 3) return null;
 
-    return replies.map((reply) => (
-      <View key={reply.id} style={[styles.replyWrapper]}>
-        <View style={styles.threadLine} />
-        <View style={styles.replyRow}>
-          <Pfp email={post.profile.email} name={post.profile.username} size={24} />
-          <View style={styles.replyBubble}>
-            <Text style={styles.commentText}>{reply.text}</Text>
-            <View style={styles.commentActions}>
-              <TouchableOpacity onPress={() => handleCommentLike(reply.id)} style={styles.commentActionButton}>
-                <MaterialIcons
-                  name={commentLikes[reply.id] ? 'favorite' : 'favorite-border'}
-                  size={14}
-                  color={commentLikes[reply.id] ? '#e53935' : '#999'}
-                />
-                <Text style={styles.commentActionText}>{commentLikes[reply.id] ? '1' : '0'}</Text>
+    return replies.map((reply) => {
+
+      const count = reply.count?.[0].count || 0;
+
+      const bubble = (
+        <View style={level > 0 ? styles.replyBubble : styles.commentBubble}>
+          <Text style={styles.commentText}>{reply.content}</Text>
+          <View style={styles.commentActions}>
+            <TouchableOpacity onPress={() => handleCommentLike(reply.id)} style={styles.commentActionButton}>
+              <MaterialIcons
+                name={commentLikes[reply.id] ? 'favorite' : 'favorite-border'}
+                size={14}
+                color={commentLikes[reply.id] ? '#e53935' : '#999'}
+              />
+              <Text style={styles.commentActionText}>{commentLikes[reply.id] ? '1' : '0'}</Text>
+            </TouchableOpacity>
+            <TouchableOpacity onPress={() => {
+              fetchCommentsForComment(reply.id);
+            }}>
+              <View style={[styles.iconPill, { backgroundColor: count > 0 ? '#e6f0ff' : 'transparent' }]}>
+                <MaterialIcons name="chat-bubble-outline" size={20} color={count > 0 ? '#1357DA' : '#999'} />
+                <Text style={[styles.iconPillText, { color: count > 0 ? '#1f1f1f' : '#999' }]}>{count}</Text>
+              </View>
+            </TouchableOpacity>
+            {level < 3 && (
+              <TouchableOpacity onPress={() => handleReplyToggle(reply.id)}>
+                <Text style={styles.commentActionText}>Reply</Text>
               </TouchableOpacity>
-              {level < 3 && (
-                <TouchableOpacity onPress={() => handleReplyToggle(reply.id)}>
-                  <Text style={styles.commentActionText}>Reply</Text>
+            )}
+          </View>
+
+          {replyingTo === reply.id && (
+            <View style={styles.replyBox}>
+              <TextInput
+                style={styles.replyInput}
+                placeholder="Write a reply..."
+                placeholderTextColor="#bbb"
+                value={replyText}
+                onChangeText={setReplyText}
+                multiline
+              />
+              {replyText.trim().length > 0 && (
+                <TouchableOpacity onPress={() => handleSendReply(reply.id, reply)} style={styles.replyPostButton}>
+                  <Text style={styles.replyPostButtonText}>Post</Text>
                 </TouchableOpacity>
               )}
             </View>
+          )}
 
-            {replyingTo === reply.id && (
-              <View style={styles.replyBox}>
-                <TextInput
-                  style={styles.replyInput}
-                  placeholder="Write a reply..."
-                  placeholderTextColor="#bbb"
-                  value={replyText}
-                  onChangeText={setReplyText}
-                  multiline
-                />
-                {replyText.trim().length > 0 && (
-                  <TouchableOpacity onPress={() => handleSendReply(reply.id)} style={styles.replyPostButton}>
-                    <Text style={styles.replyPostButtonText}>Post</Text>
-                  </TouchableOpacity>
-                )}
-              </View>
-            )}
-
-            {renderReplies(reply.children, level + 1)}
-          </View>
+          {renderReplies(reply.children ?? [], level + 1)}
         </View>
-      </View>
-    ));
+      );
+    
+      const content = (
+        <View key={reply.id} style={level > 0 ? styles.replyRow : styles.commentRow}>
+          <Pfp email={reply.user?.email ?? ''} name={reply.user?.username ?? ''} size={level > 0 ? 24 : undefined} />
+          {level > 0 ? bubble : (
+            <View style={styles.commentContent}>
+              {bubble}
+            </View>
+          )}
+        </View>
+      );
+
+      return level > 0 ? (
+        <View key={reply.id} style={[styles.replyWrapper]}>
+          <View style={styles.threadLine} />
+          {content}
+        </View>
+      ) : content;
+    });
   };
 
   return (
@@ -175,11 +265,21 @@ const PostCard = ({ post }: PostCardProps) => {
       {/* Post Content */}
       <View style={styles.contentContainer}>
         <Text style={styles.postContent}>{post.content}</Text>
-        {postImageUrl && (
-          <View style={styles.imageContainer}>
-            <Image source={{ uri: postImageUrl }} style={styles.postImage} resizeMode="contain" />
-          </View>
-        )}
+        {
+          (postImageUrl || []).map((image, idx) => {
+            return (
+              <View style={styles.imageContainer} key={idx}>
+                <Image
+                  source={{
+                    uri: Platform.OS === 'web' ? image : `https://leqcmbvpugjvyzlxxmgs.supabase.co/storage/v1/object/public/post-image/${id}/${image}`,
+                  }}
+                  style={styles.postImage}
+                  resizeMode="contain"
+                />
+              </View>
+            );
+          })
+        }
       </View>
 
       {/* Like + Comment */}
@@ -189,12 +289,12 @@ const PostCard = ({ post }: PostCardProps) => {
           <Text style={[styles.iconPillText, { color: likes > 0 ? '#1f1f1f' : '#999' }]}>{likes}</Text>
         </TouchableOpacity>
 
-        <View style={[styles.iconPill, { backgroundColor: comments.length > 0 ? '#e6f0ff' : 'transparent' }]}>
-          <MaterialIcons name="chat-bubble-outline" size={20} color={comments.length > 0 ? '#1357DA' : '#999'} />
-          <Text style={[styles.iconPillText, { color: comments.length > 0 ? '#1f1f1f' : '#999' }]}>{comments.length}</Text>
+        <View style={[styles.iconPill, { backgroundColor: allCommentsCount > 0 ? '#e6f0ff' : 'transparent' }]}>
+          <MaterialIcons name="chat-bubble-outline" size={20} color={allCommentsCount > 0 ? '#1357DA' : '#999'} />
+          <Text style={[styles.iconPillText, { color: allCommentsCount > 0 ? '#1f1f1f' : '#999' }]}>{allCommentsCount}</Text>
         </View>
 
-        {comments.length > 0 && (
+        {allCommentsCount > 0 && (
           <TouchableOpacity onPress={() => setShowComments(prev => !prev)}>
             <Text style={styles.viewHideText}>
               {showComments ? 'Hide all' : 'View all comments'}
@@ -204,46 +304,7 @@ const PostCard = ({ post }: PostCardProps) => {
       </View>
 
       {/* Comments */}
-      {showComments && comments.map((comment) => (
-        <View key={comment.id} style={styles.commentRow}>
-          <Pfp email={post.profile.email} name={post.profile.username} />
-          <View style={styles.commentContent}>
-            <View style={styles.commentBubble}>
-              <Text style={styles.commentText}>{comment.text}</Text>
-              <View style={styles.commentActions}>
-                <TouchableOpacity onPress={() => handleCommentLike(comment.id)} style={styles.commentActionButton}>
-                  <MaterialIcons name={commentLikes[comment.id] ? 'favorite' : 'favorite-border'} size={14} color={commentLikes[comment.id] ? '#e53935' : '#999'} />
-                  <Text style={styles.commentActionText}>{commentLikes[comment.id] ? '1' : '0'}</Text>
-                </TouchableOpacity>
-                <TouchableOpacity onPress={() => handleReplyToggle(comment.id)}>
-                  <Text style={styles.commentActionText}>Reply</Text>
-                </TouchableOpacity>
-              </View>
-
-              {replyingTo === comment.id && (
-                <View style={styles.replyBox}>
-                  <TextInput
-                    style={styles.replyInput}
-                    placeholder="Write a reply..."
-                    placeholderTextColor="#bbb"
-                    value={replyText}
-                    onChangeText={setReplyText}
-                    multiline
-                  />
-                  {replyText.trim().length > 0 && (
-                    <TouchableOpacity onPress={() => handleSendReply(comment.id)} style={styles.replyPostButton}>
-                      <Text style={styles.replyPostButtonText}>Post</Text>
-                    </TouchableOpacity>
-                  )}
-                </View>
-              )}
-
-              {/* Nested Replies */}
-              {renderReplies(comment.children)}
-            </View>
-          </View>
-        </View>
-      ))}
+      {showComments && renderReplies(comments)}
 
       {/* Input */}
       <View style={styles.commentBox}>
@@ -292,7 +353,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#777',
     marginTop: 2,
-  },  
+  },
   leftGroup: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -378,11 +439,11 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   commentRow: {
-  flexDirection: 'row',
-  alignItems: 'flex-start',
-  marginTop: 14,
-  paddingLeft: 10,
-},
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    marginTop: 14,
+    paddingLeft: 10,
+  },
   commentContent: {
     flex: 1,
   },
