@@ -19,6 +19,7 @@ export default function InviteToGroupScreen() {
   const [users, setUsers] = useState<any[]>([]);
   const [selected, setSelected] = useState<string[]>([]);
 
+  // ✅ Load all users from Supabase
   useEffect(() => {
     const loadUsers = async () => {
       try {
@@ -26,42 +27,55 @@ export default function InviteToGroupScreen() {
         setUsers(allUsers);
       } catch (error) {
         Alert.alert('Failed to load users');
+        console.error('Fetch users error:', error);
       }
     };
     loadUsers();
   }, []);
 
+  // ✅ Select or deselect a user
   const toggleSelect = (id: string) => {
     setSelected((prev) =>
       prev.includes(id) ? prev.filter((uid) => uid !== id) : [...prev, id]
     );
   };
 
+  // ✅ Add selected users to group
   const handleInvite = async () => {
     if (selected.length === 0) return;
 
     try {
       await addGroupMembers(groupId as string, selected);
       Alert.alert('Users added to group');
-      router.back(); // Go back to chat
-    } catch (error) {
-      Alert.alert('Error adding users');
+      router.back();
+    } catch (error: any) {
+      console.error('Error adding group members:', error);
+      Alert.alert('Error adding users', error.message || 'Something went wrong');
     }
   };
 
   return (
     <SafeAreaView style={styles.container}>
-      <Text style={styles.title}>Invite Users</Text>
+      {/* 🔙 Back + Header */}
+      <View style={styles.headerRow}>
+        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+          <Ionicons name="arrow-back" size={24} color="#007aff" />
+        </TouchableOpacity>
+        <Text style={styles.title}>Invite Users</Text>
+      </View>
 
+      {/* 👥 User list */}
       <FlatList
         data={users}
         keyExtractor={(item) => item.user_id || item.id}
         renderItem={({ item }) => {
-          const isSelected = selected.includes(item.user_id || item.id);
+          const userId = item.user_id || item.id;
+          const isSelected = selected.includes(userId);
+
           return (
             <TouchableOpacity
               style={styles.userRow}
-              onPress={() => toggleSelect(item.user_id || item.id)}
+              onPress={() => toggleSelect(userId)}
             >
               <Ionicons
                 name={isSelected ? 'checkbox' : 'square-outline'}
@@ -74,6 +88,7 @@ export default function InviteToGroupScreen() {
         }}
       />
 
+      {/* ➕ Invite button */}
       <TouchableOpacity style={styles.inviteButton} onPress={handleInvite}>
         <Text style={styles.inviteText}>Add to Group</Text>
       </TouchableOpacity>
@@ -83,7 +98,15 @@ export default function InviteToGroupScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, padding: 16, backgroundColor: '#fff' },
-  title: { fontSize: 22, fontWeight: 'bold', marginBottom: 16 },
+  headerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  backButton: {
+    marginRight: 12,
+  },
+  title: { fontSize: 22, fontWeight: 'bold' },
   userRow: {
     flexDirection: 'row',
     alignItems: 'center',

@@ -7,10 +7,11 @@ import {
   TextInput,
   FlatList,
   TouchableOpacity,
-  Alert
+  Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
+import { createGroup } from '@/src/api/group';
 
 const MOCK_USERS = [
   { id: 'u1', name: 'Jovie AU' },
@@ -26,11 +27,11 @@ export default function NewGroupScreen() {
 
   const toggleUser = (id: string) => {
     setSelectedUsers((prev) =>
-      prev.includes(id) ? prev.filter(uid => uid !== id) : [...prev, id]
+      prev.includes(id) ? prev.filter((uid) => uid !== id) : [...prev, id]
     );
   };
 
-  const handleCreateGroup = () => {
+  const handleCreateGroup = async () => {
     if (!groupName.trim()) {
       Alert.alert('Enter group name');
       return;
@@ -41,10 +42,19 @@ export default function NewGroupScreen() {
       return;
     }
 
-    const fakeGroupId = `group-${Date.now()}`;
-    console.log('✅ Group created:', { groupName, selectedUsers, fakeGroupId });
+    try {
+      const result = await createGroup(groupName, selectedUsers);
 
-    router.push(`/chat/${fakeGroupId}`);
+      if (!result?.group?.id) {
+        throw new Error('Group creation failed');
+      }
+
+      // ✅ Use real UUID from Supabase
+      router.push(`/chat/${result.group.id}`);
+    } catch (error: any) {
+      console.error('Group creation error:', error);
+      Alert.alert('Failed to create group', error.message || 'Something went wrong');
+    }
   };
 
   return (
