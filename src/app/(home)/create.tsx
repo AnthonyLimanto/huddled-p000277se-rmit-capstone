@@ -67,6 +67,9 @@ export default function CreatePostScreen() {
 
   const handleSubmit = async () => {
     try {
+      if (text.trim() === "" || fileList.length === 0) {
+        return
+      }
       const currentUserId = await getSessionUser();
       const fileNameArr = (fileList || []).map((file) => file.name);
       const sentPost = await createPost(currentUserId, text, fileNameArr.join(','));
