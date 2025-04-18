@@ -14,6 +14,8 @@ export type Comment = {
     parent?: Comment
     children?: Comment[]
     count?: {count: number}[]
+    likes?: {count: number}[]
+    isLike?: any[]
 }
 
 export type CommentCreate = Omit<Comment, 'id' | 'created_at' | 'user' | 'post' | 'parent' | 'children'>;

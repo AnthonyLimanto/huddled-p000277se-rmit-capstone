@@ -8,4 +8,6 @@ export type Post = {
     created_at: Date
     profile: Profile
     count?: {count: number}[]
+    likes?: {count: number}[]
+    isLike?: any[]
 }

@@ -13,7 +13,7 @@ export const createPost = async (userId: string, content: string, imageUrl: stri
 };
 
 // Fetch all posts with user info
-export const fetchPosts = async () => {
+export const fetchPosts = async (user_id: string) => {
   const { data, error } = await supabase
     .from('posts')
     .select(`
@@ -21,8 +21,10 @@ export const fetchPosts = async () => {
       content,
       created_at,
       image_url,
-      profile:users(username, degree, pfp_url, email),
-      count:comments(count)
+      profile:users!user_id(username, degree, pfp_url, email),
+      count:comments(count),
+      likes:post_likes!post_id(count),
+      isLike:post_likes!post_id(user_id).eq(user_id, ${user_id})
     `)
     .order('created_at', { ascending: false });
 
@@ -33,3 +35,5 @@ export const fetchPosts = async () => {
   }
   return data; 
 };
+
+
