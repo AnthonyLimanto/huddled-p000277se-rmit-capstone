@@ -14,7 +14,7 @@ export const createComment = async (params: CommentCreate) => {
 };
 
 // Fetch all posts with user info
-export const fetchComments = async (post_id: string) => {
+export const fetchComments = async (post_id: string, user_id: string) => {
   const { data, error } = await supabase
     .from('comments')
     .select(`
@@ -25,8 +25,10 @@ export const fetchComments = async (post_id: string) => {
       post_id,
       parent_id,
       created_at,
-      user: users(username, degree, pfp_url, email),
+      user: users!user_id(username, degree, pfp_url, email),
       count:comments(count),
+      likes:comment_likes!comment_id(count),
+      isLike:comment_likes!comment_id(user_id).eq(user_id, ${user_id})
       children: comments (
         id,
         content,
@@ -36,7 +38,9 @@ export const fetchComments = async (post_id: string) => {
         parent_id,
         created_at,
         user: users(username, degree, pfp_url, email),
-        count:comments(count)
+        count:comments(count),
+        likes:comment_likes!comment_id(count),
+        isLike:comment_likes!comment_id(user_id).eq(user_id, ${user_id})
       ) 
     `)
     .eq('post_id', post_id)
@@ -51,7 +55,7 @@ export const fetchComments = async (post_id: string) => {
   return data; 
 };
 
-export const fetchCommentsByParentId = async (parent_id: string) => {
+export const fetchCommentsByParentId = async (parent_id: string, user_id: string) => {
   const { data, error } = await supabase
     .from('comments')
     .select(`
@@ -64,6 +68,8 @@ export const fetchCommentsByParentId = async (parent_id: string) => {
       created_at,
       user: users(username, degree, pfp_url, email),
       count:comments(count),
+      likes:comment_likes!comment_id(count),
+      isLike:comment_likes!comment_id(user_id).eq(user_id, ${user_id})
       children: comments (
         id,
         content,
@@ -73,7 +79,9 @@ export const fetchCommentsByParentId = async (parent_id: string) => {
         parent_id,
         created_at,
         user: users(username, degree, pfp_url, email),
-        count:comments(count)
+        count:comments(count),
+        likes:comment_likes!comment_id(count),
+        isLike:comment_likes!comment_id(user_id).eq(user_id, ${user_id})
       ) 
     `)
     .eq('parent_id', parent_id)

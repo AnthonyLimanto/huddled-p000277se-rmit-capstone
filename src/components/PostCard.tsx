@@ -7,6 +7,8 @@ import { downloadPostImage } from '../helper/bucketHelper';
 import { useAuth } from '../context/AuthContext';
 import { Comment, CommentCreate } from '../model/comment';
 import { createComment, fetchComments, fetchCommentsByParentId } from '../api/comments';
+import { addPostLike, deletePostLike, fetchPostLikeInfo } from '../api/post_likes';
+import { addCommentLike, deleteCommentLike } from '../api/comment_likes';
 
 type PostCardProps = {
   post: Post;
@@ -29,13 +31,12 @@ const howLongAgo = (postTime: Date) => {
 
 const PostCard = ({ post }: PostCardProps) => {
   const [postImageUrl, setPostImageUrl] = useState<string[]>([]);
-  const [liked, setLiked] = useState(false);
-  const [likes, setLikes] = useState(0);
+  const [liked, setLiked] = useState(!!(post.isLike?.length ?? 0));
+  const [likes, setLikes] = useState(post.likes?.[0].count ?? 0);
   const [comments, setComments] = useState<Reply[]>([]);
   const [commentText, setCommentText] = useState('');
   const [replyText, setReplyText] = useState('');
   const [replyingTo, setReplyingTo] = useState<string | null>(null);
-  const [commentLikes, setCommentLikes] = useState<{ [key: string]: boolean }>({});
   const [showComments, setShowComments] = useState(false);
 
   const { user } = useAuth();
@@ -72,14 +73,26 @@ const PostCard = ({ post }: PostCardProps) => {
 
   const fetchCommentsForPost = async () => {
     try {
-      const res = await fetchComments(post.id);
+      const res = await fetchComments(post.id, user?.id ?? '');
       if (res) {
-        setComments(res as Reply[]);
+        setComments(res as unknown as Reply[]);
       }
     } catch (error) {
       console.error("Error fetching comments:", error);
     }
   };
+
+  const fetchLikesInfo = async () => {
+    try {
+      const res = await fetchPostLikeInfo(post.id, user?.id ?? '');
+      if (res) {
+        setLikes(res.likes);
+        setLiked(res.isLike);
+      }
+    } catch (error) {
+      console.error("Error fetching likes:", error);
+    }
+  }
 
   const updateComments = (oldComments: Reply[], parentId: string, comments: Reply[]): Reply[] => {
     const updatedComments = oldComments.map((comment: Reply) => {
@@ -95,10 +108,10 @@ const PostCard = ({ post }: PostCardProps) => {
 
   const fetchCommentsForComment = async (parentId: string) => {
     try {
-      const res = await fetchCommentsByParentId(parentId);
+      const res = await fetchCommentsByParentId(parentId, user?.id ?? '');
       if (res) {
         setComments(prev => {
-          return updateComments(prev, parentId, res as Reply[]);
+          return updateComments(prev, parentId, res as unknown as Reply[]);
         }
         );
       }
@@ -111,9 +124,16 @@ const PostCard = ({ post }: PostCardProps) => {
     fetchCommentsForPost();
   }, [post.id]);
 
-  const handleLike = () => {
-    setLiked(!liked);
-    setLikes(prev => liked ? prev - 1 : prev + 1);
+  const handleLike = async () => {
+    let res = false;
+    if (liked) {
+      res = await deletePostLike(post.id, user?.id ?? '');
+    } else {
+      res = await addPostLike(post.id, user?.id ?? '');
+    }
+    if (res) {
+      await fetchLikesInfo();
+    }
   };
 
   const handlePostComment = async () => {
@@ -130,11 +150,21 @@ const PostCard = ({ post }: PostCardProps) => {
     }
   };
 
-  const handleCommentLike = (id: string) => {
-    setCommentLikes(prev => ({
-      ...prev,
-      [id]: !prev[id]
-    }));
+  const handleCommentLike = async (data: Reply, liked: boolean) => {
+    const { id, parent_id } = data;
+    let res = false;
+    if (liked) {
+      res = await deleteCommentLike(id, user?.id ?? '');
+    } else {
+      res = await addCommentLike(id, user?.id ?? '');
+    }
+    if (res) {
+      if (parent_id) {
+        await fetchCommentsForComment(parent_id);
+      } else {
+        await fetchCommentsForPost();
+      }
+    }
   };
 
   const handleReplyToggle = (id: string) => {
@@ -179,23 +209,26 @@ const PostCard = ({ post }: PostCardProps) => {
 
       const count = reply.count?.[0].count || 0;
 
+      const likes = reply.likes?.[0].count || 0;
+      const liked = !!(reply.isLike?.length ?? 0);
+
       const bubble = (
         <View style={level > 0 ? styles.replyBubble : styles.commentBubble}>
           <Text style={styles.commentText}>{reply.content}</Text>
           <View style={styles.commentActions}>
-            <TouchableOpacity onPress={() => handleCommentLike(reply.id)} style={styles.commentActionButton}>
+            <TouchableOpacity onPress={() => handleCommentLike(reply, liked)} style={styles.commentActionButton}>
               <MaterialIcons
-                name={commentLikes[reply.id] ? 'favorite' : 'favorite-border'}
+                name={liked ? 'favorite' : 'favorite-border'}
                 size={14}
-                color={commentLikes[reply.id] ? '#e53935' : '#999'}
+                color={liked ? '#e53935' : '#999'}
               />
-              <Text style={styles.commentActionText}>{commentLikes[reply.id] ? '1' : '0'}</Text>
+              <Text style={styles.commentActionText}>{likes}</Text>
             </TouchableOpacity>
             <TouchableOpacity onPress={() => {
               fetchCommentsForComment(reply.id);
             }}>
               <View style={[styles.iconPill, { backgroundColor: count > 0 ? '#e6f0ff' : 'transparent' }]}>
-                <MaterialIcons name="chat-bubble-outline" size={20} color={count > 0 ? '#1357DA' : '#999'} />
+                <MaterialIcons name="chat-bubble-outline" size={14} color={count > 0 ? '#1357DA' : '#999'} />
                 <Text style={[styles.iconPillText, { color: count > 0 ? '#1f1f1f' : '#999' }]}>{count}</Text>
               </View>
             </TouchableOpacity>
