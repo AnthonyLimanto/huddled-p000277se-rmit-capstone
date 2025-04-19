@@ -67,6 +67,10 @@ export default function CreatePostScreen() {
 
   const handleSubmit = async () => {
     try {
+      if (text.trim() === "" && fileList.length === 0) {
+        console.log('Please enter text or select an image to post.');
+        return
+      }
       const currentUserId = await getSessionUser();
       const fileNameArr = (fileList || []).map((file) => file.name);
       const sentPost = await createPost(currentUserId, text, fileNameArr.join(','));
