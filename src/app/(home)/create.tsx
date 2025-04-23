@@ -1,11 +1,10 @@
-import React, { useMemo, useState } from 'react';
-import { View, Text, StyleSheet, TextInput, TouchableOpacity, SafeAreaView, StatusBar, Alert, Image } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import { createPost, Post } from '@/src/api/posts';
+import { createPost } from '@/src/api/posts';
 import { supabase } from '@/src/api/supabase';
-import { getSessionUser } from '@/src/api/users';
+import { uploadPostImages } from '@/src/helper/bucketHelper';
+import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
-import { uploadPostImage, uploadPostImages } from '@/src/helper/bucketHelper';
+import React, { useMemo, useState } from 'react';
+import { Alert, Image, SafeAreaView, StatusBar, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 
 const MAX_IMAGE_COUNT = 4;
 
@@ -178,9 +177,11 @@ export default function CreatePostScreen() {
           </TouchableOpacity>
         </View>
 
-        <TouchableOpacity style={styles.postButton} onPress={handleSubmit}>
-          <Text style={styles.postButtonText}>Post</Text>
-        </TouchableOpacity>
+        <View style={styles.postButtonContainer}>
+          <TouchableOpacity style={styles.postButton} onPress={handleSubmit}>
+            <Text style={styles.postButtonText}>Post</Text>
+          </TouchableOpacity>
+        </View>
       </View>
     </SafeAreaView>
   );
@@ -268,12 +269,20 @@ const styles = StyleSheet.create({
     marginLeft: 8,
     fontSize: 16,
   },
+  postButtonContainer:{
+    padding: 20,
+    borderTopWidth: 1,
+    borderColor: '#EEE',
+    marginTop: 20,
+  },
   postButton: {
     backgroundColor: '#0066CC',
-    padding: 15,
     borderRadius: 10,
     alignItems: 'center',
     marginTop: 'auto',
+    justifyContent: 'center',
+    paddingVertical: 12,
+    flexDirection: 'row',
   },
   postButtonText: {
     color: 'white',
