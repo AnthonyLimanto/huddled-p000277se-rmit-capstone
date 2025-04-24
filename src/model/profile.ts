@@ -4,4 +4,5 @@ export type Profile = {
     degree: string,
     created_at: Date
     email: string,
+    pfp_url: string,
 }

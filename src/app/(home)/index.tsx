@@ -15,6 +15,7 @@ import PostCard from "../../components/PostCard";
 import Header from "../../components/Header";
 import { Post } from '../../model/post';
 import { useFocusEffect } from '@react-navigation/native';
+import { useAuth } from '@/src/context/AuthContext';
 
 const keyExtractor = (post: Post, index: number) =>
   post?.id ? `${post.id}-${index}` : `${index}`;
@@ -26,10 +27,12 @@ export default function HomeScreen() {
   const [page, setPage] = useState(1);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [hasMore, setHasMore] = useState(true);
+  const {user} = useAuth();
+  console.log(user);
 
   const loadPosts = async (pageNum = 1, append = false) => {
     try {
-      const fetchedPosts = await fetchPosts();
+      const fetchedPosts = await fetchPosts(user?.id ?? '');
       if (fetchedPosts.length === 0) {
         setHasMore(false);
         return;
