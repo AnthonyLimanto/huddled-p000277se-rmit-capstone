@@ -15,6 +15,8 @@ import { Ionicons } from '@expo/vector-icons';
 import MessageCard, { Message } from '@/src/components/MessageCard';
 import { fetchGroupMessages, sendGroupMessage } from '@/src/api/message';
 import { getSessionUser } from '@/src/api/users';
+import { Group } from '@/src/model/group';
+import { fetchGroup } from '@/src/api/group';
 
 export default function ChatScreen() {
   const { id } = useLocalSearchParams(); // groupId from route
@@ -22,6 +24,7 @@ export default function ChatScreen() {
   const [input, setInput] = useState('');
   const [messages, setMessages] = useState<Message[]>([]);
   const [currentUser, setCurrentUser] = useState<any>(null);
+  const [group, setGroup] = useState<Group>();
 
   // 🔄 Load user and messages on mount
   useEffect(() => {
@@ -29,16 +32,23 @@ export default function ChatScreen() {
       try {
         const user = await getSessionUser();
         setCurrentUser(user);
+        
+        const fetchedGroup = await fetchGroup(id);
+        if (fetchedGroup && fetchedGroup.length > 0) {
+          console.log(fetchedGroup);
+          setGroup(fetchedGroup[0]);
+        }
 
-        const rawMessages = await fetchGroupMessages(id as string);
-        setMessages(
-          rawMessages.map((m: any) => ({
-            id: m.id,
-            sender: m.users?.username || 'Unknown',
-            content: m.content,
-            isOwnMessage: m.user_id === user.id,
-          }))
-        );
+
+        // const rawMessages = await fetchGroupMessages(id as string);
+        // setMessages(
+        //   rawMessages.map((m: any) => ({
+        //     id: m.id,
+        //     sender: m.users?.username || 'Unknown',
+        //     content: m.content,
+        //     isOwnMessage: m.user_id === user.id,
+        //   }))
+        // );
       } catch (err) {
         console.error('Failed to load chat data:', err);
       }
@@ -76,7 +86,7 @@ export default function ChatScreen() {
           <Ionicons name="arrow-back" size={24} color="#333" />
         </TouchableOpacity>
         <View style={{ marginLeft: 12 }}>
-          <Text style={styles.headerTitle}>Group Chat</Text>
+          <Text style={styles.headerTitle}>{group?.name}</Text>
           <Text style={styles.subTitle}>Group ID: {id}</Text>
         </View>
         {/* ➕ Invite button */}

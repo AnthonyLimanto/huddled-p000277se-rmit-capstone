@@ -41,6 +41,18 @@ export const createGroup = async (name: string, users: string[]) => {
     }
   };
   
+export const fetchGroup = async (group_id: string) => {
+  const {data: groupData, error} = await supabase
+    .from('groups')
+    .select("*")
+    .eq('id', group_id)
+    if (error) {
+      console.error("Error fetching group:", error);
+    } else {
+        console.log("group:", groupData);
+    }
+    return groupData;
+}
 
 export const fetchGroups = async (user_id: string) => {
     const { data: groupData, error } = await supabase
