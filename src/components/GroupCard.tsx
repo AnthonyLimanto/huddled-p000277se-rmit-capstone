@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet, FlatList, TouchableOpacity } from 'react-native';
 import { Group } from '../model/group';
 import { Pfp } from './Pfp';
+import { router } from 'expo-router';
 
 interface GroupCardProps {
   group: Group;
@@ -9,15 +10,20 @@ interface GroupCardProps {
 
 export const GroupCard = ({ group }: GroupCardProps) => {  
   console.log('given group prop:', group);
+
+  const handlePress = () => {
+    router.push(`/chat/${group.id}`);
+  }
+
     return (
-        <TouchableOpacity style={styles.chatItem}>
+        <TouchableOpacity style={styles.chatItem} onPress={handlePress}>
               <View >
-                <Pfp email={group.group.id} name={group.group.name} style={styles.avatar} size={60} />
+                <Pfp email={group.id} name={group.name} style={styles.avatar} size={60} />
               </View>
               
               <View style={styles.chatDetails}>
                 <View style={styles.chatHeader}>
-                  <Text style={styles.chatName}>{group.group.name}</Text>
+                  <Text style={styles.chatName}>{group.name}</Text>
                   <Text style={styles.timeText}>{"hardcoded time"}</Text>
                 </View>
                 

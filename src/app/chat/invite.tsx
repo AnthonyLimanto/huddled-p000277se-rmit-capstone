@@ -11,10 +11,10 @@ import {
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { fetchUsers } from '@/src/api/users';
-import { addGroupMembers } from '@/src/api/group';
+import { addGroupMembers, createGroup } from '@/src/api/group';
 
 export default function InviteToGroupScreen() {
-  const { groupId } = useLocalSearchParams();
+  const [groupId, setGroupId] = useState("");
   const router = useRouter();
   const [users, setUsers] = useState<any[]>([]);
   const [selected, setSelected] = useState<string[]>([]);
@@ -45,7 +45,8 @@ export default function InviteToGroupScreen() {
     if (selected.length === 0) return;
 
     try {
-      await addGroupMembers(groupId as string, selected);
+      const group = await createGroup("Study Group123123123", selected);
+      setGroupId(group.group.id);
       Alert.alert('Users added to group');
       router.back();
     } catch (error: any) {

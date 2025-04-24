@@ -37,8 +37,10 @@ export default function MessagesScreen() {
         try {
           const currentUser = await getSessionUser();
           if (currentUser) {
-            const userGroups = await fetchGroups(currentUser);
-            setGroups(userGroups);
+            const userGroups = await fetchGroups(currentUser.id);
+            if (userGroups) {
+              setGroups(userGroups.flatMap(({ group }) => group));
+            }
           } else {
             console.error('No user session found.');
           }
