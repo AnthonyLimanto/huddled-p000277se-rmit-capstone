@@ -22,25 +22,25 @@ export const createGroup = async (name: string, users: string[]) => {
     }
   };
 
-export const addGroupMembers = async (group_id: string, users: string[]) => {
+  export const addGroupMembers = async (group_id: string, users: string[]) => {
     try {
-        const members = users.map((userId) => ({
-            group_id: group_id, 
-            user_id: userId, 
-        }));
-    
-        const { data: membersData, error: membersError } = await supabase
-            .from("group_members")
-            .insert(members);
-    
-        if (membersError) throw membersError;
-    
-        return membersData;
+      const members = users.map((userId) => ({
+        group_id,
+        user_id: userId,
+      }));
+  
+      const { data, error } = await supabase
+        .from('group_members')
+        .insert(members, { ignoreDuplicates: true }); // <-- Ignore existing pairs
+  
+      if (error) throw error;
+      return data;
     } catch (error) {
-        console.error("Error adding group members:", error);
-        throw error;
+      console.error("Error adding group members:", error);
+      throw error;
     }
-}
+  };
+  
 
 export const fetchGroups = async (user_id: string) => {
     const { data: groupData, error } = await supabase

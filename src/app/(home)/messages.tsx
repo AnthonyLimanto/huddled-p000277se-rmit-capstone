@@ -1,27 +1,43 @@
 import React, { useCallback, useState } from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, SafeAreaView, StatusBar, TextInput } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  FlatList,
+  TouchableOpacity,
+  SafeAreaView,
+  StatusBar,
+  TextInput,
+  Modal,
+  Pressable,
+  Alert,
+} from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { GroupCard } from '@/src/components/GroupCard';
 import { Group } from '@/src/model/group';
 import { useFocusEffect } from '@react-navigation/native';
+import { useRouter } from 'expo-router';
 import { fetchGroups } from '@/src/api/group';
 import { getSessionUser } from '@/src/api/users';
 
-
 export default function MessagesScreen() {
   const [groups, setGroups] = useState<Group[]>([]);
-  const renderGroupCard = ({ item }) => <GroupCard group={item} />;
+  const [modalVisible, setModalVisible] = useState(false);
+  const router = useRouter();
+
+  const renderGroupCard = ({ item }: { item: Group }) => (
+    <TouchableOpacity onPress={() => router.push(`/chat/${item.id}`)}>
+      <GroupCard group={item} />
+    </TouchableOpacity>
+  );
 
   useFocusEffect(
     useCallback(() => {
       const fetchUserAndGroups = async () => {
         try {
-          const currentUser = await getSessionUser(); // Fetch the current session user
+          const currentUser = await getSessionUser();
           if (currentUser) {
-            console.log('Current User:', currentUser);
-            const userGroups = await fetchGroups(currentUser); 
-            console.log('Fetched Groups:', userGroups);
-            // Fetch groups for the current user
+            const userGroups = await fetchGroups(currentUser);
             setGroups(userGroups);
           } else {
             console.error('No user session found.');
@@ -34,16 +50,23 @@ export default function MessagesScreen() {
       fetchUserAndGroups();
     }, [])
   );
+
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" />
+
+      {/* 🔵 Header */}
       <View style={styles.header}>
         <Text style={styles.title}>Messages</Text>
-        <TouchableOpacity style={styles.newMessageButton}>
+        <TouchableOpacity
+          style={styles.newMessageButton}
+          onPress={() => setModalVisible(true)}
+        >
           <Ionicons name="create-outline" size={24} color="#0066CC" />
         </TouchableOpacity>
       </View>
-      
+
+      {/* 🔍 Search Bar */}
       <View style={styles.searchContainer}>
         <View style={styles.searchBar}>
           <Ionicons name="search" size={20} color="#666" />
@@ -54,13 +77,48 @@ export default function MessagesScreen() {
           />
         </View>
       </View>
-      
+
+      {/* 📨 Group List */}
       <FlatList
         data={groups}
         renderItem={renderGroupCard}
         keyExtractor={item => item.id}
         style={styles.chatList}
       />
+
+      {/* ⬇️ Modal Options */}
+      <Modal
+        visible={modalVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setModalVisible(false)}
+      >
+        <Pressable style={styles.modalOverlay} onPress={() => setModalVisible(false)}>
+          <View style={styles.modalContainer}>
+            <TouchableOpacity
+              style={styles.modalOption}
+              onPress={() => {
+                setModalVisible(false);
+                router.push('/chat/newMessage');
+              }}
+            >
+              <Ionicons name="person-outline" size={20} color="#333" style={styles.modalIcon} />
+              <Text style={styles.modalText}>New Message</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.modalOption}
+              onPress={() => {
+                setModalVisible(false);
+                router.push('/chat/newGroup');
+              }}
+            >
+              <Ionicons name="people-outline" size={20} color="#333" style={styles.modalIcon} />
+              <Text style={styles.modalText}>New Group</Text>
+            </TouchableOpacity>
+          </View>
+        </Pressable>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -110,57 +168,28 @@ const styles = StyleSheet.create({
   chatList: {
     flex: 1,
   },
-  chatItem: {
-    flexDirection: 'row',
-    padding: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: '#F0F0F0',
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.2)',
+    justifyContent: 'flex-end',
   },
-  avatar: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    backgroundColor: '#DDD',
+  modalContainer: {
+    backgroundColor: '#FFF',
+    paddingVertical: 10,
+    borderTopLeftRadius: 12,
+    borderTopRightRadius: 12,
+    paddingHorizontal: 20,
+  },
+  modalOption: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 14,
+  },
+  modalIcon: {
     marginRight: 12,
   },
-  chatDetails: {
-    flex: 1,
-    justifyContent: 'center',
-  },
-  chatHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 6,
-  },
-  chatName: {
+  modalText: {
     fontSize: 16,
-    fontWeight: 'bold',
-  },
-  timeText: {
-    fontSize: 14,
-    color: '#999',
-  },
-  messageRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  messageText: {
-    flex: 1,
-    color: '#666',
-    fontSize: 15,
-  },
-  unreadBadge: {
-    backgroundColor: '#0066CC',
-    borderRadius: 12,
-    minWidth: 24,
-    height: 24,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginLeft: 8,
-  },
-  unreadText: {
-    color: 'white',
-    fontSize: 12,
-    fontWeight: 'bold',
+    color: '#333',
   },
 });
