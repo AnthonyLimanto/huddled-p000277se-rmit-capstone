@@ -46,8 +46,8 @@ export default function SignIn() {
     setPasswordError(passErr);
     if (emailErr || passErr) return;
 
-    // 👇 If CAPTCHA not yet passed, show it and stop here
-    if (!captchaVerified) {
+    // 👇 If CAPTCHA not yet passed, show it and stop here (only on mobile)
+    if ((Platform.OS === 'ios' || Platform.OS === 'android') && !captchaVerified) {
       recaptchaRef.current?.open();
       return;
     }
@@ -139,19 +139,20 @@ export default function SignIn() {
       </KeyboardAvoidingView>
 
       {/* ✅ reCAPTCHA */}
-      <ReCaptcha
-        ref={recaptchaRef}
-        siteKey="6Ld2OxgrAAAAAAOiVeZgdx66ZbYCDfQ9rwZpC2tw"
-        baseUrl="http://localhost" // Change to your production domain later
-        onVerify={() => {
-          setCaptchaVerified(true);
-          // 👇 delay login slightly to allow state update
-          setTimeout(() => handleLogin(), 300);
-        }}
-        onExpire={() => {
-          setCaptchaVerified(false);
-        }}
-      />
+      {(Platform.OS === 'ios' || Platform.OS === 'android') && (
+        <ReCaptcha
+          ref={recaptchaRef}
+          siteKey="6Ld2OxgrAAAAAAOiVeZgdx66ZbYCDfQ9rwZpC2tw"
+          baseUrl="http://localhost"
+          onVerify={() => {
+            setCaptchaVerified(true);
+            setTimeout(() => handleLogin(), 300);
+          }}
+          onExpire={() => {
+            setCaptchaVerified(false);
+          }}
+        />
+      )}
 
       {/* ✅ Login success modal */}
       <Modal transparent visible={successModalVisible} animationType="fade">
