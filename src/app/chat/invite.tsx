@@ -8,23 +8,36 @@ import {
   SafeAreaView,
   Alert,
 } from 'react-native';
-import { useRouter, useLocalSearchParams } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { fetchUsers } from '@/src/api/users';
-import { addGroupMembers, createGroup } from '@/src/api/group';
+import { addGroupMembers, fetchGroupMembers } from '@/src/api/group';
+
+
 
 export default function InviteToGroupScreen() {
-  const [groupId, setGroupId] = useState("");
   const router = useRouter();
   const [users, setUsers] = useState<any[]>([]);
   const [selected, setSelected] = useState<string[]>([]);
+  const params = useLocalSearchParams();
+  console.log(params);  
 
   // ✅ Load all users from Supabase
   useEffect(() => {
     const loadUsers = async () => {
       try {
+        // Fetch all users
         const allUsers = await fetchUsers();
-        setUsers(allUsers);
+    
+        // Fetch users already in the group
+        const groupMembers = await fetchGroupMembers(params.groupId); // Replace with your API to fetch group members
+    
+        // Filter out users who are already in the group
+        const filteredUsers = allUsers.filter(
+          (user) => !groupMembers.some((member) => member.user_id === user.user_id)
+        );
+    
+        setUsers(filteredUsers);
       } catch (error) {
         Alert.alert('Failed to load users');
         console.error('Fetch users error:', error);
@@ -45,12 +58,11 @@ export default function InviteToGroupScreen() {
     if (selected.length === 0) return;
 
     try {
-      const group = await createGroup("Study Group123123123", selected);
-      setGroupId(group.group.id);
+      const group = await addGroupMembers(params.groupId, selected); // Use groupId from props
       Alert.alert('Users added to group');
       router.back();
     } catch (error: any) {
-      console.error('Error adding group members:', error);
+      console.error('Error adding group members:', params.groupId);
       Alert.alert('Error adding users', error.message || 'Something went wrong');
     }
   };
