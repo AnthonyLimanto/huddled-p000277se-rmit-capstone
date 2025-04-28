@@ -174,4 +174,8 @@ const styles = StyleSheet.create({
     padding: 10,
     borderRadius: 20,
   },
+  inviteText: {
+    alignItems: 'center',
+    fontSize: 16,
+  }
 });
