@@ -1,10 +1,10 @@
+import React, { useMemo, useState } from 'react';
+import { Alert, Image, SafeAreaView, StatusBar, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { createPost } from '@/src/api/posts';
 import { supabase } from '@/src/api/supabase';
 import { uploadPostImages } from '@/src/helper/bucketHelper';
-import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
-import React, { useMemo, useState } from 'react';
-import { Alert, Image, SafeAreaView, StatusBar, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 
 const MAX_IMAGE_COUNT = 4;
 

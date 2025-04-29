@@ -66,7 +66,7 @@ export const fetchCommentsByParentId = async (parent_id: string, user_id: string
       post_id,
       parent_id,
       created_at,
-      user: users(username, degree, pfp_url, email),
+      user: users!user_id(username, degree, pfp_url, email),
       count:comments(count),
       likes:comment_likes!comment_id(count),
       isLike:comment_likes!comment_id(user_id).eq(user_id, ${user_id})
@@ -78,7 +78,7 @@ export const fetchCommentsByParentId = async (parent_id: string, user_id: string
         post_id,
         parent_id,
         created_at,
-        user: users(username, degree, pfp_url, email),
+        user: users!user_id(username, degree, pfp_url, email),
         count:comments(count),
         likes:comment_likes!comment_id(count),
         isLike:comment_likes!comment_id(user_id).eq(user_id, ${user_id})
