@@ -321,9 +321,9 @@ const PostCard = ({ post }: PostCardProps) => {
 
       {/* Like + Comment */}
       <View style={styles.actionsContainer}>
-        <TouchableOpacity onPress={handleLike} style={[styles.iconPill, { backgroundColor: likes > 0 ? '#fde8e8' : 'transparent' }]}>
-          <MaterialIcons name={liked ? 'favorite' : 'favorite-border'} size={20} color={likes > 0 ? '#e53935' : '#999'} />
-          <Text style={[styles.iconPillText, { color: likes > 0 ? '#1f1f1f' : '#999' }]}>{likes}</Text>
+        <TouchableOpacity onPress={handleLike} style={[styles.iconPill, { backgroundColor: liked ? '#fde8e8' : 'transparent' }]}>
+          <MaterialIcons name={liked ? 'favorite' : 'favorite-border'} size={20} color={liked ? '#e53935' : '#999'} />
+          <Text style={[styles.iconPillText, { color: liked ? '#1f1f1f' : '#999' }]}>{likes}</Text>
         </TouchableOpacity>
 
         <View style={[styles.iconPill, { backgroundColor: allCommentsCount > 0 ? '#e6f0ff' : 'transparent' }]}>

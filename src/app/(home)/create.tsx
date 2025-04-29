@@ -1,11 +1,11 @@
 import React, { useMemo, useState } from 'react';
 import { View, Text, StyleSheet, TextInput, TouchableOpacity, SafeAreaView, StatusBar, Alert, Image } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { createPost, Post } from '@/src/api/posts';
+import { createPost} from '@/src/api/posts';
 import { supabase } from '@/src/api/supabase';
 import { getSessionUser } from '@/src/api/users';
 import * as ImagePicker from 'expo-image-picker';
-import { uploadPostImage, uploadPostImages } from '@/src/helper/bucketHelper';
+import {uploadPostImages } from '@/src/helper/bucketHelper';
 
 const MAX_IMAGE_COUNT = 4;
 
