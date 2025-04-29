@@ -1,11 +1,10 @@
 import React, { useMemo, useState } from 'react';
-import { View, Text, StyleSheet, TextInput, TouchableOpacity, SafeAreaView, StatusBar, Alert, Image } from 'react-native';
+import { Alert, Image, SafeAreaView, StatusBar, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { createPost} from '@/src/api/posts';
+import { createPost } from '@/src/api/posts';
 import { supabase } from '@/src/api/supabase';
-import { getSessionUser } from '@/src/api/users';
+import { uploadPostImages } from '@/src/helper/bucketHelper';
 import * as ImagePicker from 'expo-image-picker';
-import {uploadPostImages } from '@/src/helper/bucketHelper';
 
 const MAX_IMAGE_COUNT = 4;
 
@@ -67,6 +66,10 @@ export default function CreatePostScreen() {
 
   const handleSubmit = async () => {
     try {
+      if (text.trim() === "" && fileList.length === 0) {
+        console.log('Please enter text or select an image to post.');
+        return
+      }
       const currentUserId = await getSessionUser();
       const fileNameArr = (fileList || []).map((file) => file.name);
       const sentPost = await createPost(currentUserId, text, fileNameArr.join(','));
@@ -174,9 +177,11 @@ export default function CreatePostScreen() {
           </TouchableOpacity>
         </View>
 
-        <TouchableOpacity style={styles.postButton} onPress={handleSubmit}>
-          <Text style={styles.postButtonText}>Post</Text>
-        </TouchableOpacity>
+        <View style={styles.postButtonContainer}>
+          <TouchableOpacity style={styles.postButton} onPress={handleSubmit}>
+            <Text style={styles.postButtonText}>Post</Text>
+          </TouchableOpacity>
+        </View>
       </View>
     </SafeAreaView>
   );
@@ -264,12 +269,20 @@ const styles = StyleSheet.create({
     marginLeft: 8,
     fontSize: 16,
   },
+  postButtonContainer:{
+    padding: 20,
+    borderTopWidth: 1,
+    borderColor: '#EEE',
+    marginTop: 20,
+  },
   postButton: {
     backgroundColor: '#0066CC',
-    padding: 15,
     borderRadius: 10,
     alignItems: 'center',
     marginTop: 'auto',
+    justifyContent: 'center',
+    paddingVertical: 12,
+    flexDirection: 'row',
   },
   postButtonText: {
     color: 'white',

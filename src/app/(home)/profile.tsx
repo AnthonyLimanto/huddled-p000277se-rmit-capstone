@@ -1,16 +1,21 @@
-import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, SafeAreaView, StatusBar } from 'react-native';
+import { supabase } from '@/src/api/supabase';
 import { Ionicons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
+import { router } from 'expo-router';
+import React from 'react';
+import { Alert, SafeAreaView, ScrollView, StatusBar, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 
 export default function ProfileScreen() {
 
-  const router = useRouter();
-  
-  const handleLogin = () => {
-    //To sign in page
-    router.replace('../(auth)/signin');
+  const handleLogout = async () => {
+    const { error } = await supabase.auth.signOut();
+    if (error) {
+      console.error("Logout failed:", error.message);
+      Alert.alert("Error", "Logout failed. Please try again.");
+    } else {
+      Alert.alert("Logged Out", "You have been signed out.");
+      router.replace('../(auth)/signin'); // or use navigation.navigate if using React Navigation
+    }
   };
 
 
@@ -77,7 +82,7 @@ export default function ProfileScreen() {
         </View>
         
         <View style={styles.logoutContainer}>
-          <TouchableOpacity style={styles.logoutButton} onPress={handleLogin}>
+          <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
             <Ionicons name="log-out-outline" size={20} color="#FF3B30" />
             <Text style={styles.logoutText}>Log Out</Text>
           </TouchableOpacity>
