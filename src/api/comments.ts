@@ -28,7 +28,7 @@ export const fetchComments = async (post_id: string, user_id: string) => {
       user: users!user_id(username, degree, pfp_url, email),
       count:comments(count),
       likes:comment_likes!comment_id(count),
-      isLike:comment_likes!comment_id(user_id).eq(user_id, ${user_id})
+      isLike:comment_likes!comment_id(user_id)
       children: comments (
         id,
         content,
@@ -45,6 +45,7 @@ export const fetchComments = async (post_id: string, user_id: string) => {
     `)
     .eq('post_id', post_id)
     .is('parent_id', null)
+    .eq('isLike.user_id', user_id)
     .order('created_at', { ascending: false });
 
   if (error) {
@@ -69,8 +70,8 @@ export const fetchCommentsByParentId = async (parent_id: string, user_id: string
       user: users!user_id(username, degree, pfp_url, email),
       count:comments(count),
       likes:comment_likes!comment_id(count),
-      isLike:comment_likes!comment_id(user_id).eq(user_id, ${user_id})
-      children: comments (
+      isLike:comment_likes!comment_id(user_id)
+      children:comments (
         id,
         content,
         image_urls,
@@ -85,6 +86,7 @@ export const fetchCommentsByParentId = async (parent_id: string, user_id: string
       ) 
     `)
     .eq('parent_id', parent_id)
+    .eq('isLike.user_id', user_id)
     .order('created_at', { ascending: false });
 
   if (error) {
