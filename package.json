@@ -12,7 +12,13 @@
     "lint": "expo lint"
   },
   "jest": {
-    "preset": "jest-expo"
+    "preset": "jest-expo",
+    "setupFiles": [
+      "./jest.setup.js"
+    ],
+    "moduleNameMapper": {
+      "^@/(.*)$": "<rootDir>/src/$1"
+    }
   },
   "dependencies": {
     "@expo/vector-icons": "^14.0.2",
@@ -50,13 +56,18 @@
     "react-native-webview": "13.12.5"
   },
   "devDependencies": {
-    "@babel/core": "^7.25.2",
+    "@babel/core": "^7.27.1",
+    "@babel/preset-env": "^7.27.1",
+    "@babel/preset-typescript": "^7.27.1",
+    "@testing-library/react-native": "^13.2.0",
     "@types/jest": "^29.5.12",
     "@types/react": "~18.3.12",
     "@types/react-test-renderer": "^18.3.0",
-    "jest": "^29.2.1",
+    "babel-jest": "^29.7.0",
+    "jest": "^29.7.0",
     "jest-expo": "~52.0.6",
     "react-test-renderer": "18.3.1",
+    "ts-jest": "^29.3.2",
     "typescript": "^5.3.3"
   },
   "private": true,
