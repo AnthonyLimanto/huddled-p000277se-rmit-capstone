@@ -24,7 +24,7 @@ export const fetchUsers = async () => {
 
 export const fetchUser = async (email: string) => {
     const {data, error} = await supabase
-        .from('Users')
+        .from('users')
         .select('*')
         .eq('email', email)
     
@@ -53,7 +53,7 @@ export const completeSignUp = async (
     if (pfpFile) {
       const response = await fetch(pfpFile.uri); // Fetch local file
       const blob = await response.blob();        // Convert to Blob
-
+      
       // Upload to Supabase Storage bucket 'pfp'
       await uploadPfp(blob, email);
 
