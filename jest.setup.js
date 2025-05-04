@@ -29,6 +29,23 @@ jest.mock('@expo/vector-icons', () => ({
       },
       props.name
     );
+  },
+  MaterialIcons: (props) => {
+    const React = require('react');
+    const { View, Text } = require('react-native');
+    return React.createElement(
+      View, 
+      { 
+        testID: props.testID, 
+        accessibilityLabel: props.name,
+        style: { 
+          width: props.size, 
+          height: props.size, 
+          backgroundColor: props.color 
+        }
+      },
+      props.name
+    );
   }
 }));
   
@@ -129,8 +146,15 @@ jest.mock('./src/api/users.ts', () => ({
 }));
 
 // mock api/supabase
-jest.mock('./src/api/supabase', () => ({
-  supabase: {
+jest.mock('./src/api/supabase', () => {
+  // 创建一个模拟的 Supabase 客户端
+  const mockSupabase = {
+    from: jest.fn(() => mockSupabase),
+    select: jest.fn(() => mockSupabase),
+    insert: jest.fn(() => mockSupabase),
+    delete: jest.fn(() => mockSupabase),
+    eq: jest.fn(() => mockSupabase),
+    maybeSingle: jest.fn(),
     auth: {
       signInWithPassword: jest.fn().mockResolvedValue({ error: null }),
       getUser: jest.fn().mockResolvedValue({ 
@@ -143,8 +167,10 @@ jest.mock('./src/api/supabase', () => ({
         error: null 
       })
     }
-  }
-}));
+  };
+  
+  return { supabase: mockSupabase };
+});
 
 // mock api/posts.ts
 jest.mock('./src/api/posts', () => ({
@@ -164,20 +190,9 @@ jest.mock('./src/api/posts', () => ({
 // mock src/helper/bucketHelper
 jest.mock('./src/helper/bucketHelper', () => ({
   uploadPostImages: jest.fn().mockResolvedValue(true),
+  downloadPostImage: jest.fn().mockImplementation(async () => ['https://example.com/image.jpg'])
 }));
 
-// mock src/components/PostCard.tsx
-jest.mock('./src/components/PostCard', () => {
-  const React = require('react');
-  const { View } = require('react-native');
-  
-  return function MockPostCard({ post }) {
-    return React.createElement(View, { 
-      testID: `post-${post.id}`,
-      'data-post': JSON.stringify(post)
-    });
-  };
-});
 
 // mock src/components/Header.tsx
 jest.mock('./src/components/Header', () => {

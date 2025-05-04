@@ -11,15 +11,7 @@
     "test": "jest --watchAll",
     "lint": "expo lint"
   },
-  "jest": {
-    "preset": "jest-expo",
-    "setupFiles": [
-      "./jest.setup.js"
-    ],
-    "moduleNameMapper": {
-      "^@/(.*)$": "<rootDir>/src/$1"
-    }
-  },
+
   "dependencies": {
     "@expo/vector-icons": "^14.0.2",
     "@hcaptcha/react-hcaptcha": "^1.12.0",

@@ -216,7 +216,7 @@ const PostCard = ({ post }: PostCardProps) => {
         <View style={level > 0 ? styles.replyBubble : styles.commentBubble}>
           <Text style={styles.commentText}>{reply.content}</Text>
           <View style={styles.commentActions}>
-            <TouchableOpacity onPress={() => handleCommentLike(reply, liked)} style={styles.commentActionButton}>
+            <TouchableOpacity testID={`comment-like-button-${reply.id}`} onPress={() => handleCommentLike(reply, liked)} style={styles.commentActionButton}>
               <MaterialIcons
                 name={liked ? 'favorite' : 'favorite-border'}
                 size={14}
@@ -224,7 +224,7 @@ const PostCard = ({ post }: PostCardProps) => {
               />
               <Text style={styles.commentActionText}>{likes}</Text>
             </TouchableOpacity>
-            <TouchableOpacity onPress={() => {
+            <TouchableOpacity testID={`comment-bubble-button-${reply.id}`} onPress={() => {
               fetchCommentsForComment(reply.id);
             }}>
               <View style={[styles.iconPill, { backgroundColor: count > 0 ? '#e6f0ff' : 'transparent' }]}>
@@ -233,7 +233,7 @@ const PostCard = ({ post }: PostCardProps) => {
               </View>
             </TouchableOpacity>
             {level < 3 && (
-              <TouchableOpacity onPress={() => handleReplyToggle(reply.id)}>
+              <TouchableOpacity testID={`reply-button-${reply.id}`} onPress={() => handleReplyToggle(reply.id)}>
                 <Text style={styles.commentActionText}>Reply</Text>
               </TouchableOpacity>
             )}
@@ -250,7 +250,7 @@ const PostCard = ({ post }: PostCardProps) => {
                 multiline
               />
               {replyText.trim().length > 0 && (
-                <TouchableOpacity onPress={() => handleSendReply(reply.id, reply)} style={styles.replyPostButton}>
+                <TouchableOpacity testID={`post-reply-button-${reply.id}`} onPress={() => handleSendReply(reply.id, reply)} style={styles.replyPostButton}>
                   <Text style={styles.replyPostButtonText}>Post</Text>
                 </TouchableOpacity>
               )}
@@ -262,7 +262,7 @@ const PostCard = ({ post }: PostCardProps) => {
       );
     
       const content = (
-        <View key={reply.id} style={level > 0 ? styles.replyRow : styles.commentRow}>
+        <View key={reply.id} testID={reply.id} style={level > 0 ? styles.replyRow : styles.commentRow}>
           <Pfp email={reply.user?.email ?? ''} name={reply.user?.username ?? ''} size={level > 0 ? 24 : undefined} />
           <View>
             <Text style={styles.username}>{reply.user?.username}</Text>
@@ -302,26 +302,28 @@ const PostCard = ({ post }: PostCardProps) => {
       {/* Post Content */}
       <View style={styles.contentContainer}>
         <Text style={styles.postContent}>{post.content}</Text>
-        {
-          (postImageUrl || []).map((image, idx) => {
-            return (
-              <View style={styles.imageContainer} key={idx}>
-                <Image
-                  source={{
-                    uri: Platform.OS === 'web' ? image : `https://leqcmbvpugjvyzlxxmgs.supabase.co/storage/v1/object/public/post-image/${id}/${image}`,
-                  }}
-                  style={styles.postImage}
-                  resizeMode="contain"
-                />
-              </View>
-            );
-          })
-        }
+        {postImageUrl.length > 0 && (
+          <View testID="post-images-wrapper">
+            {(postImageUrl || []).map((image, idx) => {
+              return (
+                <View style={styles.imageContainer} key={idx}>
+                  <Image
+                    source={{
+                      uri: Platform.OS === 'web' ? image : `https://leqcmbvpugjvyzlxxmgs.supabase.co/storage/v1/object/public/post-image/${id}/${image}`,
+                    }}
+                    style={styles.postImage}
+                    resizeMode="contain"
+                  />
+                </View>
+              );
+            })}
+          </View>
+        )}
       </View>
 
       {/* Like + Comment */}
       <View style={styles.actionsContainer}>
-        <TouchableOpacity onPress={handleLike} style={[styles.iconPill, { backgroundColor: liked ? '#fde8e8' : 'transparent' }]}>
+        <TouchableOpacity onPress={handleLike} testID="post-like-button" style={[styles.iconPill, { backgroundColor: liked ? '#fde8e8' : 'transparent' }]}>
           <MaterialIcons name={liked ? 'favorite' : 'favorite-border'} size={20} color={liked ? '#e53935' : '#999'} />
           <Text style={[styles.iconPillText, { color: liked ? '#1f1f1f' : '#999' }]}>{likes}</Text>
         </TouchableOpacity>
@@ -332,7 +334,7 @@ const PostCard = ({ post }: PostCardProps) => {
         </View>
 
         {allCommentsCount > 0 && (
-          <TouchableOpacity onPress={() => setShowComments(prev => !prev)}>
+          <TouchableOpacity testID="view-comments-button" onPress={() => setShowComments(prev => !prev)}>
             <Text style={styles.viewHideText}>
               {showComments ? 'Hide all' : 'View all comments'}
             </Text>
@@ -354,7 +356,7 @@ const PostCard = ({ post }: PostCardProps) => {
           multiline
         />
         {commentText.trim().length > 0 && (
-          <TouchableOpacity onPress={handlePostComment} style={styles.postButton}>
+          <TouchableOpacity testID="post-comment-button" onPress={handlePostComment} style={styles.postButton}>
             <Text style={styles.postButtonText}>Post</Text>
           </TouchableOpacity>
         )}
