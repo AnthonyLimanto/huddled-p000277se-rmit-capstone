@@ -6,23 +6,23 @@ import { Comment } from '../../model/comment';
 import * as AuthContext from '../../context/AuthContext';
 import { Platform } from 'react-native';
 
-// 设置测试超时
+// Set test timeout
 jest.setTimeout(30000);
 
-// 导入实际组件使用的模块，然后在这些模块上使用 spyOn
-// 这样保证 mock 与组件引用的是相同路径
+// Import modules actually used by the component, then use spyOn on these modules
+// This ensures that the mock references the same path as the component
 import * as comments from '../../api/comments';
 import * as postLikes from '../../api/post_likes';
 import * as commentLikes from '../../api/comment_likes';
 
 
-// 然后导入被模拟的函数
+// Then import the mocked functions
 import { downloadPostImage } from '../../helper/bucketHelper';
 
-// 模拟Platform.OS，应该在模拟API之前设置
+// Mock Platform.OS, should be set before mocking APIs
 Platform.OS = 'web';
 
-// 模拟 Auth 上下文，匹配组件的使用方式
+// Mock Auth context, matching component usage
 const mockUser = { id: 'logged-user-123', email: 'user@example.com' };
 jest.spyOn(AuthContext, 'useAuth').mockReturnValue({
   user: mockUser,
@@ -30,37 +30,37 @@ jest.spyOn(AuthContext, 'useAuth').mockReturnValue({
   signOut: jest.fn().mockResolvedValue(undefined)
 });
 
-// 模拟一个更完整的帖子对象，确保所有条件分支都能被触发
+// Mock a more complete post object to ensure all condition branches can be triggered
 const createMockPost = (isLiked = false, hasImage = true): Post => ({
   id: 'post-123',
   user_id: 'user-456',
-  content: '这是一个测试帖子',
-  image_url: hasImage ? 'image1.jpg,image2.jpg' : undefined, // 确保非 'default'
+  content: 'This is a test post',
+  image_url: hasImage ? 'image1.jpg,image2.jpg' : undefined, // Ensure not 'default'
   created_at: new Date(),
   profile: {
     username: 'testuser',
-    degree: '计算机科学',
+    degree: 'Computer Science',
     email: 'test@example.com',
     id: 'user-456' as unknown as number,
     created_at: new Date(),
     pfp_url: 'https://example.com/profile.jpg',
   },
   likes: [{ count: 10 }],
-  count: [{ count: 5 }], // 确保有评论计数 > 0，才会显示"查看评论"按钮
-  isLike: isLiked ? [{}] : [] // 根据参数设置点赞状态
+  count: [{ count: 5 }], // Ensure comment count > 0, to display "View comments" button
+  isLike: isLiked ? [{}] : [] // Set like status based on parameter
 });
 
-// 模拟评论数据
+// Mock comment data
 const mockComments: Comment[] = [
   {
     id: 'comment-1',
     user_id: 'user-789',
     post_id: 'post-123',
-    content: '这是一个测试评论',
+    content: 'This is a test comment',
     created_at: new Date(),
     user: {
       username: 'commenter1',
-      degree: '软件工程',
+      degree: 'Software Engineering',
       email: 'commenter1@example.com'
     },
     count: [{ count: 2 }],
@@ -72,11 +72,11 @@ const mockComments: Comment[] = [
         user_id: 'user-101',
         post_id: 'post-123',
         parent_id: 'comment-1',
-        content: '这是一个测试回复',
+        content: 'This is a test reply',
         created_at: new Date(),
         user: {
           username: 'replier1',
-          degree: '人工智能',
+          degree: 'Artificial Intelligence',
           email: 'replier1@example.com'
         },
         count: [{ count: 0 }],
@@ -87,27 +87,27 @@ const mockComments: Comment[] = [
   }
 ];
 
-describe('PostCard 组件', () => {
-  // 每个测试前重置mock
+describe('PostCard Component', () => {
+  // Reset mocks before each test
   beforeEach(() => {
-    // 清除所有模拟函数的调用历史和实现
+    // Clear all mock function call history and implementations
     jest.clearAllMocks();
     
-    // 重置 Platform.OS 为 'web'，确保图片下载逻辑正确
+    // Reset Platform.OS to 'web' to ensure correct image download logic
     Platform.OS = 'web';
     
-    // 确保 downloadPostImage 被正确模拟
+    // Ensure downloadPostImage is correctly mocked
     (downloadPostImage as jest.Mock).mockImplementation(async (postId: string, imageNameArr: string[]) => {
-      // 如果没有提供图片名称数组，返回空数组
+      // If no image name array is provided, return empty array
       if (!imageNameArr || imageNameArr.length === 0) {
         return [];
       }
-      // 否则为每个图片名称生成一个模拟URL
+      // Otherwise generate a mock URL for each image name
       return imageNameArr.map((name: string) => `https://example.com/${postId}/${name}`);
     });
     
-    // 除非在测试中特别覆盖，否则保持默认的模拟实现
-    // 这样确保每个测试都有一个干净的起点
+    // Unless specifically overridden in the test, keep the default mock implementations
+    // This ensures each test has a clean starting point
     jest.spyOn(comments, 'fetchComments').mockImplementation(() => Promise.resolve(mockComments as any));
     jest.spyOn(comments, 'fetchCommentsByParentId').mockImplementation(() => Promise.resolve(mockComments[0].children as any));
     jest.spyOn(comments, 'createComment').mockImplementation(() => Promise.resolve([{ id: 'new-comment-id' }] as any));
@@ -120,18 +120,18 @@ describe('PostCard 组件', () => {
     jest.spyOn(commentLikes, 'deleteCommentLike').mockImplementation(() => Promise.resolve(true));
   });
 
-  // 测试组件初始化和API调用
-  test('组件加载时应调用fetchComments和downloadPostImage', async () => {
-    // 使用完整的模拟帖子，确保有图片URL
+  // Test component initialization and API calls
+  test('component should call fetchComments and downloadPostImage when loaded', async () => {
+    // Use a complete mock post with image URL
     const mockPost = createMockPost(false, true);
     
-    // 确保组件渲染前就设置好 mock 返回值
+    // Ensure mock is set before rendering component
     jest.spyOn(comments, 'fetchComments').mockResolvedValueOnce(mockComments as any);
     
-    // 渲染组件
+    // Render component
     render(<PostCard post={mockPost} />);
     
-    // 等待fetchComments被调用，使用更长的超时时间
+    // Wait for fetchComments to be called, using a longer timeout
     await waitFor(
       () => {
         expect(comments.fetchComments).toHaveBeenCalledWith('post-123', 'logged-user-123');
@@ -139,7 +139,7 @@ describe('PostCard 组件', () => {
       { timeout: 3000 }
     );
     
-    // 等待downloadPostImage被调用
+    // Wait for downloadPostImage to be called
     await waitFor(
       () => {
         expect(downloadPostImage).toHaveBeenCalledWith('post-123', ['image1.jpg', 'image2.jpg']);
@@ -148,17 +148,17 @@ describe('PostCard 组件', () => {
     );
   });
 
-  // 测试帖子点赞功能
-  test('初始未点赞时，点击点赞按钮应调用addPostLike', async () => {
-    // 使用未点赞的帖子
+  // Test post like functionality
+  test('should call addPostLike when like button is clicked on an unliked post', async () => {
+    // Use an unliked post
     const mockPost = createMockPost(false);
     
-    // 确保组件渲染前设置好 mock
+    // Ensure mock is set before rendering
     jest.spyOn(comments, 'fetchComments').mockResolvedValueOnce(mockComments as any);
     
     const { getByTestId, debug } = render(<PostCard post={mockPost} />);
     
-    // 等待组件初始化完成，使用更长的超时时间
+    // Wait for component initialization to complete, using a longer timeout
     await waitFor(
       () => {
         expect(comments.fetchComments).toHaveBeenCalledWith('post-123', 'logged-user-123');
@@ -166,19 +166,19 @@ describe('PostCard 组件', () => {
       { timeout: 3000 }
     );
     
-    // 等待一段时间，确保组件完全渲染
+    // Wait for a while to ensure component is fully rendered
     await new Promise(resolve => setTimeout(resolve, 500));
     
-    // 输出组件树，帮助诊断问题
-    console.log('点赞测试组件树:', debug());
+    // Output component tree for debugging
+    console.log('Like test component tree:', debug());
     
-    // 找到点赞按钮
+    // Find the like button
     const likeButton = getByTestId('post-like-button');
     
-    // 点击点赞按钮
+    // Click the like button
     fireEvent.press(likeButton);
     
-    // 验证调用了addPostLike，使用更长的超时时间
+    // Verify addPostLike was called, using a longer timeout
     await waitFor(
       () => {
         expect(postLikes.addPostLike).toHaveBeenCalledWith('post-123', 'logged-user-123');
@@ -186,7 +186,7 @@ describe('PostCard 组件', () => {
       { timeout: 3000 }
     );
     
-    // 验证调用了fetchPostLikeInfo更新状态
+    // Verify fetchPostLikeInfo was called to update state
     await waitFor(
       () => {
         expect(postLikes.fetchPostLikeInfo).toHaveBeenCalledWith('post-123', 'logged-user-123');
@@ -195,234 +195,234 @@ describe('PostCard 组件', () => {
     );
   });
   
-  test('初始已点赞时，点击点赞按钮应调用deletePostLike', async () => {
-    // 使用已点赞的帖子
+  test('should call deletePostLike when like button is clicked on an already liked post', async () => {
+    // Use an already liked post
     const mockPost = createMockPost(true);
     
     const { getByTestId } = render(<PostCard post={mockPost} />);
     
-    // 等待组件初始化完成
+    // Wait for component initialization to complete
     await waitFor(() => {
       expect(comments.fetchComments).toHaveBeenCalled();
     });
     
-    // 找到点赞按钮
+    // Find the like button
     const likeButton = getByTestId('post-like-button');
     
-    // 点击点赞按钮
+    // Click the like button
     fireEvent.press(likeButton);
     
-    // 验证调用了deletePostLike
+    // Verify deletePostLike was called
     await waitFor(() => {
       expect(postLikes.deletePostLike).toHaveBeenCalledWith('post-123', 'logged-user-123');
     });
     
-    // 验证调用了fetchPostLikeInfo更新状态
+    // Verify fetchPostLikeInfo was called to update state
     await waitFor(() => {
       expect(postLikes.fetchPostLikeInfo).toHaveBeenCalledWith('post-123', 'logged-user-123');
     });
   });
   
-  // 测试评论显示和操作
-  test('有评论时，应显示"查看所有评论"按钮并能展开评论', async () => {
+  // Test comment display and operations
+  test('should show "View all comments" button and be able to expand comments when there are comments', async () => {
     const mockPost = createMockPost();
     
     const { getByTestId, getByText, queryByText } = render(<PostCard post={mockPost} />);
     
-    // 等待组件初始化完成
+    // Wait for component initialization to complete
     await waitFor(() => {
       expect(comments.fetchComments).toHaveBeenCalled();
     });
     
-    // 验证"查看所有评论"按钮存在
+    // Verify "View all comments" button exists
     const viewCommentsButton = getByTestId('view-comments-button');
     expect(viewCommentsButton).toBeTruthy();
     expect(getByText('View all comments')).toBeTruthy();
     
-    // 点击展开评论
+    // Click to expand comments
     fireEvent.press(viewCommentsButton);
     
-    // 验证评论内容显示
+    // Verify comment content is displayed
     await waitFor(() => {
-      expect(queryByText('这是一个测试评论')).toBeTruthy();
+      expect(queryByText('This is a test comment')).toBeTruthy();
     });
     
-    // 验证按钮文字变为"Hide all"
+    // Verify button text changes to "Hide all"
     expect(getByText('Hide all')).toBeTruthy();
     
-    // 再次点击应隐藏评论
+    // Click again should hide comments
     fireEvent.press(viewCommentsButton);
     
-    // 验证按钮文字变回"View all comments"
+    // Verify button text changes back to "View all comments"
     await waitFor(() => {
       expect(getByText('View all comments')).toBeTruthy();
     });
   });
   
-  // 测试评论点赞功能
-  test('点击评论点赞按钮应调用相应API', async () => {
+  // Test comment like functionality
+  test('should call relevant API when comment like button is clicked', async () => {
     const mockPost = createMockPost();
     
     const { getByTestId } = render(<PostCard post={mockPost} />);
     
-    // 等待组件初始化完成
+    // Wait for component initialization to complete
     await waitFor(() => {
       expect(comments.fetchComments).toHaveBeenCalled();
     });
     
-    // 点击"查看所有评论"按钮展开评论
+    // Click "View all comments" button to expand comments
     const viewCommentsButton = getByTestId('view-comments-button');
     fireEvent.press(viewCommentsButton);
     
-    // 等待评论渲染完成
+    // Wait for comments to render
     await waitFor(() => {
       const commentLikeButton = getByTestId('comment-like-button-comment-1');
       expect(commentLikeButton).toBeTruthy();
     });
     
-    // 点击评论点赞按钮
+    // Click the comment like button
     const commentLikeButton = getByTestId('comment-like-button-comment-1');
     fireEvent.press(commentLikeButton);
     
-    // 验证调用了addCommentLike
+    // Verify addCommentLike was called
     await waitFor(() => {
       expect(commentLikes.addCommentLike).toHaveBeenCalledWith('comment-1', 'logged-user-123');
     });
   });
   
-  // 测试发布评论
-  test('输入评论后应能发布并刷新评论列表', async () => {
+  // Test posting a comment
+  test('should be able to post a comment and refresh comment list', async () => {
     const mockPost = createMockPost();
     
     const { getByTestId, getByPlaceholderText, queryByTestId } = render(<PostCard post={mockPost} />);
     
-    // 等待组件初始化完成
+    // Wait for component initialization to complete
     await waitFor(() => {
       expect(comments.fetchComments).toHaveBeenCalled();
     });
     
-    // 找到评论输入框
+    // Find comment input field
     const commentInput = getByPlaceholderText('Leave your thoughts here ...');
     
-    // 初始状态应该没有发布按钮
+    // Initial state should not have post button
     expect(queryByTestId('post-comment-button')).toBeNull();
     
-    // 输入评论内容
-    fireEvent.changeText(commentInput, '这是一条新评论');
+    // Input comment content
+    fireEvent.changeText(commentInput, 'This is a new comment');
     
-    // 应显示发布按钮
+    // Post button should appear
     await waitFor(() => {
       const postButton = getByTestId('post-comment-button');
       expect(postButton).toBeTruthy();
     });
     
-    // 点击发布按钮
+    // Click post button
     const postButton = getByTestId('post-comment-button');
     fireEvent.press(postButton);
     
-    // 验证调用了createComment
+    // Verify createComment was called
     await waitFor(() => {
       expect(comments.createComment).toHaveBeenCalledWith({
         user_id: 'logged-user-123',
         post_id: 'post-123',
-        content: '这是一条新评论'
+        content: 'This is a new comment'
       });
     });
     
-    // 验证刷新了评论列表
+    // Verify comment list was refreshed
     await waitFor(() => {
       expect(comments.fetchComments).toHaveBeenCalledTimes(2);
     });
   });
   
-  // 测试发布回复
-  test('点击Reply按钮应显示回复框并能发布回复', async () => {
+  // Test posting a reply
+  test('should show reply box and be able to post a reply when Reply button is clicked', async () => {
     const mockPost = createMockPost();
     
     const { getByTestId, getByPlaceholderText } = render(<PostCard post={mockPost} />);
     
-    // 等待组件初始化完成
+    // Wait for component initialization to complete
     await waitFor(() => {
       expect(comments.fetchComments).toHaveBeenCalled();
     });
     
-    // 点击"查看所有评论"按钮展开评论
+    // Click "View all comments" button to expand comments
     const viewCommentsButton = getByTestId('view-comments-button');
     fireEvent.press(viewCommentsButton);
     
-    // 等待评论渲染完成
+    // Wait for comments to render
     await waitFor(() => {
       const replyButton = getByTestId('reply-button-comment-1');
       expect(replyButton).toBeTruthy();
     });
     
-    // 点击回复按钮
+    // Click reply button
     const replyButton = getByTestId('reply-button-comment-1');
     fireEvent.press(replyButton);
     
-    // 应显示回复输入框
+    // Reply input field should appear
     const replyInput = getByPlaceholderText('Write a reply...');
     
-    // 输入回复内容
-    fireEvent.changeText(replyInput, '这是一条回复');
+    // Input reply content
+    fireEvent.changeText(replyInput, 'This is a reply');
     
-    // 等待回复按钮出现
+    // Wait for reply button to appear
     await waitFor(() => {
       const postReplyButton = getByTestId('post-reply-button-comment-1');
       expect(postReplyButton).toBeTruthy();
     });
     
-    // 点击发布回复按钮
+    // Click post reply button
     const postReplyButton = getByTestId('post-reply-button-comment-1');
     fireEvent.press(postReplyButton);
     
-    // 验证调用了createComment
+    // Verify createComment was called
     await waitFor(() => {
       expect(comments.createComment).toHaveBeenCalledWith({
-        content: '这是一条回复',
+        content: 'This is a reply',
         user_id: 'logged-user-123',
         post_id: 'post-123',
         parent_id: 'comment-1'
       });
     });
     
-    // 验证加载了子评论
+    // Verify child comments were loaded
     await waitFor(() => {
       expect(comments.fetchCommentsByParentId).toHaveBeenCalledWith('comment-1', 'logged-user-123');
     });
   });
   
-  // 测试图片加载行为
-  test('帖子有图片时应调用downloadPostImage并显示图片', async () => {
+  // Test image loading behavior
+  test('should call downloadPostImage and display images when post has images', async () => {
     const mockPost = createMockPost(false, true);
     
     const { queryByTestId } = render(<PostCard post={mockPost} />);
     
-    // 等待图片加载
+    // Wait for images to load
     await waitFor(() => {
       expect(downloadPostImage).toHaveBeenCalledWith('post-123', ['image1.jpg', 'image2.jpg']);
     });
     
-    // 验证图片容器存在
+    // Verify image container exists
     await waitFor(() => {
       expect(queryByTestId('post-images-wrapper')).toBeTruthy();
     });
   });
   
-  test('帖子无图片时不应显示图片容器', async () => {
-    // 使用没有图片的帖子
+  test('should not display image container when post has no images', async () => {
+    // Use a post without images
     const mockPost = createMockPost(false, false);
     
-    // 确保组件渲染前就设置好 mock 返回值
+    // Ensure mock is set before rendering
     jest.spyOn(comments, 'fetchComments').mockResolvedValueOnce(mockComments as any);
     
-    // 渲染组件
+    // Render component
     const { queryByTestId, debug } = render(<PostCard post={mockPost} />);
     
-    // 打印组件树，帮助调试
-    console.log('组件树:', debug());
+    // Print component tree for debugging
+    console.log('Component tree:', debug());
     
-    // 先验证 fetchComments 被调用 - 使用更长的超时时间，确保异步操作有足够时间完成
+    // First verify fetchComments was called - use a longer timeout to ensure async operations have enough time to complete
     await waitFor(
       () => {
         expect(comments.fetchComments).toHaveBeenCalledWith('post-123', 'logged-user-123');
@@ -430,13 +430,13 @@ describe('PostCard 组件', () => {
       { timeout: 3000 }
     );
     
-    // 等待组件完全渲染
+    // Wait for component to fully render
     await new Promise(resolve => setTimeout(resolve, 500));
     
-    // 验证图片容器不存在
+    // Verify image container doesn't exist
     expect(queryByTestId('post-image-container')).toBeNull();
     
-    // 验证没有调用 downloadPostImage
+    // Verify downloadPostImage wasn't called
     expect(downloadPostImage).not.toHaveBeenCalled();
   });
 }); 

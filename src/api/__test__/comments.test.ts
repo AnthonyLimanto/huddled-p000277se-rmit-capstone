@@ -1,22 +1,22 @@
-// 导入要测试的函数
+// Import functions to be tested
 import { createComment, fetchComments, fetchCommentsByParentId, deleteComment, canDeleteComment } from '../comments';
 import { supabase } from '../supabase';
 import { CommentCreate } from '../../model/comment';
 
-// 测试前重置所有模拟
+// Reset all mocks before each test
 beforeEach(() => {
   jest.clearAllMocks();
-  // 设置控制台错误的监听器，避免测试中显示太多错误日志
+  // Set up console error listener to avoid showing too many error logs during testing
   jest.spyOn(console, 'error').mockImplementation(() => {});
 });
 
 describe('fetchComments', () => {
-  // 1.1 正常情况：成功获取评论数组
-  test('应返回评论数组', async () => {
+  // 1.1 Normal case: Successfully fetch comments array
+  test('should return comments array', async () => {
     const mockCommentsData = [
       {
         id: 'comment-1',
-        content: '测试评论1',
+        content: 'Test comment 1',
         image_urls: ['image1.jpg'],
         user_id: 'user-1',
         post_id: 'post-1',
@@ -29,7 +29,7 @@ describe('fetchComments', () => {
         children: [
           {
             id: 'comment-child-1',
-            content: '子评论1',
+            content: 'Child comment 1',
             image_urls: ['image2.jpg'],
             user_id: 'user-2',
             post_id: 'post-1',
@@ -44,7 +44,7 @@ describe('fetchComments', () => {
       }
     ];
 
-    // 模拟 Supabase 响应
+    // Mock Supabase response
     (supabase.from as jest.Mock).mockImplementationOnce(() => ({
       select: jest.fn().mockReturnThis(),
       eq: jest.fn().mockReturnThis(),
@@ -62,16 +62,16 @@ describe('fetchComments', () => {
     expect(console.error).not.toHaveBeenCalled();
   });
   
-  // 1.2 异常情况：postId 为无效值时
-  test('postId 为空值时应正确处理', async () => {
-    // 模拟 Supabase 响应，正确实现is方法
+  // 1.2 Exception case: postId is invalid
+  test('should handle empty postId correctly', async () => {
+    // Mock Supabase response, correctly implement is method
     (supabase.from as jest.Mock).mockImplementationOnce(() => ({
       select: jest.fn().mockReturnThis(),
       eq: jest.fn().mockReturnThis(),
       is: jest.fn().mockReturnThis(),
       order: jest.fn().mockResolvedValue({
         data: null,
-        error: new Error('无效的postId')
+        error: new Error('Invalid postId')
       })
     }));
     
@@ -82,16 +82,16 @@ describe('fetchComments', () => {
     expect(console.error).toHaveBeenCalled();
   });
   
-  // 1.3 异常情况：服务器返回错误
-  test('服务器返回错误时应捕获并记录', async () => {
-    // 模拟 Supabase 响应错误
+  // 1.3 Exception case: Server returns error
+  test('should catch and log errors when server returns an error', async () => {
+    // Mock Supabase response error
     (supabase.from as jest.Mock).mockImplementationOnce(() => ({
       select: jest.fn().mockReturnThis(),
       eq: jest.fn().mockReturnThis(),
       is: jest.fn().mockReturnThis(),
       order: jest.fn().mockResolvedValue({
         data: null,
-        error: new Error('服务器错误')
+        error: new Error('Server error')
       })
     }));
     
@@ -103,12 +103,12 @@ describe('fetchComments', () => {
 });
 
 describe('fetchCommentsByParentId', () => {
-  // 2.1 正常情况：成功获取子评论数组
-  test('应返回子评论数组', async () => {
+  // 2.1 Normal case: Successfully fetch child comments array
+  test('should return child comments array', async () => {
     const mockChildCommentsData = [
       {
         id: 'comment-child-1',
-        content: '子评论1',
+        content: 'Child comment 1',
         image_urls: ['image2.jpg'],
         user_id: 'user-2',
         post_id: 'post-1',
@@ -122,7 +122,7 @@ describe('fetchCommentsByParentId', () => {
       }
     ];
 
-    // 模拟 Supabase 响应
+    // Mock Supabase response
     (supabase.from as jest.Mock).mockImplementationOnce(() => ({
       select: jest.fn().mockReturnThis(),
       eq: jest.fn().mockReturnThis(),
@@ -139,15 +139,15 @@ describe('fetchCommentsByParentId', () => {
     expect(console.error).not.toHaveBeenCalled();
   });
   
-  // 2.2 异常情况：parentId 为无效值时
-  test('parentId 为空值时应正确处理', async () => {
-    // 模拟 Supabase 响应，确保order方法被正确模拟
+  // 2.2 Exception case: parentId is invalid
+  test('should handle empty parentId correctly', async () => {
+    // Mock Supabase response, ensure order method is correctly mocked
     (supabase.from as jest.Mock).mockImplementationOnce(() => ({
       select: jest.fn().mockReturnThis(),
       eq: jest.fn().mockReturnThis(),
       order: jest.fn().mockResolvedValue({
         data: null,
-        error: new Error('无效的parentId')
+        error: new Error('Invalid parentId')
       })
     }));
     
@@ -158,15 +158,15 @@ describe('fetchCommentsByParentId', () => {
     expect(console.error).toHaveBeenCalled();
   });
   
-  // 2.3 异常情况：服务器返回错误
-  test('服务器返回错误时应捕获并记录', async () => {
-    // 模拟 Supabase 响应错误
+  // 2.3 Exception case: Server returns error
+  test('should catch and log errors when server returns an error', async () => {
+    // Mock Supabase response error
     (supabase.from as jest.Mock).mockImplementationOnce(() => ({
       select: jest.fn().mockReturnThis(),
       eq: jest.fn().mockReturnThis(),
       order: jest.fn().mockResolvedValue({
         data: null,
-        error: new Error('服务器错误')
+        error: new Error('Server error')
       })
     }));
     
@@ -178,10 +178,10 @@ describe('fetchCommentsByParentId', () => {
 });
 
 describe('createComment', () => {
-  // 3.1 正常情况：创建评论成功
-  test('应正确创建评论并返回评论数据', async () => {
+  // 3.1 Normal case: Successfully create comment
+  test('should create comment and return comment data', async () => {
     const commentData: CommentCreate = {
-      content: '测试评论内容',
+      content: 'Test comment content',
       user_id: 'user-1',
       post_id: 'post-1',
       parent_id: undefined,
@@ -191,7 +191,7 @@ describe('createComment', () => {
     const mockResponseData = [
       {
         id: 'new-comment-id',
-        content: '测试评论内容',
+        content: 'Test comment content',
         user_id: 'user-1',
         post_id: 'post-1',
         parent_id: null,
@@ -200,7 +200,7 @@ describe('createComment', () => {
       }
     ];
     
-    // 模拟 Supabase 响应
+    // Mock Supabase response
     (supabase.from as jest.Mock).mockImplementationOnce(() => ({
       insert: jest.fn().mockReturnThis(),
       select: jest.fn().mockResolvedValue({
@@ -215,53 +215,53 @@ describe('createComment', () => {
     expect(supabase.from).toHaveBeenCalledWith('comments');
   });
   
-  // 3.2 异常情况：创建评论失败，参数缺失
-  test('参数缺失时应抛出错误', async () => {
+  // 3.2 Exception case: Create comment fails, missing parameters
+  test('should throw error when parameters are missing', async () => {
     const incompleteCommentData = {
-      // 缺少必要字段
-      content: '测试评论内容',
-      // user_id 和 post_id 缺失
+      // Missing required fields
+      content: 'Test comment content',
+      // user_id and post_id missing
       parent_id: undefined,
       image_url: undefined
     } as unknown as CommentCreate;
     
-    // 模拟 Supabase 响应错误
+    // Mock Supabase response error
     (supabase.from as jest.Mock).mockImplementationOnce(() => ({
       insert: jest.fn().mockReturnThis(),
       select: jest.fn().mockResolvedValue({
         data: null,
-        error: new Error('缺少必要参数')
+        error: new Error('Missing required parameters')
       })
     }));
     
     await expect(createComment(incompleteCommentData)).rejects.toThrow();
   });
   
-  // 3.3 异常情况：服务器返回错误
-  test('服务器返回错误时应正确抛出', async () => {
+  // 3.3 Exception case: Server returns error
+  test('should throw error when server returns an error', async () => {
     const commentData: CommentCreate = {
-      content: '测试评论内容',
+      content: 'Test comment content',
       user_id: 'user-1',
       post_id: 'post-1',
       parent_id: undefined,
       image_url: undefined
     };
     
-    // 模拟 Supabase 响应错误
+    // Mock Supabase response error
     (supabase.from as jest.Mock).mockImplementationOnce(() => ({
       insert: jest.fn().mockReturnThis(),
       select: jest.fn().mockResolvedValue({
         data: null,
-        error: new Error('服务器错误')
+        error: new Error('Server error')
       })
     }));
     
     await expect(createComment(commentData)).rejects.toThrow();
   });
   
-  // 3.4 边界情况：评论内容超长
-  test('评论内容超长时应正确处理', async () => {
-    // 创建一个超长的评论内容（超过1000字符）
+  // 3.4 Edge case: Comment content too long
+  test('should handle comment content that exceeds the limit', async () => {
+    // Create a comment content that exceeds 1000 characters
     const longContent = 'a'.repeat(1001);
     
     const commentData: CommentCreate = {
@@ -272,12 +272,12 @@ describe('createComment', () => {
       image_url: undefined
     };
     
-    // 模拟 Supabase 响应
+    // Mock Supabase response
     (supabase.from as jest.Mock).mockImplementationOnce(() => ({
       insert: jest.fn().mockReturnThis(),
       select: jest.fn().mockResolvedValue({
         data: null,
-        error: new Error('评论内容超过限制')
+        error: new Error('Comment content exceeds limit')
       })
     }));
     
@@ -286,9 +286,9 @@ describe('createComment', () => {
 });
 
 describe('deleteComment', () => {
-  // 4.1 正常情况：评论删除成功
-  test('应正确删除评论并返回true', async () => {
-    // 模拟 Supabase 响应
+  // 4.1 Normal case: Comment deletion succeeds
+  test('should delete comment and return true', async () => {
+    // Mock Supabase response
     (supabase.from as jest.Mock).mockImplementationOnce(() => ({
       delete: jest.fn().mockReturnThis(),
       eq: jest.fn().mockResolvedValue({
@@ -302,13 +302,13 @@ describe('deleteComment', () => {
     expect(supabase.from).toHaveBeenCalledWith('comments');
   });
   
-  // 4.2 异常情况：删除不存在的评论
-  test('删除不存在的评论应抛出错误', async () => {
-    // 模拟 Supabase 响应
+  // 4.2 Exception case: Delete non-existent comment
+  test('should throw error when deleting non-existent comment', async () => {
+    // Mock Supabase response
     (supabase.from as jest.Mock).mockImplementationOnce(() => ({
       delete: jest.fn().mockReturnThis(),
       eq: jest.fn().mockResolvedValue({
-        error: new Error('评论不存在')
+        error: new Error('Comment does not exist')
       })
     }));
     
@@ -316,13 +316,13 @@ describe('deleteComment', () => {
     expect(supabase.from).toHaveBeenCalledWith('comments');
   });
   
-  // 4.3 异常情况：服务器错误
-  test('服务器错误时应正确抛出', async () => {
-    // 模拟 Supabase 响应
+  // 4.3 Exception case: Server error
+  test('should throw error when server returns an error', async () => {
+    // Mock Supabase response
     (supabase.from as jest.Mock).mockImplementationOnce(() => ({
       delete: jest.fn().mockReturnThis(),
       eq: jest.fn().mockResolvedValue({
-        error: new Error('服务器错误')
+        error: new Error('Server error')
       })
     }));
     
@@ -332,9 +332,9 @@ describe('deleteComment', () => {
 });
 
 describe('canDeleteComment', () => {
-  // 5.1 正常情况：用户是评论作者
-  test('用户是评论作者时应返回true', async () => {
-    // 模拟 Supabase 响应
+  // 5.1 Normal case: User is comment author
+  test('should return true when user is comment author', async () => {
+    // Mock Supabase response
     (supabase.from as jest.Mock).mockImplementationOnce(() => ({
       select: jest.fn().mockReturnThis(),
       eq: jest.fn().mockReturnThis(),
@@ -350,9 +350,9 @@ describe('canDeleteComment', () => {
     expect(supabase.from).toHaveBeenCalledWith('comments');
   });
   
-  // 5.2 正常情况：用户不是评论作者
-  test('用户不是评论作者时应返回false', async () => {
-    // 模拟 Supabase 响应
+  // 5.2 Normal case: User is not comment author
+  test('should return false when user is not comment author', async () => {
+    // Mock Supabase response
     (supabase.from as jest.Mock).mockImplementationOnce(() => ({
       select: jest.fn().mockReturnThis(),
       eq: jest.fn().mockReturnThis(),
@@ -368,9 +368,9 @@ describe('canDeleteComment', () => {
     expect(supabase.from).toHaveBeenCalledWith('comments');
   });
   
-  // 5.3 异常情况：评论不存在
-  test('评论不存在时应返回false', async () => {
-    // 模拟 Supabase 响应
+  // 5.3 Exception case: Comment does not exist
+  test('should return false when comment does not exist', async () => {
+    // Mock Supabase response
     (supabase.from as jest.Mock).mockImplementationOnce(() => ({
       select: jest.fn().mockReturnThis(),
       eq: jest.fn().mockReturnThis(),
@@ -386,15 +386,15 @@ describe('canDeleteComment', () => {
     expect(supabase.from).toHaveBeenCalledWith('comments');
   });
   
-  // 5.4 异常情况：服务器错误
-  test('服务器错误时应返回false', async () => {
-    // 模拟 Supabase 响应
+  // 5.4 Exception case: Server error
+  test('should return false when server returns an error', async () => {
+    // Mock Supabase response
     (supabase.from as jest.Mock).mockImplementationOnce(() => ({
       select: jest.fn().mockReturnThis(),
       eq: jest.fn().mockReturnThis(),
       maybeSingle: jest.fn().mockResolvedValue({
         data: null,
-        error: new Error('服务器错误')
+        error: new Error('Server error')
       })
     }));
     

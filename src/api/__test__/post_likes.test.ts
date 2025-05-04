@@ -1,25 +1,25 @@
-// 导入要测试的函数
+// Import functions to be tested
 import { fetchPostLikeInfo, addPostLike, deletePostLike } from '../post_likes';
 import { supabase } from '../supabase';
 
-// 测试前重置所有模拟
+// Reset all mocks before each test
 beforeEach(() => {
   jest.clearAllMocks();
-  // 避免测试中显示太多错误日志
+  // Avoid displaying too many error logs during testing
   jest.spyOn(console, 'error').mockImplementation(() => {});
 });
 
-describe('fetchPostLikeInfo 函数', () => {
-  // 情境 1：正常情况（有点赞记录）
-  test('有点赞记录时应返回正确的点赞数和用户已点赞状态', async () => {
-    // 模拟第一次调用（获取点赞数）
+describe('fetchPostLikeInfo function', () => {
+  // Scenario 1: Normal case (has like records)
+  test('should return correct like count and user like status when post has likes', async () => {
+    // Mock first call (get like count)
     (supabase.from as jest.Mock).mockImplementationOnce(() => ({
       select: jest.fn().mockReturnValue({
         eq: jest.fn().mockResolvedValue({ count: 5, error: null })
       })
     }));
     
-    // 模拟第二次调用（获取用户点赞状态）
+    // Mock second call (get user like status)
     (supabase.from as jest.Mock).mockImplementationOnce(() => ({
       select: jest.fn().mockReturnValue({
         eq: jest.fn().mockReturnValue({
@@ -43,16 +43,16 @@ describe('fetchPostLikeInfo 函数', () => {
     expect(supabase.from).toHaveBeenCalledWith('post_likes');
   });
   
-  // 情境 2：正常情况（没有人点赞）
-  test('没有点赞记录时应返回0点赞数和用户未点赞状态', async () => {
-    // 模拟第一次调用（获取点赞数）
+  // Scenario 2: Normal case (no likes)
+  test('should return 0 likes and no user like status when post has no likes', async () => {
+    // Mock first call (get like count)
     (supabase.from as jest.Mock).mockImplementationOnce(() => ({
       select: jest.fn().mockReturnValue({
         eq: jest.fn().mockResolvedValue({ count: 0, error: null })
       })
     }));
     
-    // 模拟第二次调用（获取用户点赞状态）
+    // Mock second call (get user like status)
     (supabase.from as jest.Mock).mockImplementationOnce(() => ({
       select: jest.fn().mockReturnValue({
         eq: jest.fn().mockReturnValue({
@@ -76,12 +76,12 @@ describe('fetchPostLikeInfo 函数', () => {
     expect(supabase.from).toHaveBeenCalledWith('post_likes');
   });
   
-  // 情境 3：查询点赞数时出现错误
-  test('查询点赞数失败时应返回默认值', async () => {
-    // 模拟 count 查询错误
+  // Scenario 3: Error when querying like count
+  test('should return default values when like count query fails', async () => {
+    // Mock count query error
     (supabase.from as jest.Mock).mockImplementationOnce(() => ({
       select: jest.fn().mockReturnValue({
-        eq: jest.fn().mockResolvedValue({ count: null, error: new Error('数据库错误') })
+        eq: jest.fn().mockResolvedValue({ count: null, error: new Error('Database error') })
       })
     }));
     
@@ -94,23 +94,23 @@ describe('fetchPostLikeInfo 函数', () => {
     expect(console.error).toHaveBeenCalled();
   });
   
-  // 情境 4：查询当前用户是否点赞时出错
-  test('查询用户点赞状态失败时应返回默认值', async () => {
-    // 模拟第一次调用（获取点赞数）
+  // Scenario 4: Error when querying current user like status
+  test('should return default values when user like status query fails', async () => {
+    // Mock first call (get like count)
     (supabase.from as jest.Mock).mockImplementationOnce(() => ({
       select: jest.fn().mockReturnValue({
         eq: jest.fn().mockResolvedValue({ count: 5, error: null })
       })
     }));
     
-    // 模拟用户点赞查询错误
+    // Mock user like query error
     (supabase.from as jest.Mock).mockImplementationOnce(() => ({
       select: jest.fn().mockReturnValue({
         eq: jest.fn().mockReturnValue({
           eq: jest.fn().mockReturnValue({
             maybeSingle: jest.fn().mockResolvedValue({ 
               data: null, 
-              error: new Error('用户点赞状态查询错误') 
+              error: new Error('User like status query error') 
             })
           })
         })
@@ -127,10 +127,10 @@ describe('fetchPostLikeInfo 函数', () => {
   });
 });
 
-describe('addPostLike 函数', () => {
-  // 情境 1：插入成功
-  test('插入点赞记录成功时应返回 true', async () => {
-    // 模拟插入操作成功
+describe('addPostLike function', () => {
+  // Scenario 1: Successful insert
+  test('should return true when like record is successfully inserted', async () => {
+    // Mock successful insert operation
     (supabase.from as jest.Mock).mockImplementationOnce(() => ({
       insert: jest.fn().mockResolvedValue({ data: {}, error: null })
     }));
@@ -141,13 +141,13 @@ describe('addPostLike 函数', () => {
     expect(supabase.from).toHaveBeenCalledWith('post_likes');
   });
   
-  // 情境 2：插入失败
-  test('插入点赞记录失败时应返回 false', async () => {
-    // 模拟插入操作失败
+  // Scenario 2: Insert fails
+  test('should return false when like record insertion fails', async () => {
+    // Mock failed insert operation
     (supabase.from as jest.Mock).mockImplementationOnce(() => ({
       insert: jest.fn().mockResolvedValue({ 
         data: null, 
-        error: new Error('插入点赞记录失败') 
+        error: new Error('Failed to insert like record') 
       })
     }));
     
@@ -158,10 +158,10 @@ describe('addPostLike 函数', () => {
   });
 });
 
-describe('deletePostLike 函数', () => {
-  // 情境 1：删除成功
-  test('删除点赞记录成功时应返回 true', async () => {
-    // 模拟删除操作成功
+describe('deletePostLike function', () => {
+  // Scenario 1: Successful delete
+  test('should return true when like record is successfully deleted', async () => {
+    // Mock successful delete operation
     (supabase.from as jest.Mock).mockImplementationOnce(() => ({
       delete: jest.fn().mockReturnValue({
         eq: jest.fn().mockReturnValue({
@@ -176,13 +176,13 @@ describe('deletePostLike 函数', () => {
     expect(supabase.from).toHaveBeenCalledWith('post_likes');
   });
   
-  // 情境 2：删除失败
-  test('删除点赞记录失败时应返回 false', async () => {
-    // 模拟删除操作失败
+  // Scenario 2: Delete fails
+  test('should return false when like record deletion fails', async () => {
+    // Mock failed delete operation
     (supabase.from as jest.Mock).mockImplementationOnce(() => ({
       delete: jest.fn().mockReturnValue({
         eq: jest.fn().mockReturnValue({
-          eq: jest.fn().mockResolvedValue({ error: new Error('删除点赞记录失败') })
+          eq: jest.fn().mockResolvedValue({ error: new Error('Failed to delete like record') })
         })
       })
     }));

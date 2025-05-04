@@ -1,19 +1,18 @@
-// 导入要测试的函数
 import { fetchCommentLikeInfo, addCommentLike, deleteCommentLike } from '../comment_likes';
 import { deleteComment, canDeleteComment } from '../comments';
 import { supabase } from '../supabase';
 
-// 测试前重置所有模拟
+// Reset all mocks before each test
 beforeEach(() => {
   jest.clearAllMocks();
-  // 设置控制台错误的监听器，避免测试中显示太多错误日志
+  // Set up console error listener to avoid showing too many error logs during testing
   jest.spyOn(console, 'error').mockImplementation(() => {});
 });
 
 describe('likeComment', () => {
-  // 4.1 正常情况：成功为评论点赞
-  test('点赞成功时应返回true', async () => {
-    // 模拟点赞操作成功
+  // 4.1 Normal case: Successfully like a comment
+  test('should return true when like operation succeeds', async () => {
+    // Mock successful like operation
     (supabase.from as jest.Mock).mockImplementationOnce(() => ({
       insert: jest.fn().mockResolvedValue({ 
         data: {}, 
@@ -27,12 +26,12 @@ describe('likeComment', () => {
     expect(supabase.from).toHaveBeenCalledWith('comment_likes');
   });
   
-  // 4.2 异常情况：commentId 缺失或非法值
-  test('commentId为空时应返回错误', async () => {
-    // 模拟空commentId抛出错误
+  // 4.2 Exception case: Missing or invalid commentId
+  test('should return error when commentId is empty', async () => {
+    // Mock empty commentId error
     (supabase.from as jest.Mock).mockImplementationOnce(() => ({
       insert: jest.fn().mockImplementation(() => {
-        throw new Error('无效的评论ID');
+        throw new Error('Invalid comment ID');
       })
     }));
     
@@ -42,13 +41,13 @@ describe('likeComment', () => {
     expect(console.error).toHaveBeenCalled();
   });
   
-  // 4.3 异常情况：服务器返回错误
-  test('服务器返回错误时应处理并返回false', async () => {
-    // 模拟服务器返回错误
+  // 4.3 Exception case: Server returns error
+  test('should handle server error and return false', async () => {
+    // Mock server error
     (supabase.from as jest.Mock).mockImplementationOnce(() => ({
       insert: jest.fn().mockResolvedValue({ 
         data: null, 
-        error: new Error('数据库错误') 
+        error: new Error('Database error') 
       })
     }));
     
@@ -58,13 +57,13 @@ describe('likeComment', () => {
     expect(console.error).toHaveBeenCalled();
   });
   
-  // 4.4 异常情况：已点赞重复点击
-  test('已点赞的评论重复点赞应返回错误', async () => {
-    // 模拟插入失败（唯一约束错误）
+  // 4.4 Exception case: Already liked, attempting to like again
+  test('should return error when trying to like an already liked comment', async () => {
+    // Mock insert failure (unique constraint error)
     (supabase.from as jest.Mock).mockImplementationOnce(() => ({
       insert: jest.fn().mockResolvedValue({ 
         data: null, 
-        error: { code: '23505', message: '违反唯一约束' } // PostgreSQL 唯一约束错误码
+        error: { code: '23505', message: 'Unique constraint violation' } // PostgreSQL unique constraint error code
       })
     }));
     
@@ -76,9 +75,9 @@ describe('likeComment', () => {
 });
 
 describe('unlikeComment', () => {
-  // 5.1 正常情况：成功取消点赞
-  test('取消点赞成功时应返回true', async () => {
-    // 模拟取消点赞操作成功
+  // 5.1 Normal case: Successfully unlike a comment
+  test('should return true when unlike operation succeeds', async () => {
+    // Mock successful unlike operation
     (supabase.from as jest.Mock).mockImplementationOnce(() => ({
       delete: jest.fn().mockReturnValue({
         eq: jest.fn().mockReturnValue({
@@ -93,12 +92,12 @@ describe('unlikeComment', () => {
     expect(supabase.from).toHaveBeenCalledWith('comment_likes');
   });
   
-  // 5.2 异常情况：commentId 缺失或非法值
-  test('commentId为空时应返回错误', async () => {
-    // 模拟空commentId抛出错误
+  // 5.2 Exception case: Missing or invalid commentId
+  test('should return error when commentId is empty', async () => {
+    // Mock empty commentId error
     (supabase.from as jest.Mock).mockImplementationOnce(() => ({
       delete: jest.fn().mockImplementation(() => {
-        throw new Error('无效的评论ID');
+        throw new Error('Invalid comment ID');
       })
     }));
     
@@ -108,13 +107,13 @@ describe('unlikeComment', () => {
     expect(console.error).toHaveBeenCalled();
   });
   
-  // 5.3 异常情况：服务器返回错误
-  test('服务器返回错误时应处理并返回false', async () => {
-    // 模拟服务器返回错误
+  // 5.3 Exception case: Server returns error
+  test('should handle server error and return false', async () => {
+    // Mock server error
     (supabase.from as jest.Mock).mockImplementationOnce(() => ({
       delete: jest.fn().mockReturnValue({
         eq: jest.fn().mockReturnValue({
-          eq: jest.fn().mockResolvedValue({ error: new Error('数据库错误') })
+          eq: jest.fn().mockResolvedValue({ error: new Error('Database error') })
         })
       })
     }));
@@ -125,15 +124,15 @@ describe('unlikeComment', () => {
     expect(console.error).toHaveBeenCalled();
   });
   
-  // 5.4 边界情况：未点赞时尝试取消点赞
-  test('未点赞的评论尝试取消点赞应正确处理', async () => {
-    // 模拟没有删除任何行的情况（但不视为错误）
+  // 5.4 Edge case: Attempting to unlike a comment that wasn't liked
+  test('should correctly handle attempting to unlike a comment that was not liked', async () => {
+    // Mock case where no rows were deleted (but not considered an error)
     (supabase.from as jest.Mock).mockImplementationOnce(() => ({
       delete: jest.fn().mockReturnValue({
         eq: jest.fn().mockReturnValue({
           eq: jest.fn().mockResolvedValue({ 
             error: null,
-            data: { count: 0 } // 没有删除任何行
+            data: { count: 0 } // No rows deleted
           })
         })
       })
@@ -141,17 +140,17 @@ describe('unlikeComment', () => {
     
     const result = await deleteCommentLike('comment-123', 'user-123');
     
-    expect(result).toBe(true); // API设计为无论是否实际删除了记录，只要操作本身没有错误就返回true
+    expect(result).toBe(true); // API designed to return true as long as the operation itself didn't error, regardless of whether any rows were actually deleted
     expect(supabase.from).toHaveBeenCalledWith('comment_likes');
   });
 });
 
-describe('获取评论点赞信息 - 边界情况', () => {
-  // 6.1 网络异常情况
-  test('网络异常时应返回默认值', async () => {
-    // 模拟网络异常
+describe('Fetch comment like info - edge cases', () => {
+  // 6.1 Network exception case
+  test('should return default values when network exception occurs', async () => {
+    // Mock network exception
     (supabase.from as jest.Mock).mockImplementationOnce(() => {
-      throw new Error('网络异常');
+      throw new Error('Network exception');
     });
     
     const result = await fetchCommentLikeInfo('comment-123', 'user-123');
@@ -163,10 +162,10 @@ describe('获取评论点赞信息 - 边界情况', () => {
     expect(console.error).toHaveBeenCalled();
   });
   
-  // 6.2 并发调用时的行为
-  test('并发调用应各自独立运行', async () => {
-    // 模拟第一次调用 fetchCommentLikeInfo
-    // 第一次调用的第一个请求（获取点赞数）
+  // 6.2 Concurrent calls behavior
+  test('concurrent calls should run independently', async () => {
+    // Mock first call to fetchCommentLikeInfo
+    // First call's first request (getting like count)
     (supabase.from as jest.Mock).mockImplementationOnce(() => ({
       select: jest.fn().mockReturnValue({
         eq: jest.fn().mockResolvedValue({ 
@@ -176,7 +175,7 @@ describe('获取评论点赞信息 - 边界情况', () => {
       })
     }));
     
-    // 第一次调用的第二个请求（检查用户是否点赞）
+    // First call's second request (checking if user has liked)
     (supabase.from as jest.Mock).mockImplementationOnce(() => ({
       select: jest.fn().mockReturnValue({
         eq: jest.fn().mockReturnValue({
@@ -190,8 +189,8 @@ describe('获取评论点赞信息 - 边界情况', () => {
       })
     }));
     
-    // 模拟第二次调用 fetchCommentLikeInfo
-    // 第二次调用的第一个请求（获取点赞数）
+    // Mock second call to fetchCommentLikeInfo
+    // Second call's first request (getting like count)
     (supabase.from as jest.Mock).mockImplementationOnce(() => ({
       select: jest.fn().mockReturnValue({
         eq: jest.fn().mockResolvedValue({ 
@@ -201,7 +200,7 @@ describe('获取评论点赞信息 - 边界情况', () => {
       })
     }));
     
-    // 第二次调用的第二个请求（检查用户是否点赞）
+    // Second call's second request (checking if user has liked)
     (supabase.from as jest.Mock).mockImplementationOnce(() => ({
       select: jest.fn().mockReturnValue({
         eq: jest.fn().mockReturnValue({
@@ -215,7 +214,7 @@ describe('获取评论点赞信息 - 边界情况', () => {
       })
     }));
     
-    // 并发调用两次
+    // Make two concurrent calls
     const result1 = await fetchCommentLikeInfo('comment-123', 'user-123');
     const result2 = await fetchCommentLikeInfo('comment-456', 'user-123');
     
@@ -231,10 +230,10 @@ describe('获取评论点赞信息 - 边界情况', () => {
   });
 });
 
-describe('评论删除功能', () => {
-  // 7.1 模拟一个评论删除功能
-  test('删除评论时应连带删除点赞记录', async () => {
-    // 模拟删除点赞记录的级联操作
+describe('Comment deletion functionality', () => {
+  // 7.1 Mock a comment deletion feature
+  test('should also delete like records when a comment is deleted', async () => {
+    // Mock cascading delete of like records
     (supabase.from as jest.Mock).mockImplementationOnce(() => ({
       delete: jest.fn().mockReturnThis(),
       eq: jest.fn().mockResolvedValue({ error: null })
@@ -246,9 +245,9 @@ describe('评论删除功能', () => {
     expect(supabase.from).toHaveBeenCalledWith('comments');
   });
   
-  // 7.2 模拟一个非作者尝试删除评论的情况
-  test('非评论作者尝试删除评论应失败', async () => {
-    // 模拟查询返回不同的用户ID
+  // 7.2 Mock a non-author attempting to delete a comment
+  test('should fail when a non-author tries to delete a comment', async () => {
+    // Mock query returning a different user ID
     (supabase.from as jest.Mock).mockImplementationOnce(() => ({
       select: jest.fn().mockReturnThis(),
       eq: jest.fn().mockReturnThis(),
