@@ -6,6 +6,7 @@ export type Comment = {
     user_id: string,
     post_id: string,
     parent_id?: string,
+    layer_id?: string,
     content: string,
     image_url?: string
     created_at: Date
