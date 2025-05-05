@@ -1,11 +1,16 @@
 import { Ionicons } from '@expo/vector-icons';
 import React from 'react';
-import { Platform, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Image, Platform, SafeAreaView, StyleSheet, TouchableOpacity, View } from 'react-native';
 
 const Header = () => {
   return (
-        <View style={styles.header}>
-          <Text style={styles.title}>Huddled</Text>
+      <SafeAreaView style={styles.container}>
+          <View style={styles.logoContainer}>
+            <Image
+              source={require('../../assets/images/Huddled-wordmark.png')}
+              style={styles.logoWordmark}
+            />
+          </View>
           <TouchableOpacity style={styles.notificationIcon} >
             <Ionicons name={Platform.OS === 'ios' ? 'notifications-outline' : 'notifications-outline'}
               size={30}
@@ -14,17 +19,28 @@ const Header = () => {
               color="#FFFFFF"
             />
           </TouchableOpacity>
-        </View>
+          </SafeAreaView>
   );
 };
 const styles = StyleSheet.create({
-    header: {
+  container: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
         paddingHorizontal: 20,
         paddingTop: 20,
         paddingBottom: 10,
+      },
+      logoContainer: {
+        alignItems: 'left',
+        marginTop: 5,
+        marginLeft: 20,
+        marginBottom: 10,
+      },
+      logoWordmark: {
+        width: 150,
+        height: 50,
+        resizeMode: 'contain',
       },
       title: {
         fontSize: 28,
@@ -35,7 +51,7 @@ const styles = StyleSheet.create({
         width: 50,
         height: 40,
         borderRadius: 10,
-        backgroundColor: '#1357DA',
+        backgroundColor: '#075DB6',
         alignItems: 'center',
         justifyContent: 'center',
       },
