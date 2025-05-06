@@ -1,10 +1,11 @@
-import React, { useMemo, useState } from 'react';
 import { Alert, Image, SafeAreaView, StatusBar, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { createPost } from '../../api/posts';
 import { supabase } from '../../api/supabase';
 import { uploadPostImages } from '../../helper/bucketHelper';
+import { Audio } from 'expo-av';
 import * as ImagePicker from 'expo-image-picker';
+import React, { useEffect, useMemo, useRef, useState } from 'react'
 
 const MAX_IMAGE_COUNT = 4;
 
@@ -22,6 +23,23 @@ export default function CreatePostScreen() {
   const [fileList, setFileList] = useState<ImageFileType[]>([]);
 
   const isImageReachLimit = useMemo(() => fileList.length >= MAX_IMAGE_COUNT, [fileList]);
+  const dingSound = useRef<Audio.Sound | null>(null);
+  useEffect(() => {
+    const loadSound = async () => {
+      const { sound } = await Audio.Sound.createAsync(
+        require('../../../assets/sounds/Post_sound.mp3')
+      );
+      dingSound.current = sound;
+    };
+
+    loadSound();
+
+    return () => {
+      if (dingSound.current) {
+        dingSound.current.unloadAsync();
+      }
+    };
+  }, []);
 
   const getSessionUser = async () => {
     const { data, error } = await supabase.auth.getUser();
@@ -64,23 +82,30 @@ export default function CreatePostScreen() {
     }
   };
 
-  const handleSubmit = async () => {
+    const handleSubmit = async () => {
     try {
+      //  Play ding sound
+      if (dingSound.current) {
+        await dingSound.current.replayAsync();
+      }
+
       if (text.trim() === "" && fileList.length === 0) {
         console.log('Please enter text or select an image to post.');
-        return
+        return;
       }
+
       const currentUserId = await getSessionUser();
-      const fileNameArr = (fileList || []).map((file) => file.name);
+      const fileNameArr = fileList.map((file) => file.name);
       const sentPost = await createPost(currentUserId, text, fileNameArr.join(','));
       console.log("Post file created:", postFile, sentPost);
-      if (fileList?.length && sentPost) {
-        await uploadPostImages(fileList, sentPost[0].id); // ✅ Upload image to bucket
+
+      if (fileList.length && sentPost) {
+        await uploadPostImages(fileList, sentPost[0].id);
       }
-      console.log("Sent post:", sentPost);
 
       Alert.alert('Success', 'Post created successfully!');
       setText("");
+      setFileList([]);
     } catch (error) {
       console.error("Error creating post:", error);
       Alert.alert('Error', 'Failed to create post.');
