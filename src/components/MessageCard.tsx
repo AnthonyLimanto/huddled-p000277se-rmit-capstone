@@ -33,7 +33,7 @@ const styles = StyleSheet.create({
   },
   ownMessage: {
     alignSelf: 'flex-end',
-    backgroundColor: '#DCF8C6', // Light green for own messages
+    backgroundColor: '#F0F9FF'
   },
   otherMessage: {
     alignSelf: 'flex-start',

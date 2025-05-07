@@ -13,7 +13,11 @@ import {
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import MessageCard from '@/src/components/MessageCard';
-import { fetchGroupMessages, sendGroupMessage } from '@/src/api/group-message';
+import {
+  fetchGroupMessages,
+  sendGroupMessage,
+  subscribeToGroupMessages,
+} from '@/src/api/group-message';
 import { getSessionUser } from '@/src/api/users';
 import { Group } from '@/src/model/group';
 import { fetchGroup } from '@/src/api/group';
@@ -36,7 +40,6 @@ export default function ChatScreen() {
 
         const fetchedGroup = await fetchGroup(groupId);
         if (fetchedGroup && fetchedGroup.length > 0) {
-          console.log(fetchedGroup);
           setGroup(fetchedGroup[0]);
         }
 
@@ -54,8 +57,47 @@ export default function ChatScreen() {
     };
 
     loadData();
+
+    // Subscribe to real-time updates
+    const unsubscribe = subscribeToGroupMessages(groupId as string, (payload) => {
+      console.log('Real-time update:', payload);
+
+      if (payload.eventType === 'INSERT') {
+        // Add new message to the list
+        setMessages((prevMessages) => [
+          ...prevMessages,
+          {
+            id: payload.new.id,
+            sender: payload.new.users?.username || 'Unknown',
+            content: payload.new.content,
+            isOwnMessage: payload.new.user_id === currentUser?.id,
+          },
+        ]);
+      } else if (payload.eventType === 'UPDATE') {
+        // Update an existing message
+        setMessages((prevMessages) =>
+          prevMessages.map((message) =>
+            message.id === payload.new.id
+              ? {
+                  ...message,
+                  content: payload.new.content,
+                }
+              : message
+          )
+        );
+      } else if (payload.eventType === 'DELETE') {
+        // Remove a deleted message
+        setMessages((prevMessages) =>
+          prevMessages.filter((message) => message.id !== payload.old.id)
+        );
+      }
+    });
+
+    // Cleanup subscription on unmount
+    return () => {
+      unsubscribe();
+    };
   }, [groupId]);
-        
 
   // 💬 Send a message
   const handleSend = async () => {
@@ -177,5 +219,5 @@ const styles = StyleSheet.create({
   inviteText: {
     alignItems: 'center',
     fontSize: 16,
-  }
+  },
 });
