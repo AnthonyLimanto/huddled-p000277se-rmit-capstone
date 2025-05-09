@@ -101,17 +101,6 @@ export default function MessagesScreen() {
               style={styles.modalOption}
               onPress={() => {
                 setModalVisible(false);
-                router.push('/chat/newMessage');
-              }}
-            >
-              <Ionicons name="person-outline" size={20} color="#333" style={styles.modalIcon} />
-              <Text style={styles.modalText}>New Message</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={styles.modalOption}
-              onPress={() => {
-                setModalVisible(false);
                 router.push('/chat/newGroup');
               }}
             >
