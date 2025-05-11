@@ -1,5 +1,4 @@
 import { fetchCommentLikeInfo, addCommentLike, deleteCommentLike } from '../comment_likes';
-import { deleteComment, canDeleteComment } from '../comments';
 import { supabase } from '../supabase';
 
 // Reset all mocks before each test
@@ -227,39 +226,5 @@ describe('Fetch comment like info - edge cases', () => {
       likes: 10,
       isLike: false
     });
-  });
-});
-
-describe('Comment deletion functionality', () => {
-  // 7.1 Mock a comment deletion feature
-  test('should also delete like records when a comment is deleted', async () => {
-    // Mock cascading delete of like records
-    (supabase.from as jest.Mock).mockImplementationOnce(() => ({
-      delete: jest.fn().mockReturnThis(),
-      eq: jest.fn().mockResolvedValue({ error: null })
-    }));
-    
-    const result = await deleteComment('comment-123');
-    
-    expect(result).toBe(true);
-    expect(supabase.from).toHaveBeenCalledWith('comments');
-  });
-  
-  // 7.2 Mock a non-author attempting to delete a comment
-  test('should fail when a non-author tries to delete a comment', async () => {
-    // Mock query returning a different user ID
-    (supabase.from as jest.Mock).mockImplementationOnce(() => ({
-      select: jest.fn().mockReturnThis(),
-      eq: jest.fn().mockReturnThis(),
-      maybeSingle: jest.fn().mockResolvedValue({ 
-        data: { user_id: 'different-user' }, 
-        error: null 
-      })
-    }));
-    
-    const result = await canDeleteComment('comment-123', 'user-123');
-    
-    expect(result).toBe(false);
-    expect(supabase.from).toHaveBeenCalledWith('comments');
   });
 }); 

@@ -94,35 +94,3 @@ export const fetchCommentsByParentId = async (parent_id: string, user_id: string
   }
   return data || null; 
 }
-
-export const deleteComment = async (comment_id: string) => {
-  try {
-    const { error } = await supabase
-      .from("comments")
-      .delete()
-      .eq('id', comment_id);
-    
-    if (error) throw error;
-    return true;
-  } catch (error) {
-    console.error("Error deleting comment:", error);
-    throw error;
-  }
-};
-
-// 验证用户是否有权限删除评论
-export const canDeleteComment = async (comment_id: string, user_id: string) => {
-  try {
-    const { data, error } = await supabase
-      .from('comments')
-      .select('user_id')
-      .eq('id', comment_id)
-      .maybeSingle();
-    
-    if (error) throw error;
-    return data && data.user_id === user_id;
-  } catch (error) {
-    console.error("Error checking comment permission:", error);
-    return false;
-  }
-};
