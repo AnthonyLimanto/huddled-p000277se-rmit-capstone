@@ -6,10 +6,9 @@ import { Post } from "../model/post";
 import { downloadPostImage } from '../helper/bucketHelper';
 import { useAuth } from '../context/AuthContext';
 import { Comment, CommentCreate } from '../model/comment';
-import { createComment, fetchCommentById, fetchComments, fetchCommentsByLayerId } from '../api/comments';
+import { createComment, fetchComments, fetchCommentsByParentId } from '../api/comments';
 import { addPostLike, deletePostLike, fetchPostLikeInfo } from '../api/post_likes';
 import { addCommentLike, deleteCommentLike } from '../api/comment_likes';
-import ImagePreview from './ImagePreview';
 
 type PostCardProps = {
   post: Post;
@@ -39,7 +38,6 @@ const PostCard = ({ post }: PostCardProps) => {
   const [replyText, setReplyText] = useState('');
   const [replyingTo, setReplyingTo] = useState<string | null>(null);
   const [showComments, setShowComments] = useState(false);
-  const [showPreview, setShowPreview] = useState({show: false, init: 0});
 
   const { user } = useAuth();
 
@@ -110,7 +108,7 @@ const PostCard = ({ post }: PostCardProps) => {
 
   const fetchCommentsForComment = async (parentId: string) => {
     try {
-      const res = await fetchCommentsByLayerId(parentId, user?.id ?? '');
+      const res = await fetchCommentsByParentId(parentId, user?.id ?? '');
       if (res) {
         setComments(prev => {
           return updateComments(prev, parentId, res as unknown as Reply[]);
@@ -121,6 +119,10 @@ const PostCard = ({ post }: PostCardProps) => {
       console.error("Error fetching comments:", error);
     }
   };
+
+  useEffect(() => {
+    fetchCommentsForPost();
+  }, [post.id]);
 
   const handleLike = async () => {
     let res = false;
@@ -141,40 +143,27 @@ const PostCard = ({ post }: PostCardProps) => {
         post_id: post.id,
         content: commentText.trim(),
       };
-      const data = await createComment(newComment);
+      await createComment(newComment);
+      fetchCommentsForPost();
       setCommentText('');
-
-      if (!showComments) {
-        setShowComments(true);
-        await fetchCommentsForPost();
-      } else {
-        const newCommentData = await fetchCommentById(data[0].id);
-        setComments(prev => {
-          const newComments = [...prev, newCommentData];
-          return newComments;
-        });
-      }
+      if (!showComments) setShowComments(true);
     }
   };
 
   const handleCommentLike = async (data: Reply, liked: boolean) => {
-    const { id } = data;
+    const { id, parent_id } = data;
     let res = false;
     if (liked) {
       res = await deleteCommentLike(id, user?.id ?? '');
-      if (data.likes?.[0]) {
-        data.likes[0].count -= 1;
-      }
-      data.isLike = [];
     } else {
       res = await addCommentLike(id, user?.id ?? '');
-      if (data.likes?.[0]) {
-        data.likes[0].count += 1;
-      }
-      data.isLike = [{ user_id: user?.id ?? '' }];
     }
     if (res) {
-      setComments(prev => [...prev]);
+      if (parent_id) {
+        await fetchCommentsForComment(parent_id);
+      } else {
+        await fetchCommentsForPost();
+      }
     }
   };
 
@@ -184,20 +173,17 @@ const PostCard = ({ post }: PostCardProps) => {
 
   const handleSendReply = async (parentId: string, reply: Reply) => {
     if (replyText.trim()) {
-      const layer_id = reply.layer_id || parentId;
       const newReply: CommentCreate = {
         content: replyText.trim(),
         user_id: user?.id || '',
         post_id: post.id,
         parent_id: parentId,
-        layer_id: layer_id,
       };
-      const data = await createComment(newReply);
-      const newReplyData = await fetchCommentById(data[0].id, layer_id);
-      setComments(prev => {
-        const newComments = addReplyToComment(prev, layer_id, newReplyData);
-        return newComments;
-      });
+      if (reply.count) {
+        reply.count[0].count += 1;
+      }
+      await createComment(newReply);
+      await fetchCommentsForComment(parentId);
       setReplyText('');
       setReplyingTo(null);
     }
@@ -206,9 +192,6 @@ const PostCard = ({ post }: PostCardProps) => {
   const addReplyToComment = (list: Reply[], parentId: string, replyToAdd: Reply): Reply[] => {
     return list.map(comment => {
       if (comment.id === parentId) {
-        if (comment.count?.[0]) {
-          comment.count[0].count += 1;
-        }
         return { ...comment, children: [...(comment.children ?? []), replyToAdd] };
       } else if ((comment.children ?? []).length > 0) {
         return { ...comment, children: addReplyToComment(comment.children ?? [], parentId, replyToAdd) };
@@ -231,15 +214,7 @@ const PostCard = ({ post }: PostCardProps) => {
 
       const bubble = (
         <View style={level > 0 ? styles.replyBubble : styles.commentBubble}>
-          <Text style={styles.commentText}>
-            {reply.parent && (
-              <View style={styles.nameRow}>
-                <Text style={styles.username}>@ {reply.parent.user?.username}</Text>
-                <Text style={styles.degree}>({reply.parent.user?.degree}): </Text>
-              </View>
-            )}
-            {reply.content}
-          </Text>
+          <Text style={styles.commentText}>{reply.content}</Text>
           <View style={styles.commentActions}>
             <TouchableOpacity testID={`comment-like-button-${reply.id}`} onPress={() => handleCommentLike(reply, liked)} style={styles.commentActionButton}>
               <MaterialIcons
@@ -249,14 +224,14 @@ const PostCard = ({ post }: PostCardProps) => {
               />
               <Text style={styles.commentActionText}>{likes}</Text>
             </TouchableOpacity>
-            {level <= 0 && <TouchableOpacity onPress={() => {
+            <TouchableOpacity testID={`comment-bubble-button-${reply.id}`} onPress={() => {
               fetchCommentsForComment(reply.id);
             }}>
               <View style={[styles.iconPill, { backgroundColor: count > 0 ? '#e6f0ff' : 'transparent' }]}>
                 <MaterialIcons name="chat-bubble-outline" size={14} color={count > 0 ? '#1357DA' : '#999'} />
                 <Text style={[styles.iconPillText, { color: count > 0 ? '#1f1f1f' : '#999' }]}>{count}</Text>
               </View>
-            </TouchableOpacity>}
+            </TouchableOpacity>
             {level < 3 && (
               <TouchableOpacity testID={`reply-button-${reply.id}`} onPress={() => handleReplyToggle(reply.id)}>
                 <Text style={styles.commentActionText}>Reply</Text>
@@ -285,20 +260,19 @@ const PostCard = ({ post }: PostCardProps) => {
           {renderReplies(reply.children ?? [], level + 1)}
         </View>
       );
+    
       const content = (
         <View key={reply.id} testID={reply.id} style={level > 0 ? styles.replyRow : styles.commentRow}>
           <Pfp email={reply.user?.email ?? ''} name={reply.user?.username ?? ''} size={level > 0 ? 24 : undefined} />
-          <View style={{ flex: 1 }}>
-            <View style={styles.nameRow}>
-              <Text style={styles.username}>{reply.user?.username}</Text>
-              <Text style={styles.degree}>({reply.user?.degree})</Text>
-            </View>
-            {level > 0 ? bubble : (
-              <View style={styles.commentContent}>
-                {bubble}
-              </View>
-            )}
+          <View>
+            <Text style={styles.username}>{reply.user?.username}</Text>
+            <Text style={styles.degree}>{reply.user?.degree}</Text>
           </View>
+          {level > 0 ? bubble : (
+            <View style={styles.commentContent}>
+              {bubble}
+            </View>
+          )}
         </View>
       );
 
@@ -312,7 +286,7 @@ const PostCard = ({ post }: PostCardProps) => {
   };
 
   return (
-    <View style={{...styles.card, zIndex: showPreview.show ? 1 : 0}}>
+    <View style={styles.card}>
       {/* Post Header */}
       <View style={styles.userInfo}>
         <View style={styles.leftGroup}>
@@ -328,54 +302,23 @@ const PostCard = ({ post }: PostCardProps) => {
       {/* Post Content */}
       <View style={styles.contentContainer}>
         <Text style={styles.postContent}>{post.content}</Text>
-        <View style={styles.imageWrapper}>
-          {
-            (postImageUrl || []).slice(0, 2).map((image, idx) => {
+        {postImageUrl.length > 0 && (
+          <View testID="post-images-wrapper">
+            {(postImageUrl || []).map((image, idx) => {
               return (
-                <TouchableOpacity
-                  key={idx}
-                  style={styles.imageContainer}
-                  onPress={() => setShowPreview({ show: true, init: idx })}
-                >
+                <View style={styles.imageContainer} key={idx}>
                   <Image
                     source={{
                       uri: Platform.OS === 'web' ? image : `https://leqcmbvpugjvyzlxxmgs.supabase.co/storage/v1/object/public/post-image/${id}/${image}`,
                     }}
                     style={styles.postImage}
-                    resizeMode="cover"
+                    resizeMode="contain"
                   />
-                </TouchableOpacity>
+                </View>
               );
-            })
-          }
-        </View>
-        {postImageUrl?.length > 2 && <View style={styles.imageWrapper}>
-          {
-            (postImageUrl || []).slice(2, 4).map((image, idx) => {
-              const realIdx = idx + 2;
-              return (
-                <TouchableOpacity
-                  key={idx}
-                  style={styles.imageContainer}
-                  onPress={() => setShowPreview({ show: true, init: realIdx })}
-                >
-                  <Image
-                    source={{
-                      uri: Platform.OS === 'web' ? image : `https://leqcmbvpugjvyzlxxmgs.supabase.co/storage/v1/object/public/post-image/${id}/${image}`,
-                    }}
-                    style={styles.postImage}
-                    resizeMode="cover"
-                  />
-                  {postImageUrl?.length > 4 && idx === 1 && (
-                    <View style={styles.imageMore}>
-                      <Text style={{ color: '#fff', fontSize: 30, opacity: 0.6 }}>{`+${postImageUrl.length - 4}`}</Text>
-                    </View>
-                  )}
-                </TouchableOpacity>
-              );
-            })
-          }
-        </View>}
+            })}
+          </View>
+        )}
       </View>
 
       {/* Like + Comment */}
@@ -391,12 +334,7 @@ const PostCard = ({ post }: PostCardProps) => {
         </View>
 
         {allCommentsCount > 0 && (
-          <TouchableOpacity onPress={() => {
-            setShowComments(prev => !prev);
-            if (!showComments) {
-              fetchCommentsForPost();
-            }
-          }}>
+          <TouchableOpacity testID="view-comments-button" onPress={() => setShowComments(prev => !prev)}>
             <Text style={styles.viewHideText}>
               {showComments ? 'Hide all' : 'View all comments'}
             </Text>
@@ -423,12 +361,6 @@ const PostCard = ({ post }: PostCardProps) => {
           </TouchableOpacity>
         )}
       </View>
-      <ImagePreview
-        urls={postImageUrl}
-        init={showPreview.init}
-        show={showPreview.show}
-        onClose={() => setShowPreview({ show: false, init: 0 })}
-      />
     </View>
   );
 };
@@ -479,31 +411,18 @@ const styles = StyleSheet.create({
     color: '#333',
     lineHeight: 22,
   },
-  imageWrapper: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 10,
-    marginTop: 10,
-  },
   imageContainer: {
+    marginTop: 10,
+    borderWidth: 1,
+    borderColor: '#ddd',
     borderRadius: 10,
     overflow: 'hidden',
+    padding: 4,
   },
   postImage: {
-    width: 150,
-    height: 150,
+    width: '100%',
+    height: 220,
     borderRadius: 8,
-  },
-  imageMore: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#00000010',
-    borderRadius: 10
   },
   actionsContainer: {
     flexDirection: 'row',
@@ -622,6 +541,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'flex-start',
     marginTop: 8,
+    marginLeft: 20,
   },
   threadLine: {
     width: 2,
@@ -650,9 +570,4 @@ const styles = StyleSheet.create({
     shadowRadius: 1,
     elevation: 1,
   },
-  nameRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 10
-  }
 });

@@ -1,19 +1,21 @@
-import { useAuth } from '@/src/context/AuthContext';
-import { useFocusEffect } from '@react-navigation/native';
-import { useCallback, useState } from "react";
+import { Ionicons } from '@expo/vector-icons';
+import { useState, useCallback } from "react";
 import {
-  ActivityIndicator,
   FlatList,
   SafeAreaView,
   StatusBar,
   StyleSheet,
   Text,
-  View
+  TouchableOpacity,
+  View,
+  ActivityIndicator,
 } from 'react-native';
 import { fetchPosts } from "../../api/posts";
-import Header from "../../components/Header";
 import PostCard from "../../components/PostCard";
+import Header from "../../components/Header";
 import { Post } from '../../model/post';
+import { useFocusEffect } from '@react-navigation/native';
+import { useAuth } from '@/src/context/AuthContext';
 
 const keyExtractor = (post: Post, index: number) =>
   post?.id ? `${post.id}-${index}` : `${index}`;
@@ -112,24 +114,21 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#CDECFF',
+    backgroundColor: '#F0F9FF',
   },
-
   newPostsButton: {
-    width: 160,
-    height: 50,
-    backgroundColor: '#075DB6',
-    borderRadius: 25,
+    width: 150,
+    height: 40,
+    backgroundColor: '#1357DA',
+    borderRadius: 20,
     paddingHorizontal: 20,
-    paddingVertical: 12,
+    paddingVertical: 10,
     alignItems: 'center',
     alignSelf: 'center',
     marginVertical: 10,
-    marginBottom: 30,
   },
   newPostsText: {
-    color: '#fff',
-    fontSize: 18,
+    color: 'white',
     fontWeight: 'bold',
   },
   feedContainer: {

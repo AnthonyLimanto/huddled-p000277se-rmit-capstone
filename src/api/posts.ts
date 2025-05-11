@@ -24,9 +24,8 @@ export const fetchPosts = async (user_id: string) => {
       profile:users!user_id(username, degree, pfp_url, email),
       count:comments(count),
       likes:post_likes!post_id(count),
-      isLike:post_likes!post_id(user_id)
+      isLike:post_likes!post_id(user_id).eq(user_id, ${user_id})
     `)
-    .eq('isLike.user_id', user_id)
     .order('created_at', { ascending: false });
 
   if (error) {
