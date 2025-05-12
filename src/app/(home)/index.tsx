@@ -1,20 +1,19 @@
-import { Ionicons } from '@expo/vector-icons';
-import { useState, useCallback } from "react";
+import { useAuth } from '@/src/context/AuthContext';
+import { useFocusEffect } from '@react-navigation/native';
+import { useCallback, useState } from "react";
 import {
+  ActivityIndicator,
   FlatList,
   SafeAreaView,
   StatusBar,
   StyleSheet,
   Text,
-  TouchableOpacity,
-  View,
-  ActivityIndicator,
+  View
 } from 'react-native';
 import { fetchPosts } from "../../api/posts";
-import PostCard from "../../components/PostCard";
 import Header from "../../components/Header";
+import PostCard from "../../components/PostCard";
 import { Post } from '../../model/post';
-import { useFocusEffect } from '@react-navigation/native';
 
 const keyExtractor = (post: Post, index: number) =>
   post?.id ? `${post.id}-${index}` : `${index}`;
@@ -26,10 +25,12 @@ export default function HomeScreen() {
   const [page, setPage] = useState(1);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [hasMore, setHasMore] = useState(true);
+  const {user} = useAuth();
+  console.log(user);
 
   const loadPosts = async (pageNum = 1, append = false) => {
     try {
-      const fetchedPosts = await fetchPosts();
+      const fetchedPosts = await fetchPosts(user?.id ?? '');
       if (fetchedPosts.length === 0) {
         setHasMore(false);
         return;
@@ -111,21 +112,24 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F0F9FF',
+    backgroundColor: '#CDECFF',
   },
+
   newPostsButton: {
-    width: 150,
-    height: 40,
-    backgroundColor: '#1357DA',
-    borderRadius: 20,
+    width: 160,
+    height: 50,
+    backgroundColor: '#075DB6',
+    borderRadius: 25,
     paddingHorizontal: 20,
-    paddingVertical: 10,
+    paddingVertical: 12,
     alignItems: 'center',
     alignSelf: 'center',
     marginVertical: 10,
+    marginBottom: 30,
   },
   newPostsText: {
-    color: 'white',
+    color: '#fff',
+    fontSize: 18,
     fontWeight: 'bold',
   },
   feedContainer: {

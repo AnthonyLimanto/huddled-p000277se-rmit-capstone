@@ -1,18 +1,57 @@
-import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, SafeAreaView, StatusBar } from 'react-native';
+import { supabase } from '@/src/api/supabase';
+import { fetchUser, getSessionUser } from '@/src/api/users';
 import { Ionicons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
+import { router } from 'expo-router';
+import React, { useEffect, useState } from 'react';
+import {
+  Alert,
+  Image,
+  SafeAreaView,
+  ScrollView,
+  StatusBar,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View
+} from 'react-native';
 
-
-export default function ProfileScreen() {
-
-  const router = useRouter();
+  export default function ProfileScreen() {
+    const [userData, setUserData] = useState<any>(null);
+    const [loading, setLoading] = useState(true);
   
-  const handleLogin = () => {
-    //To sign in page
-    router.replace('../(auth)/signin');
-  };
-
+    const handleLogout = async () => {
+      const { error } = await supabase.auth.signOut();
+      if (error) {
+        console.error("Logout failed:", error.message);
+        Alert.alert("Error", "Logout failed. Please try again.");
+      } else {
+        Alert.alert("Logged Out", "You have been signed out.");
+        router.replace('../(auth)/signin'); // or use navigation.navigate if using React Navigation
+      }
+    };
+  
+    useEffect(() => {
+      const loadUserData = async () => {
+        try {
+          const userId = await getSessionUser();
+          const { data: sessionData, error: sessionError } = await supabase.auth.getUser();
+          if (sessionError) throw sessionError;
+  
+          const email = sessionData.user.email;
+          const userDetails = await fetchUser(sessionData.user.email!); 
+  
+          if (userDetails && userDetails.length > 0) {
+            setUserData(userDetails[0]);
+          }
+        } catch (error) {
+          console.error("Error loading user data:", error);
+        } finally {
+          setLoading(false);
+        }
+      };
+  
+      loadUserData();
+    }, []);
 
   return (
     <SafeAreaView style={styles.container}>
@@ -27,16 +66,27 @@ export default function ProfileScreen() {
         
         <View style={styles.profileHeader}>
           <View style={styles.avatarContainer}>
-            <View style={styles.avatar} />
+          {userData?.pfp_url ? (
+  <Image
+    source={{ uri: userData.pfp_url }}
+    style={styles.avatar}
+  />
+) : (
+  <View style={styles.avatar} />
+)}
             <TouchableOpacity style={styles.editAvatarButton}>
               <Ionicons name="camera" size={18} color="#FFF" />
             </TouchableOpacity>
           </View>
           
-          <Text style={styles.userName}>Your Name</Text>
-          <Text style={styles.userHandle}>@username</Text>
+          <Text style={styles.userName}>{userData?.username || 'Loading...'}</Text>
+          <Text style={styles.userHandle}>
+            {userData?.email ? `@${userData.email.split('@')[0]}` : ''}
+          </Text>
           <Text style={styles.userBio}>
-            This is where your bio would appear. Share a bit about yourself with others.
+            {userData?.degree
+              ? `Studying ${userData.degree}`
+              : 'This is where your bio would appear. Share a bit about yourself with others.'}
           </Text>
           
           <View style={styles.statsContainer}>
@@ -77,7 +127,7 @@ export default function ProfileScreen() {
         </View>
         
         <View style={styles.logoutContainer}>
-          <TouchableOpacity style={styles.logoutButton} onPress={handleLogin}>
+          <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
             <Ionicons name="log-out-outline" size={20} color="#FF3B30" />
             <Text style={styles.logoutText}>Log Out</Text>
           </TouchableOpacity>
