@@ -10,24 +10,26 @@ import {
   TextInput,
   Modal,
   Pressable,
-  Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { GroupCard } from '@/src/components/GroupCard';
-import { Group } from '@/src/model/group';
 import { useFocusEffect } from '@react-navigation/native';
 import { useRouter } from 'expo-router';
 import { fetchGroups } from '@/src/api/group';
 import { getSessionUser } from '@/src/api/users';
 
 export default function MessagesScreen() {
-  const [groups, setGroups] = useState<Group[]>([]);
+  const [groups, setGroups] = useState<any[]>([]); // Updated to handle group and message objects
   const [modalVisible, setModalVisible] = useState(false);
   const router = useRouter();
 
-  const renderGroupCard = ({ item }: { item: Group }) => (
-    <TouchableOpacity onPress={() => router.push(`/chat/${item.id}`)}>
-      <GroupCard group={item} />
+  const renderGroupCard = ({ item }: { item: any }) => (
+    <TouchableOpacity onPress={() => router.push(`/chat/${item.group.id}`)}>
+      <GroupCard
+        group={item.group}
+        latestMessage={item.message?.content || 'No messages yet'}
+        timestamp={item.message?.createdAt || ''}
+      />
     </TouchableOpacity>
   );
 
@@ -39,7 +41,7 @@ export default function MessagesScreen() {
           if (currentUser) {
             const userGroups = await fetchGroups(currentUser.id);
             if (userGroups) {
-              setGroups(userGroups.flatMap(({ group }) => group));
+              setGroups(userGroups); // Set the processed groups directly
             }
           } else {
             console.error('No user session found.');
@@ -84,7 +86,7 @@ export default function MessagesScreen() {
       <FlatList
         data={groups}
         renderItem={renderGroupCard}
-        keyExtractor={item => item.id}
+        keyExtractor={(item) => item.group.id}
         style={styles.chatList}
       />
 
