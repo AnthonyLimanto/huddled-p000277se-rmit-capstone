@@ -1,11 +1,22 @@
-import { Alert, Image, SafeAreaView, StatusBar, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import {
+  Alert,
+  Image,
+  SafeAreaView,
+  StatusBar,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { createPost } from '@/src/api/posts';
 import { supabase } from '@/src/api/supabase';
 import { uploadPostImages } from '@/src/helper/bucketHelper';
 import { Audio } from 'expo-av';
 import * as ImagePicker from 'expo-image-picker';
-import React, { useEffect, useMemo, useRef, useState } from 'react'
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { useNavigation } from '@react-navigation/native';
 
 const MAX_IMAGE_COUNT = 4;
 
@@ -17,13 +28,15 @@ export type ImageFileType = {
 
 export default function CreatePostScreen() {
   const MAX_CHAR = 300;
-  const [text, setText] = useState("");
-  const [postFile, setPostFile] = useState<string | null>(null);
-
+  const [text, setText] = useState('');
   const [fileList, setFileList] = useState<ImageFileType[]>([]);
+  const [userName, setUserName] = useState('');
+  const [userTitle, setUserTitle] = useState('');
+  const navigation = useNavigation();
 
-  const isImageReachLimit = useMemo(() => fileList.length >= MAX_IMAGE_COUNT, [fileList]);
   const dingSound = useRef<Audio.Sound | null>(null);
+  const isImageReachLimit = useMemo(() => fileList.length >= MAX_IMAGE_COUNT, [fileList]);
+
   useEffect(() => {
     const loadSound = async () => {
       const { sound } = await Audio.Sound.createAsync(
@@ -32,286 +45,220 @@ export default function CreatePostScreen() {
       dingSound.current = sound;
     };
 
+    const fetchUser = async () => {
+      try {
+        const { data, error } = await supabase.auth.getUser();
+        if (error || !data?.user) throw new Error('No user session found');
+        setUserName(data.user.user_metadata.full_name || 'Unknown User');
+        setUserTitle(data.user.user_metadata.title || 'Member');
+      } catch (err) {
+        console.error('Failed to get user:', err);
+      }
+    };
+
     loadSound();
+    fetchUser();
 
     return () => {
-      if (dingSound.current) {
-        dingSound.current.unloadAsync();
-      }
+      if (dingSound.current) dingSound.current.unloadAsync();
     };
   }, []);
 
   const getSessionUser = async () => {
     const { data, error } = await supabase.auth.getUser();
-    if (error || !data?.user?.id) {
-      throw new Error('No user session found');
-    }
+    if (error || !data?.user?.id) throw new Error('No user session found');
     return data.user.id;
   };
 
-  // Need to refactor later to consolidate with the pfp image picker
   const handlePickImage = async () => {
     if (isImageReachLimit) {
       Alert.alert('Limit reached', `You can only upload ${MAX_IMAGE_COUNT} images.`);
       return;
     }
+
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      base64: true, // Include base64 data
+      base64: true,
       allowsMultipleSelection: true,
-      selectionLimit: MAX_IMAGE_COUNT - fileList.length, // Limit the number of images
+      selectionLimit: MAX_IMAGE_COUNT - fileList.length,
     });
 
-    console.log("Image picker result:", result);
-
-    if (!result.canceled && result.assets && result.assets.length > 0) {
-      if (result.assets.length + fileList.length > MAX_IMAGE_COUNT) {
-        Alert.alert('Limit reached', `You can only upload ${MAX_IMAGE_COUNT} images.`);
-        return;
-      }
-
+    if (!result.canceled && result.assets?.length > 0) {
       const uriArr = result.assets.map((asset, idx) => {
         const suffix = (asset.fileName || 'x.png').split('.').pop();
         return {
           uri: asset.uri,
-          name: `image-${Date.now()}-${idx}`,
-          file: asset.file
+          name: `image-${Date.now()}-${idx}.${suffix}`,
+          file: asset.file,
         };
       }) as ImageFileType[];
+
       setFileList((prev) => [...prev, ...uriArr]);
     }
   };
 
-    const handleSubmit = async () => {
+  const handleSubmit = async () => {
     try {
-      //  Play ding sound
-      if (dingSound.current) {
-        await dingSound.current.replayAsync();
-      }
-
-      if (text.trim() === "" && fileList.length === 0) {
-        console.log('Please enter text or select an image to post.');
-        return;
-      }
+      if (dingSound.current) await dingSound.current.replayAsync();
+      if (text.trim() === '' && fileList.length === 0) return;
 
       const currentUserId = await getSessionUser();
       const fileNameArr = fileList.map((file) => file.name);
       const sentPost = await createPost(currentUserId, text, fileNameArr.join(','));
-      console.log("Post file created:", postFile, sentPost);
 
       if (fileList.length && sentPost) {
         await uploadPostImages(fileList, sentPost[0].id);
       }
 
       Alert.alert('Success', 'Post created successfully!');
-      setText("");
+      setText('');
       setFileList([]);
     } catch (error) {
-      console.error("Error creating post:", error);
+      console.error('Error creating post:', error);
       Alert.alert('Error', 'Failed to create post.');
     }
   };
 
   const deleteImage = (index: number) => {
     setFileList((prev) => prev.filter((_, idx) => idx !== index));
-  }
+  };
 
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" />
 
-      <View style={styles.header}>
-        <Text style={styles.title}>Create Post</Text>
+      {/* Top Header */}
+      <View style={styles.topBar}>
+        <Text style={styles.topTitle}>Create Post</Text>
+        <TouchableOpacity onPress={() => navigation.goBack()}>
+          <Text style={styles.closeButton}>x</Text>
+        </TouchableOpacity>
       </View>
 
-      <View style={styles.createContainer}>
+      {/* User Info Row */}
+      <View style={styles.userRow}>
+        <View style={styles.avatarPlaceholder} />
         <View>
-          <TextInput
-            placeholder="What's on your mind?"
-            placeholderTextColor="#999"
-            multiline
-            style={styles.postInput}
-            value={text}
-            numberOfLines={4}
-            onChangeText={(input) => {
-              if (input.length <= MAX_CHAR) setText(input);
-            }}
-          />
+          <Text style={styles.userName}>{userName}</Text>
+          <Text style={styles.userTitle}>{userTitle}</Text>
         </View>
-        <View style={styles.charCounterContainer}>
-          <Text style={[styles.charCounter, text.length >= MAX_CHAR && { color: 'red' }]}>
-            {text.length} / {MAX_CHAR}
-          </Text>
-        </View>
-
-        <View style={styles.mediaOptions}>
-          <TouchableOpacity
-            style={styles.mediaButton}
-            onPress={handlePickImage}
-          >
-            <Ionicons name="image" size={24} color="#0066CC" />
-            <Text style={styles.mediaButtonText}>Photo</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.mediaButton}>
-            <Ionicons name="videocam" size={24} color="#0066CC" />
-            <Text style={styles.mediaButtonText}>Video</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.mediaButton}>
-            <Ionicons name="document" size={24} color="#0066CC" />
-            <Text style={styles.mediaButtonText}>File</Text>
-          </TouchableOpacity>
-        </View>
-        {/* Show thumbnail preview */}
-        <View style={styles.thumbNailWrapper}>
-          {
-            (fileList || []).map((file, idx) => {
-              return (
-                <View
-                  key={idx}
-                  style={styles.thumbNail}
-                >
-                  <Image
-                    key={idx}
-                    source={{ uri: file.uri }}
-                    style={{ width: 250, height: 250 }}
-                  />
-                  <TouchableOpacity
-                    onPress={() => deleteImage(idx)}
-                  >
-                    <Ionicons name='trash' size={24} color='red' />
-                  </TouchableOpacity>
-                </View>
-              );
-            })
-          }
-        </View>
-        {/* {postFile && (
-          <Image
-            source={{ uri: `data:image/png;base64,${postFile}` }}
-            style={{ width: 250, height: 250, marginTop: 10 }}
-          />
-        )} */}
-        <View style={styles.divider} />
-
-        <View style={styles.privacySelector}>
-          <Text style={styles.privacyLabel}>Who can see this?</Text>
-          <TouchableOpacity style={styles.privacyOption}>
-            <Ionicons name="globe-outline" size={20} color="#333" />
-            <Text style={styles.privacyText}>Everyone</Text>
-            <Ionicons name="chevron-down" size={20} color="#333" />
-          </TouchableOpacity>
-        </View>
-
-        <View style={styles.postButtonContainer}>
-          <TouchableOpacity style={styles.postButton} onPress={handleSubmit}>
-            <Text style={styles.postButtonText}>Post</Text>
-          </TouchableOpacity>
-        </View>
+        <TouchableOpacity style={styles.topPostButton} onPress={handleSubmit}>
+          <Text style={styles.topPostButtonText}>Post</Text>
+        </TouchableOpacity>
       </View>
+
+      {/* Text Input */}
+      <TextInput
+        placeholder="What’s on your mind today?"
+        placeholderTextColor="#AAA"
+        multiline
+        style={styles.simpleInput}
+        value={text}
+        onChangeText={(input) => {
+          if (input.length <= MAX_CHAR) setText(input);
+        }}
+      />
+
+      {/* Image Preview Thumbnails */}
+      <View style={styles.thumbNailWrapper}>
+        {fileList.map((file, idx) => (
+          <View key={idx} style={styles.thumbNail}>
+            <Image source={{ uri: file.uri }} style={{ width: 250, height: 250 }} />
+            <TouchableOpacity onPress={() => deleteImage(idx)}>
+              <Ionicons name="trash" size={24} color="red" />
+            </TouchableOpacity>
+          </View>
+        ))}
+      </View>
+
+      {/* Image Upload Icon */}
+      <TouchableOpacity style={styles.imageUploadIcon} onPress={handlePickImage}>
+        <Ionicons name="image" size={28} color="#000" />
+      </TouchableOpacity>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#FFF' },
-  header: {
+  topBar: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     padding: 20,
+    paddingBottom: 54,
+    borderBottomColor: '#eee',
     borderBottomWidth: 1,
-    borderBottomColor: '#F0F0F0',
   },
-  title: { fontSize: 28, fontWeight: 'bold' },
-  createContainer: {
-    flex: 1,
+  topTitle: {
+    fontSize: 28,
+    fontWeight: '700',
+    color: '#2a62d0',
+  },
+  closeButton: {
+    fontSize: 24,
+    color: '#2a62d0',
+  },
+  userRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
     padding: 16,
-    overflowY: 'auto'
-  },
-  postInput: {
-    height: 150,
-    fontSize: 18,
-    textAlignVertical: 'top',
-    padding: 12,
-    backgroundColor: '#F8F8F8',
-    borderRadius: 12,
-    marginBottom: 8,
-  },
-  charCounterContainer: {
-    alignItems: 'flex-end',
-    marginBottom: 10,
-    paddingRight: 4,
-  },
-  charCounter: {
-    fontSize: 14,
-    color: '#888',
-  },
-  mediaOptions: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    marginBottom: 20,
-  },
-  mediaButton: {
-    alignItems: 'center',
-    padding: 10,
-  },
-  mediaButtonText: {
-    marginTop: 5,
-    fontSize: 14,
-    color: '#0066CC',
-  },
-  thumbNailWrapper: {
-    display: 'flex',
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 10
-  },
-  thumbNail: {
-    display: 'flex',
-    flexDirection: 'row',
     gap: 10,
-    alignItems: 'center'
   },
-  divider: {
-    height: 1,
-    backgroundColor: '#F0F0F0',
-    marginVertical: 16,
+  avatarPlaceholder: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#ccc',
   },
-  privacySelector: {
-    marginBottom: 20,
-  },
-  privacyLabel: {
-    fontSize: 16,
+  userName: {
     fontWeight: 'bold',
-    marginBottom: 8,
+    fontSize: 16,
   },
-  privacyOption: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#F8F8F8',
-    padding: 12,
+  userTitle: {
+    fontSize: 12,
+    color: '#666',
+  },
+  topPostButton: {
+    marginLeft: 'auto',
+    backgroundColor: '#2a62d0',
+    paddingVertical: 6,
+    paddingHorizontal: 14,
     borderRadius: 8,
   },
-  privacyText: {
-    flex: 1,
-    marginLeft: 8,
-    fontSize: 16,
-  },
-  postButtonContainer:{
-    padding: 20,
-    borderTopWidth: 1,
-    borderColor: '#EEE',
-    marginTop: 20,
-  },
-  postButton: {
-    backgroundColor: '#0066CC',
-    borderRadius: 10,
-    alignItems: 'center',
-    marginTop: 'auto',
-    justifyContent: 'center',
-    paddingVertical: 12,
-    flexDirection: 'row',
-  },
-  postButtonText: {
-    color: 'white',
-    fontSize: 18,
+  topPostButtonText: {
+    color: '#fff',
     fontWeight: 'bold',
+  },
+  simpleInput: {
+    paddingHorizontal: 16,
+    fontSize: 16,
+    color: '#333',
+    paddingTop: 12,
+  },
+  thumbNailWrapper: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 10,
+    paddingHorizontal: 16,
+    marginTop: 16,
+  },
+  thumbNail: {
+    flexDirection: 'row',
+    gap: 10,
+    alignItems: 'center',
+  },
+  imageUploadIcon: {
+    position: 'absolute',
+    bottom: 24,
+    right: 24,
+    backgroundColor: '#fff',
+    padding: 6,
+    borderRadius: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
 });
