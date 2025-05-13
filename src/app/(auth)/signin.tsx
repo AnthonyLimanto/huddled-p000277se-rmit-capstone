@@ -154,7 +154,7 @@ export default function SignIn() {
         />
       )}
 
-      {/* ✅ Login success modal */}
+      {/* Login success modal */}
       <Modal transparent visible={successModalVisible} animationType="fade">
         <View style={styles.modalOverlay}>
           <View style={styles.modalBox}>
