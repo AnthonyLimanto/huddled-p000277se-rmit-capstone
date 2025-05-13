@@ -70,7 +70,7 @@ export default function NewGroupScreen() {
       }
 
       // Navigate to the new group chat
-      router.push(`/chat/${result.group.id}`);
+      router.push(`/messages`);
     } catch (error: any) {
       console.error('Group creation error:', error);
       Alert.alert('Failed to create group', error.message || 'Something went wrong');
