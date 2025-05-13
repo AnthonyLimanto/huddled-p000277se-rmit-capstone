@@ -1,6 +1,7 @@
 import {
   Alert,
   Image,
+  Modal,
   SafeAreaView,
   StatusBar,
   StyleSheet,
@@ -16,6 +17,7 @@ import { uploadPostImages } from '@/src/helper/bucketHelper';
 import { Audio } from 'expo-av';
 import * as ImagePicker from 'expo-image-picker';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { useRouter } from 'expo-router'; // ✅ Router for redirect
 
 const MAX_IMAGE_COUNT = 4;
 
@@ -26,10 +28,13 @@ export type ImageFileType = {
 };
 
 export default function CreatePostScreen() {
+  const router = useRouter(); // ✅ Init router
   const MAX_CHAR = 300;
+
   const [text, setText] = useState('');
   const [fileList, setFileList] = useState<ImageFileType[]>([]);
   const [profile, setProfile] = useState<{ username: string; degree: string } | null>(null);
+  const [successModalVisible, setSuccessModalVisible] = useState(false);
 
   const isImageReachLimit = useMemo(() => fileList.length >= MAX_IMAGE_COUNT, [fileList]);
   const dingSound = useRef<Audio.Sound | null>(null);
@@ -115,9 +120,14 @@ export default function CreatePostScreen() {
         await uploadPostImages(fileList, sentPost[0].id);
       }
 
-      Alert.alert('Success', 'Post created successfully!');
       setText('');
       setFileList([]);
+      setSuccessModalVisible(true);
+
+      setTimeout(() => {
+        setSuccessModalVisible(false);
+        router.replace('/(home)'); // Redirect after modal closes
+      }, 2000);
     } catch (error) {
       console.error('Error creating post:', error);
       Alert.alert('Error', 'Failed to create post.');
@@ -188,6 +198,15 @@ export default function CreatePostScreen() {
           </TouchableOpacity>
         </View>
       </View>
+
+      {/* Post success modal */}
+      <Modal transparent visible={successModalVisible} animationType="fade">
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalBox}>
+            <Text style={styles.modalText}>Post created successfully!</Text>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -203,7 +222,7 @@ const styles = StyleSheet.create({
   createContainer: {
     flex: 1,
     padding: 20,
-    paddingTop: 50, // move form lower
+    paddingTop: 50,
   },
   userBlock: {
     flexDirection: 'row',
@@ -278,5 +297,25 @@ const styles = StyleSheet.create({
     color: 'white',
     fontSize: 16,
     fontWeight: 'bold',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: '#00000099',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalBox: {
+    backgroundColor: '#fff',
+    padding: 25,
+    borderRadius: 20,
+    shadowColor: '#000',
+    shadowOpacity: 0.25,
+    shadowRadius: 6,
+    elevation: 8,
+  },
+  modalText: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#075DB6',
   },
 });
