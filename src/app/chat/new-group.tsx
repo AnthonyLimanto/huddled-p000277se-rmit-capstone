@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -8,22 +8,42 @@ import {
   FlatList,
   TouchableOpacity,
   Alert,
+  ActivityIndicator,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { createGroup } from '@/src/api/group';
-
-const MOCK_USERS = [
-  { id: 'u1', name: 'Jovie AU' },
-  { id: 'u2', name: 'Shannon' },
-  { id: 'u3', name: 'Michael AU' },
-  { id: 'u4', name: 'Felix AU' },
-];
+import { fetchUsers } from '@/src/api/users'; // Replace with your actual API for fetching users
 
 export default function NewGroupScreen() {
   const router = useRouter();
   const [groupName, setGroupName] = useState('');
   const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
+  const [users, setUsers] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  // Fetch users dynamically
+  useEffect(() => {
+    const loadUsers = async () => {
+      try {
+        const fetchedUsers = await fetchUsers(); // Replace with your actual API call
+  
+        // Validate the response
+        if (!Array.isArray(fetchedUsers)) {
+          throw new Error('Invalid user data received');
+        }
+  
+        setUsers(fetchedUsers);
+      } catch (error) {
+        console.error('Error fetching users:', error);
+        Alert.alert('Failed to load users', error.message || 'Something went wrong');
+      } finally {
+        setLoading(false);
+      }
+    };
+  
+    loadUsers();
+  }, []);
 
   const toggleUser = (id: string) => {
     setSelectedUsers((prev) =>
@@ -41,6 +61,7 @@ export default function NewGroupScreen() {
       Alert.alert('Select at least 2 users');
       return;
     }
+
     try {
       const result = await createGroup(groupName, selectedUsers);
 
@@ -48,13 +69,21 @@ export default function NewGroupScreen() {
         throw new Error('Group creation failed');
       }
 
-      // ✅ Use real UUID from Supabase
+      // Navigate to the new group chat
       router.push(`/chat/${result.group.id}`);
     } catch (error: any) {
       console.error('Group creation error:', error);
       Alert.alert('Failed to create group', error.message || 'Something went wrong');
     }
   };
+
+  if (loading) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <ActivityIndicator size="large" color="#1357DA" />
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.container}>
@@ -69,23 +98,29 @@ export default function NewGroupScreen() {
 
       <Text style={styles.label}>Add members:</Text>
 
-      <FlatList
-        data={MOCK_USERS}
-        keyExtractor={(item) => item.id}
-        renderItem={({ item }) => {
-          const selected = selectedUsers.includes(item.id);
-          return (
-            <TouchableOpacity style={styles.userRow} onPress={() => toggleUser(item.id)}>
-              <Ionicons
-                name={selected ? 'checkbox' : 'square-outline'}
-                size={24}
-                color="#1357DA"
-              />
-              <Text style={styles.userName}>{item.name}</Text>
-            </TouchableOpacity>
-          );
-        }}
-      />
+      {/* 👥 User list */}
+        <FlatList
+          data={users}
+          keyExtractor={(item) => item.user_id || item.id}
+          renderItem={({ item }) => {
+            const userId = item.user_id || item.id;
+            const isSelected = selectedUsers.includes(userId);
+  
+            return (
+              <TouchableOpacity
+                style={styles.userRow}
+                onPress={() => toggleUser(userId)}
+              >
+                <Ionicons
+                  name={isSelected ? 'checkbox' : 'square-outline'}
+                  size={24}
+                  color="#007aff"
+                />
+                <Text style={styles.username}>{item.username}</Text>
+              </TouchableOpacity>
+            );
+          }}
+        />
 
       <TouchableOpacity style={styles.createButton} onPress={handleCreateGroup}>
         <Text style={styles.buttonText}>Create Group</Text>
