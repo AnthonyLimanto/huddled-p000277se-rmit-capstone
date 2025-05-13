@@ -12,16 +12,24 @@ import {
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import MessageCard, { Message } from '@/src/components/MessageCard';
-import { fetchGroupMessages, sendGroupMessage } from '@/src/api/message';
+import MessageCard from '@/src/components/MessageCard';
+import {
+  fetchGroupMessages,
+  sendGroupMessage,
+  subscribeToGroupMessages,
+} from '@/src/api/group-message';
 import { getSessionUser } from '@/src/api/users';
+import { Group } from '@/src/model/group';
+import { fetchGroup } from '@/src/api/group';
+import { Message } from '@/src/model/message';
 
 export default function ChatScreen() {
-  const { id } = useLocalSearchParams(); // groupId from route
+  const { id: groupId } = useLocalSearchParams(); // groupId from route
   const router = useRouter();
   const [input, setInput] = useState('');
   const [messages, setMessages] = useState<Message[]>([]);
   const [currentUser, setCurrentUser] = useState<any>(null);
+  const [group, setGroup] = useState<Group>();
 
   // 🔄 Load user and messages on mount
   useEffect(() => {
@@ -30,41 +38,90 @@ export default function ChatScreen() {
         const user = await getSessionUser();
         setCurrentUser(user);
 
-        const rawMessages = await fetchGroupMessages(id as string);
-        setMessages(
-          rawMessages.map((m: any) => ({
-            id: m.id,
-            sender: m.users?.username || 'Unknown',
-            content: m.content,
-            isOwnMessage: m.user_id === user.id,
-          }))
-        );
+        const fetchedGroup = await fetchGroup(groupId);
+        if (fetchedGroup && fetchedGroup.length > 0) {
+          setGroup(fetchedGroup[0]);
+        }
+
+        const fetchedMessages = await fetchGroupMessages(groupId as string);
+        const processedMessages = fetchedMessages.map((msg: any) => ({
+          id: msg.id,
+          sender: msg.users.username,
+          content: msg.content,
+          isOwnMessage: msg.user_id === user.id, // Check if the message is sent by the current user
+        }));
+        setMessages(processedMessages);
       } catch (err) {
-        console.error('Failed to load chat data:', err);
+        console.error('Error loading data:', err);
       }
     };
 
     loadData();
-  }, [id]);
+
+    // Subscribe to real-time updates
+    const unsubscribe = subscribeToGroupMessages(groupId as string, (payload) => {
+      console.log('Real-time update:', payload);
+
+      if (payload.eventType === 'INSERT') {
+        // Add new message to the list
+        setMessages((prevMessages) => [
+          ...prevMessages,
+          {
+            id: payload.new.id,
+            sender: payload.new.users?.username || 'Unknown',
+            content: payload.new.content,
+            isOwnMessage: payload.new.user_id === currentUser?.id,
+          },
+        ]);
+      } else if (payload.eventType === 'UPDATE') {
+        // Update an existing message
+        setMessages((prevMessages) =>
+          prevMessages.map((message) =>
+            message.id === payload.new.id
+              ? {
+                  ...message,
+                  content: payload.new.content,
+                }
+              : message
+          )
+        );
+      } else if (payload.eventType === 'DELETE') {
+        // Remove a deleted message
+        setMessages((prevMessages) =>
+          prevMessages.filter((message) => message.id !== payload.old.id)
+        );
+      }
+    });
+
+    // Cleanup subscription on unmount
+    return () => {
+      unsubscribe();
+    };
+  }, [groupId]);
 
   // 💬 Send a message
   const handleSend = async () => {
     if (!input.trim() || !currentUser) return;
 
     try {
-      const sent = await sendGroupMessage(id as string, currentUser.id, input);
+      const newMessage = await sendGroupMessage(
+        groupId as string,
+        currentUser.id,
+        input
+      );
 
-      const newMsg: Message = {
-        id: sent.id,
-        sender: currentUser.username || 'You',
-        content: sent.content,
-        isOwnMessage: true,
-      };
-
-      setMessages((prev) => [newMsg, ...prev]);
+      setMessages((prevMessages) => [
+        {
+          id: newMessage.id,
+          sender: currentUser.username,
+          content: newMessage.content,
+          isOwnMessage: true,
+        },
+        ...prevMessages,
+      ]);
       setInput('');
-    } catch (error) {
-      console.error('Send failed:', error);
+    } catch (err) {
+      console.error('Error sending message:', err);
     }
   };
 
@@ -76,15 +133,16 @@ export default function ChatScreen() {
           <Ionicons name="arrow-back" size={24} color="#333" />
         </TouchableOpacity>
         <View style={{ marginLeft: 12 }}>
-          <Text style={styles.headerTitle}>Group Chat</Text>
-          <Text style={styles.subTitle}>Group ID: {id}</Text>
+          <Text style={styles.headerTitle}>{group?.name}</Text>
+          <Text style={styles.subTitle}>Group ID: {groupId}</Text>
         </View>
         {/* ➕ Invite button */}
         <TouchableOpacity
-          onPress={() => router.push(`/chat/invite?groupId=${id}`)}
+          onPress={() => router.push({ pathname: '/chat/invite', params: { groupId } })}
           style={styles.inviteButton}
         >
           <Ionicons name="person-add-outline" size={22} color="#007aff" />
+          <Text style={styles.inviteText}>Invite Users</Text>
         </TouchableOpacity>
       </View>
 
@@ -157,5 +215,9 @@ const styles = StyleSheet.create({
     backgroundColor: '#0066CC',
     padding: 10,
     borderRadius: 20,
+  },
+  inviteText: {
+    alignItems: 'center',
+    fontSize: 16,
   },
 });

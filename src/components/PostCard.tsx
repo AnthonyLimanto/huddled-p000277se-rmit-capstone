@@ -18,7 +18,7 @@ type PostCardProps = {
 type Reply = Comment;
 
 const howLongAgo = (postTime: Date) => {
-  const postDate = new Date(postTime);
+  const postDate = new Date(postTime.getTime() + 10 * 60 * 60 * 1000); // Subtract 9 hours
   const now = new Date();
   const diffMs = now.getTime() - postDate.getTime();
   const diffMinutes = Math.floor(diffMs / (1000 * 60));

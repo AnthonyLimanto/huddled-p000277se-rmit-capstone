@@ -42,3 +42,26 @@ export const fetchGroupMessages = async (groupId: string) => {
 
   return data;
 };
+
+// 🔄 Subscribe to real-time group messages
+export const subscribeToGroupMessages = (
+  groupId: string,
+  onMessageChange: (payload: any) => void
+) => {
+  const channel = supabase
+    .channel('realtime:messages') // Create a channel for the messages table
+    .on(
+      'postgres_changes',
+      { event: '*', schema: 'public', table: 'messages', filter: `group_id=eq.${groupId}` },
+      (payload) => {
+        console.log('Real-time message change:', payload);
+        onMessageChange(payload); // Call the callback function with the payload
+      }
+    )
+    .subscribe();
+
+  // Return a cleanup function to unsubscribe
+  return () => {
+    supabase.removeChannel(channel);
+  };
+};

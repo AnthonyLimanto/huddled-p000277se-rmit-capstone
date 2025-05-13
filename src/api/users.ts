@@ -2,7 +2,6 @@ import { supabase } from "./supabase";
 import { uploadPfp } from "../helper/bucketHelper";
 
 // ✅ Sign up with Supabase Auth + profile in `users` table
-=======
 // ✨ Dummy signup to old 'User' table (likely unused if using Auth)
 export const signUp = async (username: string, password: string) => {
   const { data, error } = await supabase
@@ -13,16 +12,16 @@ export const signUp = async (username: string, password: string) => {
   return data;
 };
 
-// ✨ Fetch all users
-export const fetchUsers = async () => {
-  const { data, error } = await supabase
-    .from('Users') // ⚡ Make sure this matches your table ('Users' or 'users')
-    .select('*')
-    .order('created_at', { ascending: false });
+// // ✨ Fetch all users
+// export const fetchUsers = async () => {
+//   const { data, error } = await supabase
+//     .from('Users') // ⚡ Make sure this matches your table ('Users' or 'users')
+//     .select('*')
+//     .order('created_at', { ascending: false });
 
-  if (error) throw error;
-  return data;
-};
+//   if (error) throw error;
+//   return data;
+// };
 
 // export const fetchUser = async (email: string) => {
 //     const {data, error} = await supabase
