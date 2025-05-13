@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import {
   View,
   Text,
@@ -13,6 +13,7 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { supabase } from '../../api/supabase';
+import ReCaptcha from 'react-native-recaptcha-that-works';
 
 export default function SignIn() {
   const router = useRouter();
@@ -22,6 +23,9 @@ export default function SignIn() {
   const [emailError, setEmailError] = useState('');
   const [passwordError, setPasswordError] = useState('');
   const [successModalVisible, setSuccessModalVisible] = useState(false);
+  const [captchaVerified, setCaptchaVerified] = useState(false);
+
+  const recaptchaRef = useRef<any>(null);
 
   const validateEmail = (value: string) => {
     const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -42,6 +46,12 @@ export default function SignIn() {
     setPasswordError(passErr);
     if (emailErr || passErr) return;
 
+    // 👇 If CAPTCHA not yet passed, show it and stop here (only on mobile)
+    if ((Platform.OS === 'ios' || Platform.OS === 'android') && !captchaVerified) {
+      recaptchaRef.current?.open();
+      return;
+    }
+
     const { error } = await supabase.auth.signInWithPassword({ email, password });
 
     if (error) {
@@ -56,34 +66,24 @@ export default function SignIn() {
       setSuccessModalVisible(true);
       setTimeout(() => {
         setSuccessModalVisible(false);
+        setCaptchaVerified(false); // reset for next login
         router.replace('/(home)');
       }, 2000);
     }
   };
 
-  const handleSignUp = () => {
-    router.replace('../(auth)/signup');
-  };
-
-  const handleForgotPassword = () => {
-    router.replace('../(auth)/forgot-password');
-  };
+  const handleSignUp = () => router.replace('../(auth)/signup');
+  const handleForgotPassword = () => router.replace('../(auth)/forgot-password');
 
   return (
     <SafeAreaView style={styles.container}>
       <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         style={styles.keyboardView}
       >
         <View style={styles.logoContainer}>
-          <Image
-            source={require('../../../assets/images/icon-only.png')}
-            style={styles.logoIcon}
-          />
-          <Image
-            source={require('../../../assets/images/Huddled-wordmark.png')}
-            style={styles.logoWordmark}
-          />
+          <Image source={require('../../../assets/images/icon-only.png')} style={styles.logoIcon} />
+          <Image source={require('../../../assets/images/Huddled-wordmark.png')} style={styles.logoWordmark} />
         </View>
 
         <View style={styles.formContainer}>
@@ -138,7 +138,23 @@ export default function SignIn() {
         </View>
       </KeyboardAvoidingView>
 
-      {/* Modal for Success */}
+      {/* ✅ reCAPTCHA */}
+      {(Platform.OS === 'ios' || Platform.OS === 'android') && (
+        <ReCaptcha
+          ref={recaptchaRef}
+          siteKey="6Ld2OxgrAAAAAAOiVeZgdx66ZbYCDfQ9rwZpC2tw"
+          baseUrl="http://localhost"
+          onVerify={() => {
+            setCaptchaVerified(true);
+            setTimeout(() => handleLogin(), 300);
+          }}
+          onExpire={() => {
+            setCaptchaVerified(false);
+          }}
+        />
+      )}
+
+      {/* ✅ Login success modal */}
       <Modal transparent visible={successModalVisible} animationType="fade">
         <View style={styles.modalOverlay}>
           <View style={styles.modalBox}>
@@ -149,6 +165,7 @@ export default function SignIn() {
     </SafeAreaView>
   );
 }
+
 
 const styles = StyleSheet.create({
   container: {

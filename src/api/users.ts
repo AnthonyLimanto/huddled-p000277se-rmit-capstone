@@ -2,6 +2,39 @@ import { supabase } from "./supabase";
 import { uploadPfp } from "../helper/bucketHelper";
 
 // ✅ Sign up with Supabase Auth + profile in `users` table
+// ✨ Dummy signup to old 'User' table (likely unused if using Auth)
+export const signUp = async (username: string, password: string) => {
+  const { data, error } = await supabase
+    .from("User") // ⚡ Be careful: "User" (capital U) table name
+    .insert([{ username, password }]);
+
+  if (error) throw error;
+  return data;
+};
+
+// ✨ Fetch all users
+export const fetchUsers = async () => {
+  const { data, error } = await supabase
+    .from('Users') // ⚡ Make sure this matches your table ('Users' or 'users')
+    .select('*')
+    .order('created_at', { ascending: false });
+
+  if (error) throw error;
+  return data;
+};
+
+// export const fetchUser = async (email: string) => {
+//     const {data, error} = await supabase
+//         .from('users')
+//         .select('*')
+//         .eq('email', email)
+    
+//     if (error) throw error;
+//     return data; 
+// } 
+
+
+// ✨ Full signup with PFP upload
 export const completeSignUp = async (
   email: string,
   password: string,
@@ -20,8 +53,10 @@ export const completeSignUp = async (
     let pfpUrl = `https://ui-avatars.com/api/?name=${encodeURIComponent(username)}&background=random`;
 
     if (pfpFile) {
-      const response = await fetch(pfpFile.uri);
-      const blob = await response.blob();
+      const response = await fetch(pfpFile.uri); // Fetch local file
+      const blob = await response.blob();        // Convert to Blob
+      
+      // Upload to Supabase Storage bucket 'pfp'
       await uploadPfp(blob, email);
       pfpUrl = `https://leqcmbvpugjvyzlxxmgs.supabase.co/storage/v1/object/public/pfp/${email}/profile-picture.png`;
     }

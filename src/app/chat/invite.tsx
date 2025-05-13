@@ -13,8 +13,6 @@ import { Ionicons } from '@expo/vector-icons';
 import { fetchUsers } from '@/src/api/users';
 import { addGroupMembers, fetchGroupMembers } from '@/src/api/group';
 
-
-
 export default function InviteToGroupScreen() {
   const router = useRouter();
   const [users, setUsers] = useState<any[]>([]);

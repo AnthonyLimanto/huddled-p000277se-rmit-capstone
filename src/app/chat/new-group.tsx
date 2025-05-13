@@ -41,7 +41,6 @@ export default function NewGroupScreen() {
       Alert.alert('Select at least 2 users');
       return;
     }
-
     try {
       const result = await createGroup(groupName, selectedUsers);
 
