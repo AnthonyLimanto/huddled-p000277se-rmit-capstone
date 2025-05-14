@@ -13,7 +13,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { createGroup } from '@/src/api/group';
-import { fetchUsers } from '@/src/api/users'; // Replace with your actual API for fetching users
+import { fetchUsers, getSessionUser } from '@/src/api/users'; 
 
 export default function NewGroupScreen() {
   const router = useRouter();
@@ -21,19 +21,24 @@ export default function NewGroupScreen() {
   const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
   const [users, setUsers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [currentUser, setCurrentUser] = useState<any>(null);
 
   // Fetch users dynamically
   useEffect(() => {
     const loadUsers = async () => {
       try {
+        const user = await getSessionUser();
         const fetchedUsers = await fetchUsers(); // Replace with your actual API call
   
         // Validate the response
         if (!Array.isArray(fetchedUsers)) {
           throw new Error('Invalid user data received');
         }
-  
+
         setUsers(fetchedUsers);
+        const filteredUsers = fetchedUsers.filter((u) => u.user_id !== user.id);
+        setUsers(filteredUsers);
+        setSelectedUsers([user.id]);
       } catch (error) {
         console.error('Error fetching users:', error);
         Alert.alert('Failed to load users', error.message || 'Something went wrong');
@@ -58,10 +63,10 @@ export default function NewGroupScreen() {
     }
 
     if (selectedUsers.length < 2) {
-      Alert.alert('Select at least 2 users');
+      Alert.alert('Select at least additional 1 user');
       return;
     }
-
+    console.error('Selected users:', selectedUsers);
     try {
       const result = await createGroup(groupName, selectedUsers);
 
