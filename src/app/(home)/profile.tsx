@@ -1,12 +1,12 @@
 import { supabase } from '@/src/api/supabase';
 import { fetchUser } from '@/src/api/users';
+import { uploadPfp } from '@/src/helper/bucketHelper';
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import { router } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import {
   Alert,
-  Image,
   Modal,
   SafeAreaView,
   ScrollView,
@@ -17,23 +17,63 @@ import {
   TouchableOpacity,
   View
 } from 'react-native';
+import { Pfp } from '../../components/Pfp';
 
 export default function ProfileScreen() {
   const [userData, setUserData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [editModalVisible, setEditModalVisible] = useState(false);
+  const [refreshPfp, setRefreshPfp] = useState(0);
 
   const [editUsername, setEditUsername] = useState('');
   const [editDegree, setEditDegree] = useState('');
+ 
 
-  const handleLogout = async () => {
-    const { error } = await supabase.auth.signOut();
-    if (error) {
-      console.error("Logout failed:", error.message);
-      Alert.alert("Error", "Logout failed. Please try again.");
-    } else {
-      Alert.alert("Logged Out", "You have been signed out.");
-      router.replace('../(auth)/signin');
+  const handleEditProfile = () => {
+    if (!userData) {
+      Alert.alert('Please wait', 'User data is still loading');
+      return;
+    }
+
+    setEditUsername(userData.username ?? '');
+    setEditDegree(userData.degree ?? '');
+
+    setEditModalVisible(true);
+  };
+
+  const handleUpdateProfile = async () => {
+    if (!editUsername.trim() || !editDegree.trim()) {
+      Alert.alert('Validation Error', 'All fields are required');
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from('users')
+        .update({
+          username: editUsername.trim(),
+          degree: editDegree.trim(),
+
+          
+        })
+        .eq('email', userData.email);
+
+      if (error) {
+        Alert.alert('Update Failed', error.message);
+      } else {
+        setUserData({
+          ...userData,
+          username: editUsername.trim(),
+          degree: editDegree.trim(),
+
+          
+        });
+        Alert.alert('Profile updated!');
+        setEditModalVisible(false);
+      }
+    } catch (error) {
+      Alert.alert('Error', 'Something went wrong');
+      console.error(error);
     }
   };
 
@@ -52,38 +92,18 @@ export default function ProfileScreen() {
       });
 
       if (!pickerResult.canceled && pickerResult.assets.length > 0) {
-        const imageUri = pickerResult.assets[0].uri;
+        const file = pickerResult.assets[0];
 
-        const response = await fetch(imageUri);
-        const blob = await response.blob();
+        const fetchedFile = {
+          uri: file.uri,
+          name: `profile-picture.png`,
+          type: 'image/png',
+        } as unknown as File;
 
-        const fileExt = imageUri.split('.').pop();
-        const fileName = `${Date.now()}.${fileExt}`;
-        const filePath = `profile-pics/${fileName}`;
+        await uploadPfp(fetchedFile, userData.email);
 
-        const { error: uploadError } = await supabase.storage
-          .from('avatars')
-          .upload(filePath, blob, { contentType: 'image/jpeg' });
-
-        if (uploadError) {
-          Alert.alert('Upload failed', uploadError.message);
-          return;
-        }
-
-        const { data } = supabase.storage.from('avatars').getPublicUrl(filePath);
-        const publicUrl = data.publicUrl;
-
-        const { error: updateError } = await supabase
-          .from('users')
-          .update({ pfp_url: publicUrl })
-          .eq('email', userData.email);
-
-        if (updateError) {
-          Alert.alert('Update failed', updateError.message);
-        } else {
-          setUserData({ ...userData, pfp_url: publicUrl });
-          Alert.alert('Profile picture updated!');
-        }
+        Alert.alert('Profile picture updated!');
+        setRefreshPfp((prev) => prev + 1);
       }
     } catch (error) {
       Alert.alert('Failed', 'Something went wrong while updating profile picture');
@@ -91,34 +111,14 @@ export default function ProfileScreen() {
     }
   };
 
-  const handleEditProfile = () => {
-    setEditUsername(userData.username);
-    setEditDegree(userData.degree);
-    setEditModalVisible(true);
-  };
-
-  const handleUpdateProfile = async () => {
-    if (!editUsername.trim() || !editDegree.trim()) {
-      Alert.alert('Validation Error', 'All fields are required');
-      return;
-    }
-
-    try {
-      const { error } = await supabase
-        .from('users')
-        .update({ username: editUsername.trim(), degree: editDegree.trim() })
-        .eq('email', userData.email);
-
-      if (error) {
-        Alert.alert('Update Failed', error.message);
-      } else {
-        setUserData({ ...userData, username: editUsername.trim(), degree: editDegree.trim() });
-        Alert.alert('Profile updated!');
-        setEditModalVisible(false);
-      }
-    } catch (error) {
-      Alert.alert('Error', 'Something went wrong');
-      console.error(error);
+  const handleLogout = async () => {
+    const { error } = await supabase.auth.signOut();
+    if (error) {
+      console.error("Logout failed:", error.message);
+      Alert.alert("Error", "Logout failed. Please try again.");
+    } else {
+      Alert.alert("Logged Out", "You have been signed out.");
+      router.replace('../(auth)/signin');
     }
   };
 
@@ -152,8 +152,8 @@ export default function ProfileScreen() {
 
         <View style={styles.profileHeader}>
           <View style={styles.avatarContainer}>
-            {userData?.pfp_url ? (
-              <Image source={{ uri: userData.pfp_url }} style={styles.avatar} />
+            {userData?.email ? (
+              <Pfp key={refreshPfp} email={userData.email} name={userData.username} style={styles.avatar} size={100} />
             ) : (
               <View style={styles.avatar} />
             )}
@@ -172,23 +172,13 @@ export default function ProfileScreen() {
               : 'This is where your bio would appear. Share a bit about yourself with others.'}
           </Text>
 
-          <TouchableOpacity style={styles.editProfileButton} onPress={handleEditProfile}>
+          <TouchableOpacity
+            style={styles.editProfileButton}
+            onPress={handleEditProfile}
+            disabled={loading || !userData}
+          >
             <Text style={styles.editProfileText}>Edit Profile</Text>
           </TouchableOpacity>
-        </View>
-        <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>Your Posts</Text>
-        </View>
-        
-        <View style={styles.postsContainer}>
-          {/* Empty state for posts */}
-          <View style={styles.emptyState}>
-            <Ionicons name="document-text-outline" size={40} color="#CCC" />
-            <Text style={styles.emptyStateText}>No posts yet</Text>
-            <Text style={styles.emptyStateSubtext}>
-              Your posts will appear here
-            </Text>
-          </View>
         </View>
 
         <View style={styles.logoutContainer}>
@@ -298,62 +288,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     width: '100%',
     marginTop: 20,
-  },
-statsContainer: {
-  flexDirection: 'row',
-  width: '100%',
-  marginBottom: 24,
-  paddingHorizontal: 30,
-  justifyContent: 'space-around',
-},
-statItem: {
-  alignItems: 'center',
-},
-statNumber: {
-  fontSize: 18,
-  fontWeight: 'bold',
-  marginBottom: 5,
-},
-statLabel: {
-  fontSize: 14,
-  color: '#666',
-},
-divider: {
-  width: 1,
-  height: '100%',
-  backgroundColor: '#EEE',
-},
-
-sectionHeader: {
-    paddingHorizontal: 20,
-    paddingVertical: 12,
-    backgroundColor: '#F8F8F8',
-    borderTopWidth: 1,
-    borderBottomWidth: 1,
-    borderColor: '#EEE',
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-  },
-  postsContainer: {
-    padding: 20,
-  },
-  emptyState: {
-    padding: 40,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  emptyStateText: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginTop: 12,
-    marginBottom: 8,
-  },
-  emptyStateSubtext: {
-    fontSize: 14,
-    color: '#999',
-    textAlign: 'center',
   },
   updateButtonText: { color: '#fff', fontSize: 16, fontWeight: 'bold' },
 });
