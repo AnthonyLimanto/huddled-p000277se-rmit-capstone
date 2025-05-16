@@ -87,6 +87,11 @@ export default function HomeScreen() {
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" />
+  
+      {/* Header with white background */}
+      <Header />
+  
+      {/* Post feed with blue background */}
       <FlatList
         data={posts}
         renderItem={renderPost}
@@ -95,18 +100,15 @@ export default function HomeScreen() {
         onEndReachedThreshold={0.5}
         ListFooterComponent={renderFooter}
         ListHeaderComponent={
-          <>
-            <Header />
-            <View style={styles.newPostsButton}>
-              <Text style={styles.newPostsText}>New posts</Text>
-            </View>
-          </>
+          <View style={styles.newPostsButton}>
+            <Text style={styles.newPostsText}>New posts</Text>
+          </View>
         }
         ItemSeparatorComponent={() => <View style={{ height: 12 }} />}
         contentContainerStyle={styles.feedContainer}
       />
     </SafeAreaView>
-  );
+  );  
 }
 
 const styles = StyleSheet.create({

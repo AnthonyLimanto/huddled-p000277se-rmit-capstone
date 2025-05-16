@@ -236,7 +236,11 @@ export default function ProfileScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#FFF' },
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 20 },
-  title: { fontSize: 28, fontWeight: 'bold' },
+  title: {
+    fontSize: 28,
+    fontWeight: 'bold',
+    color: '#085DB7',
+  },  
   profileHeader: { alignItems: 'center', padding: 20 },
   avatarContainer: { position: 'relative', marginBottom: 16 },
   avatar: { width: 100, height: 100, borderRadius: 50, backgroundColor: '#DDD' },

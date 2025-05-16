@@ -134,7 +134,8 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 28,
     fontWeight: 'bold',
-  },
+    color: '#085DB7',
+  },  
   newMessageButton: {
     width: 40,
     height: 40,
