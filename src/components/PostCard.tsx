@@ -10,6 +10,7 @@ import { createComment, fetchCommentById, fetchComments, fetchCommentsByLayerId 
 import { addPostLike, deletePostLike, fetchPostLikeInfo } from '../api/post_likes';
 import { addCommentLike, deleteCommentLike } from '../api/comment_likes';
 import ImagePreview from './ImagePreview';
+import { useRouter } from 'expo-router';
 
 type PostCardProps = {
   post: Post;
@@ -40,6 +41,7 @@ const PostCard = ({ post }: PostCardProps) => {
   const [replyingTo, setReplyingTo] = useState<string | null>(null);
   const [showComments, setShowComments] = useState(false);
   const [showPreview, setShowPreview] = useState({show: false, init: 0});
+  const router = useRouter();
 
   const { user } = useAuth();
 
@@ -315,15 +317,28 @@ const PostCard = ({ post }: PostCardProps) => {
     <View style={{...styles.card, zIndex: showPreview.show ? 1 : 0}}>
       {/* Post Header */}
       <View style={styles.userInfo}>
-        <View style={styles.leftGroup}>
-          <Pfp email={post.profile.email} name={post.profile.username} />
-          <View>
-            <Text style={styles.username}>{post.profile.username}</Text>
-            <Text style={styles.degree}>{post.profile.degree}</Text>
-          </View>
-        </View>
-        <Text style={styles.timestamp}>{howLongAgo(postDate)}</Text>
-      </View>
+      <TouchableOpacity
+  style={styles.leftGroup}
+  onPress={() => {
+    const email = post?.profile?.email;
+    if (email) {
+      router.push({
+        pathname: '/profile-user',
+        params: { userId: email },
+      });
+    } else {
+      console.warn('Email not found in post.profile');
+    }
+  }}  
+>
+    <Pfp email={post.profile.email} name={post.profile.username} />
+    <View>
+      <Text style={styles.username}>{post.profile.username}</Text>
+      <Text style={styles.degree}>{post.profile.degree}</Text>
+    </View>
+  </TouchableOpacity>
+  <Text style={styles.timestamp}>{howLongAgo(postDate)}</Text>
+</View>
 
       {/* Post Content */}
       <View style={styles.contentContainer}>
