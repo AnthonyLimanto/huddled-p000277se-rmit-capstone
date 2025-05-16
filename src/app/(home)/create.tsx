@@ -218,7 +218,7 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: '#F0F0F0',
   },
-  title: { fontSize: 24, fontWeight: 'bold', color: '#085DB7' },
+  title: { fontSize: 28, fontWeight: 'bold', color: '#085DB7' },
   createContainer: {
     flex: 1,
     padding: 20,

@@ -65,11 +65,14 @@ const styles = StyleSheet.create({
   },
   header: {
     padding: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F0F0F0',
   },
   title: {
     fontSize: 28,
     fontWeight: 'bold',
-  },
+    color: '#085DB7',
+  },  
   searchContainer: {
     padding: 16,
   },
