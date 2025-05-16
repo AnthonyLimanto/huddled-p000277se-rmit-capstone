@@ -46,7 +46,6 @@ export default function SignIn() {
     setPasswordError(passErr);
     if (emailErr || passErr) return;
 
-    // 👇 If CAPTCHA not yet passed, show it and stop here (only on mobile)
     if ((Platform.OS === 'ios' || Platform.OS === 'android') && !captchaVerified) {
       recaptchaRef.current?.open();
       return;
@@ -66,7 +65,7 @@ export default function SignIn() {
       setSuccessModalVisible(true);
       setTimeout(() => {
         setSuccessModalVisible(false);
-        setCaptchaVerified(false); // reset for next login
+        setCaptchaVerified(false);
         router.replace('/(home)');
       }, 2000);
     }
@@ -77,13 +76,21 @@ export default function SignIn() {
 
   return (
     <SafeAreaView style={styles.container}>
+      {/* Top icon above the blue box */}
+      <Image
+        source={require('../../../assets/images/icon-only.png')}
+        style={styles.topIcon}
+      />
+
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         style={styles.keyboardView}
       >
         <View style={styles.logoContainer}>
-          <Image source={require('../../../assets/images/icon-only.png')} style={styles.logoIcon} />
-          <Image source={require('../../../assets/images/Huddled-wordmark.png')} style={styles.logoWordmark} />
+          <Image
+            source={require('../../../assets/images/Huddled-wordmark.png')}
+            style={styles.logoWordmark}
+          />
         </View>
 
         <View style={styles.formContainer}>
@@ -138,7 +145,7 @@ export default function SignIn() {
         </View>
       </KeyboardAvoidingView>
 
-      {/* ✅ reCAPTCHA */}
+      {/* reCAPTCHA */}
       {(Platform.OS === 'ios' || Platform.OS === 'android') && (
         <ReCaptcha
           ref={recaptchaRef}
@@ -166,25 +173,25 @@ export default function SignIn() {
   );
 }
 
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#fff',
+  },
+  topIcon: {
+    width: 100,
+    height: 90,
+    resizeMode: 'contain',
+    alignSelf: 'center',
+    marginTop: 30,
   },
   keyboardView: {
     flex: 1,
   },
   logoContainer: {
     alignItems: 'center',
-    marginTop: 60,
+    marginTop: 10,
     marginBottom: 30,
-  },
-  logoIcon: {
-    width: 90,
-    height: 80,
-    resizeMode: 'contain',
-    marginBottom: 10,
   },
   logoWordmark: {
     width: 200,
