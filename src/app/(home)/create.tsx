@@ -18,6 +18,7 @@ import { Audio } from 'expo-av';
 import * as ImagePicker from 'expo-image-picker';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'expo-router'; // ✅ Router for redirect
+import { trackEvent } from '@/src/api/amplitude'; // Import Amplitude tracking
 
 const MAX_IMAGE_COUNT = 4;
 
@@ -119,6 +120,14 @@ export default function CreatePostScreen() {
       if (fileList.length && sentPost) {
         await uploadPostImages(fileList, sentPost[0].id);
       }
+
+      // Track the "Post Created" event with Amplitude
+      trackEvent('Post Created', {
+        username: profile?.username || 'Unknown',
+        degree: profile?.degree || 'Unknown',
+        postLength: text.length,
+        imageCount: fileList.length,
+      });
 
       setText('');
       setFileList([]);
