@@ -138,3 +138,15 @@ export const getSessionUser = async () => {
     pfp_url: profile.pfp_url,
   };
 };
+
+// 🔍 Search users by username or email
+export const searchUsers = async (searchTerm: string) => {
+  const { data, error } = await supabase
+    .from("users")
+    .select("*")
+    .or(`username.ilike.%${searchTerm}%,email.ilike.%${searchTerm}%`)
+    .order("username", { ascending: true });
+
+  if (error) throw error;
+  return data;
+};
