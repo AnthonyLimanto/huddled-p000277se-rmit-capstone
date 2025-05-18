@@ -1,40 +1,16 @@
 import { supabase } from "./supabase";
 import { uploadPfp } from "../helper/bucketHelper";
 
-// ✅ Sign up with Supabase Auth + profile in `users` table
-// ✨ Dummy signup to old 'User' table (likely unused if using Auth)
 export const signUp = async (username: string, password: string) => {
   const { data, error } = await supabase
-    .from("User") // ⚡ Be careful: "User" (capital U) table name
+    .from("User") 
     .insert([{ username, password }]);
 
   if (error) throw error;
   return data;
 };
 
-// // ✨ Fetch all users
-// export const fetchUsers = async () => {
-//   const { data, error } = await supabase
-//     .from('Users') // ⚡ Make sure this matches your table ('Users' or 'users')
-//     .select('*')
-//     .order('created_at', { ascending: false });
 
-//   if (error) throw error;
-//   return data;
-// };
-
-// export const fetchUser = async (email: string) => {
-//     const {data, error} = await supabase
-//         .from('users')
-//         .select('*')
-//         .eq('email', email)
-    
-//     if (error) throw error;
-//     return data; 
-// } 
-
-
-// ✨ Full signup with PFP upload
 export const completeSignUp = async (
   email: string,
   password: string,
@@ -49,7 +25,7 @@ export const completeSignUp = async (
 
     const userId = data.user.id;
 
-    // 🔁 Upload or fallback to auto avatar
+    // Upload or fallback to auto avatar
     let pfpUrl = `https://ui-avatars.com/api/?name=${encodeURIComponent(username)}&background=random`;
 
     if (pfpFile) {
@@ -61,7 +37,7 @@ export const completeSignUp = async (
       pfpUrl = `https://leqcmbvpugjvyzlxxmgs.supabase.co/storage/v1/object/public/pfp/${email}/profile-picture.png`;
     }
 
-    // 👤 Insert user profile
+    //Insert user profile
     const { error: profileError } = await supabase
       .from("users")
       .insert([
@@ -83,7 +59,7 @@ export const completeSignUp = async (
   }
 };
 
-// 👥 Fetch all users (from lowercase `users`)
+//Fetch all users (from lowercase `users`)
 export const fetchUsers = async () => {
   const { data, error } = await supabase
     .from("users")
@@ -94,7 +70,7 @@ export const fetchUsers = async () => {
   return data;
 };
 
-// 🔍 Fetch one user by email
+//Fetch one user by email
 export const fetchUser = async (email: string) => {
   const { data, error } = await supabase
     .from("users")
@@ -106,7 +82,7 @@ export const fetchUser = async (email: string) => {
   return data;
 };
 
-// ✅ Get logged-in user + profile info from `users`
+//Get logged-in user + profile info from `users`
 export const getSessionUser = async () => {
   const {
     data: { session },
@@ -139,7 +115,7 @@ export const getSessionUser = async () => {
   };
 };
 
-// 🔍 Search users by username or email
+//Search users by username or email
 export const searchUsers = async (searchTerm: string) => {
   const { data, error } = await supabase
     .from("users")

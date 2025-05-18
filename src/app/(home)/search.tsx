@@ -2,32 +2,41 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TextInput, SafeAreaView, ScrollView, StatusBar, TouchableOpacity, ActivityIndicator, FlatList, Image } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { searchUsers } from '@/src/api/users';
+import { searchPosts } from '@/src/api/posts';
 import { router } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import PostCard from '@/src/components/PostCard';
+import { useAuth } from '@/src/context/AuthContext';
+import { Post } from '@/src/model/post';
 
 const RECENT_SEARCHES_KEY = 'recentSearches';
-
-// 在将来可以添加搜索帖子的函数
-const searchPosts = async (searchTerm: string) => {
-  // 模拟搜索帖子的API调用
-  // 在实际情况中，这里应该调用真实的API
-  return [];
-};
 
 export default function SearchScreen() {
   const [searchTerm, setSearchTerm] = useState('');
   const [searchResults, setSearchResults] = useState<any[]>([]);
-  const [postResults, setPostResults] = useState<any[]>([]);
+  const [postResults, setPostResults] = useState<Post[]>([]);
   const [recentSearches, setRecentSearches] = useState<string[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('user'); // 'user' or 'post'
+  
+  const { user } = useAuth();
 
   // Load recent searches from AsyncStorage on component mount
   useEffect(() => {
     loadRecentSearches();
   }, []);
+
+  // Handle tab change
+  const handleTabChange = (tab: string) => {
+    setActiveTab(tab);
+    
+    // Execute search for the selected tab if there was a previous search
+    if (hasSearched && searchTerm.trim()) {
+      executeSearch(tab);
+    }
+  };
 
   const loadRecentSearches = async () => {
     try {
@@ -51,19 +60,22 @@ export default function SearchScreen() {
     }
   };
 
-  const handleSearch = async () => {
+  // Execute search based on active tab
+  const executeSearch = async (tab: string) => {
     if (!searchTerm.trim()) return;
     
     try {
       setIsSearching(true);
       
-      // 搜索用户
-      const userResults = await searchUsers(searchTerm);
-      setSearchResults(userResults);
-      
-      // 搜索帖子（这里只是示例，实际项目中应连接到真实API）
-      const posts = await searchPosts(searchTerm);
-      setPostResults(posts);
+      if (tab === 'user') {
+        // Search users
+        const userResults = await searchUsers(searchTerm);
+        setSearchResults(userResults);
+      } else if (tab === 'post' && user?.id) {
+        // Search posts
+        const postResults = await searchPosts(searchTerm, user.id);
+        setPostResults(postResults as any[]);
+      }
       
       // Add to recent searches
       if (!recentSearches.includes(searchTerm)) {
@@ -72,7 +84,6 @@ export default function SearchScreen() {
         saveRecentSearches(newRecentSearches);
       }
       
-      setHasSearched(true);
     } catch (error) {
       console.error('Search failed:', error);
     } finally {
@@ -80,13 +91,17 @@ export default function SearchScreen() {
     }
   };
 
-  const navigateToUserProfile = (email: string) => {
-    router.push(`/profile-user?userId=${encodeURIComponent(email)}`);
+  // Handle search button click or enter key
+  const handleSearch = async () => {
+    if (!searchTerm.trim()) return;
+    setHasSearched(true);
+    await executeSearch(activeTab);
   };
 
   const resetSearch = () => {
     setHasSearched(false);
     setSearchResults([]);
+    setPostResults([]);
     setSearchTerm('');
   };
 
@@ -104,6 +119,10 @@ export default function SearchScreen() {
     const g = Math.floor(Math.random() * 55) + 200;
     const b = Math.floor(Math.random() * 55) + 200;
     return `rgb(${r}, ${g}, ${b})`;
+  };
+
+  const navigateToUserProfile = (email: string) => {
+    router.push(`/profile-user?userId=${encodeURIComponent(email)}`);
   };
 
   const renderUserItem = ({ item }: { item: any }) => (
@@ -127,6 +146,10 @@ export default function SearchScreen() {
     </View>
   );
 
+  const renderPostItem = ({ item }: { item: any }) => (
+    <PostCard post={item} />
+  );
+
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" />
@@ -138,7 +161,7 @@ export default function SearchScreen() {
         <View style={styles.searchBar}>
           <Ionicons name="search" size={20} color="#666" style={styles.searchIcon} />
           <TextInput
-            placeholder="Search username or email..."
+            placeholder={activeTab === 'user' ? "Search username or email..." : "Search post content..."}
             placeholderTextColor="#999"
             style={styles.searchInput}
             value={searchTerm}
@@ -177,14 +200,14 @@ export default function SearchScreen() {
           <View style={styles.tabsContainer}>
             <TouchableOpacity 
               style={[styles.tab, activeTab === 'user' && styles.activeTab]} 
-              onPress={() => setActiveTab('user')}
+              onPress={() => handleTabChange('user')}
             >
               <Text style={[styles.tabText, activeTab === 'user' && styles.activeTabText]}>User</Text>
             </TouchableOpacity>
             
             <TouchableOpacity 
               style={[styles.tab, activeTab === 'post' && styles.activeTab]} 
-              onPress={() => setActiveTab('post')}
+              onPress={() => handleTabChange('post')}
             >
               <Text style={[styles.tabText, activeTab === 'post' && styles.activeTabText]}>Post</Text>
             </TouchableOpacity>
@@ -202,7 +225,16 @@ export default function SearchScreen() {
               <Text style={styles.noResultsText}>No matching users found</Text>
             )
           ) : (
-            <Text style={styles.noResultsText}>Post search feature coming soon</Text>
+            postResults.length > 0 ? (
+              <FlatList
+                data={postResults}
+                renderItem={renderPostItem}
+                keyExtractor={(item) => item.id}
+                style={styles.resultsList}
+              />
+            ) : (
+              <Text style={styles.noResultsText}>No matching posts found</Text>
+            )
           )}
         </View>
       ) : (
@@ -228,7 +260,8 @@ export default function SearchScreen() {
                   style={styles.recentSearchItem}
                   onPress={() => {
                     setSearchTerm(search);
-                    handleSearch();
+                    setHasSearched(true);
+                    executeSearch(activeTab);
                   }}
                 >
                   <Ionicons name="time-outline" size={20} color="#666" />
