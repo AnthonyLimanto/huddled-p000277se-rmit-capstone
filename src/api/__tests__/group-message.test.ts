@@ -1,6 +1,6 @@
 import { sendGroupMessage, fetchGroupMessages, subscribeToGroupMessages } from '../group-message';
 
-// 模拟整个supabase模块
+// Mock supabase
 jest.mock('../supabase', () => {
   return {
     supabase: {
@@ -11,32 +11,32 @@ jest.mock('../supabase', () => {
   };
 });
 
-// 导入模拟后的supabase
+// Import the mocked supabase
 import { supabase } from '../supabase';
 
-describe('群组消息模块测试', () => {
-  // 每个测试之前重置所有模拟
+describe('Group Message Module Tests', () => {
+  // Reset all mocks before each test
   beforeEach(() => {
     jest.clearAllMocks();
   });
 
   describe('sendGroupMessage', () => {
-    test('正常发送消息并返回新消息对象', async () => {
-      // 模拟数据和响应
+    test('Send group message and return new message object', async () => {
+      // Mock data and response
       const mockData = [{ id: 'msg123', content: 'Hello', user_id: 'user123' }];
       
-      // 设置嵌套模拟链
+      // Set nested mock chain
       const mockSelect = jest.fn().mockResolvedValue({ data: mockData, error: null });
       const mockInsert = jest.fn().mockReturnValue({ select: mockSelect });
       const mockFrom = jest.fn().mockReturnValue({ insert: mockInsert });
       
-      // 应用模拟
+      // Apply mock
       (supabase.from as jest.Mock).mockImplementation(mockFrom);
 
-      // 执行测试函数
+      // Execute test function
       const result = await sendGroupMessage('group123', 'user123', 'Hello');
 
-      // 验证
+      // Verify
       expect(supabase.from).toHaveBeenCalledWith('messages');
       expect(mockInsert).toHaveBeenCalledWith([
         { group_id: 'group123', user_id: 'user123', content: 'Hello' }
@@ -45,39 +45,39 @@ describe('群组消息模块测试', () => {
       expect(result).toEqual(mockData[0]);
     });
 
-    test('当参数无效时抛出错误', async () => {
-      // 模拟错误响应
-      const mockError = new Error('无效的参数');
+    test('Throw error when parameters are invalid', async () => {
+      // Mock error response
+      const mockError = new Error('Invalid parameters');
       
-      // 使用mockRejectedValue直接模拟Promise拒绝
+      // Use e mockRejectedVal directly to simulate irectly rejectiono simulate Promise rejection
       const mockSelect = jest.fn().mockRejectedValue(mockError);
       const mockInsert = jest.fn().mockReturnValue({ select: mockSelect });
       const mockFrom = jest.fn().mockReturnValue({ insert: mockInsert });
       
-      // 应用模拟
+      // Apply mock
       (supabase.from as jest.Mock).mockImplementation(mockFrom);
 
-      // 执行并验证抛出错误
-      await expect(sendGroupMessage('', 'user123', 'Hello')).rejects.toThrow('无效的参数');
+      // Execute and verify error
+      await expect(sendGroupMessage('', 'user123', 'Hello')).rejects.toThrow('Invalid parameters');
       expect(supabase.from).toHaveBeenCalledWith('messages');
     });
 
-    test('空内容消息的处理', async () => {
-      // 模拟空内容响应
+    test('Handle empty content message', async () => {
+      // Mock empty content response
       const mockData = [{ id: 'msg123', content: '', user_id: 'user123' }];
       
-      // 设置嵌套模拟链
+      // Set nested mock chain
       const mockSelect = jest.fn().mockResolvedValue({ data: mockData, error: null });
       const mockInsert = jest.fn().mockReturnValue({ select: mockSelect });
       const mockFrom = jest.fn().mockReturnValue({ insert: mockInsert });
       
-      // 应用模拟
+      // Apply mock
       (supabase.from as jest.Mock).mockImplementation(mockFrom);
 
-      // 执行测试函数
+      // Execute test function
       const result = await sendGroupMessage('group123', 'user123', '');
 
-      // 验证
+      // Verify
       expect(mockInsert).toHaveBeenCalledWith([
         { group_id: 'group123', user_id: 'user123', content: '' }
       ]);
@@ -86,8 +86,8 @@ describe('群组消息模块测试', () => {
   });
 
   describe('fetchGroupMessages', () => {
-    test('正常获取群组消息', async () => {
-      // 模拟消息数据
+    test('Get group messages', async () => {
+      // Mock message data
       const mockMessages = [
         {
           id: 'msg1',
@@ -105,19 +105,19 @@ describe('群组消息模块测试', () => {
         }
       ];
 
-      // 设置嵌套模拟链
+      // Set nested mock chain
       const mockOrder = jest.fn().mockResolvedValue({ data: mockMessages, error: null });
       const mockEq = jest.fn().mockReturnValue({ order: mockOrder });
       const mockSelect = jest.fn().mockReturnValue({ eq: mockEq });
       const mockFrom = jest.fn().mockReturnValue({ select: mockSelect });
 
-      // 应用模拟
+      // Apply mock
       (supabase.from as jest.Mock).mockImplementation(mockFrom);
 
-      // 执行测试函数
+      // Execute test function
       const result = await fetchGroupMessages('group123');
 
-      // 验证
+      // Verify
       expect(supabase.from).toHaveBeenCalledWith('messages');
       expect(mockSelect).toHaveBeenCalled();
       expect(mockEq).toHaveBeenCalledWith('group_id', 'group123');
@@ -125,59 +125,59 @@ describe('群组消息模块测试', () => {
       expect(result).toEqual(mockMessages);
     });
 
-    test('处理空结果集', async () => {
-      // 设置嵌套模拟链
+    test('Handle empty result set', async () => {
+      // Set nested mock chain
       const mockOrder = jest.fn().mockResolvedValue({ data: [], error: null });
       const mockEq = jest.fn().mockReturnValue({ order: mockOrder });
       const mockSelect = jest.fn().mockReturnValue({ eq: mockEq });
       const mockFrom = jest.fn().mockReturnValue({ select: mockSelect });
 
-      // 应用模拟
+      // Apply mock
       (supabase.from as jest.Mock).mockImplementation(mockFrom);
 
-      // 执行测试函数
+      // Execute test function
       const result = await fetchGroupMessages('emptyGroup');
 
-      // 验证返回空数组
+      // Verify return empty array
       expect(result).toEqual([]);
     });
 
-    test('处理获取消息失败', async () => {
-      // 设置错误响应
-      const mockError = new Error('数据库错误');
+    test('Handle get messages failed', async () => {
+      // Set error response
+      const mockError = new Error('Database error');
       
-      // 使用mockRejectedValue直接模拟Promise拒绝
+      // Use mockRejectedValue directly to simulate Promise rejection
       const mockOrder = jest.fn().mockRejectedValue(mockError);
       const mockEq = jest.fn().mockReturnValue({ order: mockOrder });
       const mockSelect = jest.fn().mockReturnValue({ eq: mockEq });
       const mockFrom = jest.fn().mockReturnValue({ select: mockSelect });
 
-      // 应用模拟
+      // Apply mock
       (supabase.from as jest.Mock).mockImplementation(mockFrom);
 
-      // 验证函数抛出错误
-      await expect(fetchGroupMessages('group123')).rejects.toThrow('数据库错误');
+      // Verify function throws error
+      await expect(fetchGroupMessages('group123')).rejects.toThrow('Database error');
     });
   });
 
   describe('subscribeToGroupMessages', () => {
-    test('正确注册实时消息订阅', () => {
-      // 创建模拟通道
+    test('Correctly register real-time message subscription', () => {
+      // Create mock channel
       const mockChannel = {
         on: jest.fn().mockReturnThis(),
         subscribe: jest.fn().mockReturnThis()
       };
       
-      // 设置返回模拟通道
+      // Set return mock channel
       (supabase.channel as jest.Mock).mockReturnValue(mockChannel);
 
-      // 模拟回调函数
+      // Mock callback function
       const mockCallback = jest.fn();
 
-      // 执行测试函数
+      // Execute test function
       const unsubscribe = subscribeToGroupMessages('group123', mockCallback);
 
-      // 验证
+      // Verify
       expect(supabase.channel).toHaveBeenCalledWith('realtime:messages');
       expect(mockChannel.on).toHaveBeenCalledWith(
         'postgres_changes',
@@ -193,32 +193,32 @@ describe('群组消息模块测试', () => {
       expect(typeof unsubscribe).toBe('function');
     });
 
-    test('取消订阅函数正确移除通道', () => {
-      // 创建模拟通道
+    test('Unsubscribe function correctly removes channel', () => {
+      // Create mock channel
       const mockChannel = {
         on: jest.fn().mockReturnThis(),
         subscribe: jest.fn().mockReturnThis()
       };
       
-      // 设置返回模拟通道
+      // Set return mock channel
       (supabase.channel as jest.Mock).mockReturnValue(mockChannel);
 
-      // 模拟回调函数
+      // Mock callback function
       const mockCallback = jest.fn();
 
-      // 执行测试函数
+      // Execute test function
       const unsubscribe = subscribeToGroupMessages('group123', mockCallback);
       unsubscribe();
 
-      // 验证通道被移除
+      // Verify channel removed
       expect(supabase.removeChannel).toHaveBeenCalledWith(mockChannel);
     });
 
-    test('消息事件触发时正确调用回调函数', () => {
-      // 保存事件处理函数
+    test('Call callback function when message event is triggered', () => {
+      // Save event handler function
       let capturedHandler: ((payload: any) => void) | undefined;
       
-      // 创建模拟通道并捕获回调
+      // Create mock channel and capture callback
       const mockChannel = {
         on: jest.fn().mockImplementation((event, filter, handler) => {
           capturedHandler = handler;
@@ -227,27 +227,27 @@ describe('群组消息模块测试', () => {
         subscribe: jest.fn().mockReturnThis()
       };
       
-      // 设置返回模拟通道
+      // Set return mock channel
       (supabase.channel as jest.Mock).mockReturnValue(mockChannel);
 
-      // 模拟回调函数
+      // Mock callback function
       const mockCallback = jest.fn();
 
-      // 执行测试函数
+      // Execute test function
       subscribeToGroupMessages('group123', mockCallback);
 
-      // 模拟实时消息事件
+      // Mock real-time message event
       const mockPayload = { 
         new: { id: 'msg1', content: 'New message' },
         eventType: 'INSERT'
       };
       
-      // 触发捕获的事件处理函数
+      // Trigger captured event handler function
       if (capturedHandler) {
         capturedHandler(mockPayload);
       }
 
-      // 验证回调被调用
+      // Verify callback called
       expect(mockCallback).toHaveBeenCalledWith(mockPayload);
     });
   });
