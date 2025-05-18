@@ -6,10 +6,10 @@ import {
   TextInput,
   TouchableOpacity,
   Image,
-  SafeAreaView,
   KeyboardAvoidingView,
   Platform,
   Modal,
+  SafeAreaView,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { supabase } from '../../api/supabase';
@@ -17,14 +17,12 @@ import ReCaptcha from 'react-native-recaptcha-that-works';
 
 export default function SignIn() {
   const router = useRouter();
-
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [emailError, setEmailError] = useState('');
   const [passwordError, setPasswordError] = useState('');
   const [successModalVisible, setSuccessModalVisible] = useState(false);
   const [captchaVerified, setCaptchaVerified] = useState(false);
-
   const recaptchaRef = useRef<any>(null);
 
   const validateEmail = (value: string) => {
@@ -52,7 +50,6 @@ export default function SignIn() {
     }
 
     const { error } = await supabase.auth.signInWithPassword({ email, password });
-
     if (error) {
       if (error.message.includes('Email not confirmed')) {
         setPasswordError('Email pending verification. Check your email to verify.');
@@ -75,23 +72,26 @@ export default function SignIn() {
   const handleForgotPassword = () => router.replace('../(auth)/forgot-password');
 
   return (
-    <SafeAreaView style={styles.container}>
-      {/* Top icon above the blue box */}
-      <Image
-        source={require('../../../assets/images/icon-only.png')}
-        style={styles.topIcon}
-      />
-
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        style={styles.keyboardView}
-      >
-        <View style={styles.logoContainer}>
+    <View style={styles.container}>
+      <SafeAreaView style={styles.safeArea}>
+        <View style={styles.topWhiteSection}>
+          <Image
+            source={require('../../../assets/images/icon-only.png')}
+            style={styles.topIcon}
+          />
+            <View style={styles.logoContainer}>
           <Image
             source={require('../../../assets/images/Huddled-wordmark.png')}
             style={styles.logoWordmark}
           />
         </View>
+        </View>
+      </SafeAreaView>
+
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        style={styles.keyboardView}
+      >
 
         <View style={styles.formContainer}>
           <Text style={styles.welcomeText}>Welcome Back</Text>
@@ -145,7 +145,6 @@ export default function SignIn() {
         </View>
       </KeyboardAvoidingView>
 
-      {/* reCAPTCHA */}
       {(Platform.OS === 'ios' || Platform.OS === 'android') && (
         <ReCaptcha
           ref={recaptchaRef}
@@ -155,13 +154,10 @@ export default function SignIn() {
             setCaptchaVerified(true);
             setTimeout(() => handleLogin(), 300);
           }}
-          onExpire={() => {
-            setCaptchaVerified(false);
-          }}
+          onExpire={() => setCaptchaVerified(false)}
         />
       )}
 
-      {/* Login success modal */}
       <Modal transparent visible={successModalVisible} animationType="fade">
         <View style={styles.modalOverlay}>
           <View style={styles.modalBox}>
@@ -169,21 +165,27 @@ export default function SignIn() {
           </View>
         </View>
       </Modal>
-    </SafeAreaView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: '#CDECFF',
+  },
+  safeArea: {
+    backgroundColor: '#fff',
+  },
+  topWhiteSection: {
+    alignItems: 'center',
+    paddingTop: 30,
     backgroundColor: '#fff',
   },
   topIcon: {
     width: 100,
     height: 90,
     resizeMode: 'contain',
-    alignSelf: 'center',
-    marginTop: 30,
   },
   keyboardView: {
     flex: 1,
@@ -201,10 +203,9 @@ const styles = StyleSheet.create({
   formContainer: {
     flex: 1,
     backgroundColor: '#CDECFF',
-    borderTopLeftRadius: 35,
-    borderTopRightRadius: 35,
     padding: 30,
     alignItems: 'center',
+    justifyContent: 'flex-start',
   },
   welcomeText: {
     fontSize: 24,
