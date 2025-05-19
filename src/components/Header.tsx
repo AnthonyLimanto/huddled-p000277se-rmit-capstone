@@ -8,14 +8,20 @@ import {
   StyleSheet,
   SafeAreaView,
 } from 'react-native';
+import { useRouter } from 'expo-router'; // ✅ Add this
 
 const Header = () => {
+  const router = useRouter(); // ✅ Initialize router
+
   return (
     <View style={styles.wrapper}>
       <SafeAreaView style={styles.safeArea}>
         <View style={styles.header}>
           <Text style={styles.title}>Huddled</Text>
-          <TouchableOpacity style={styles.notificationIcon}>
+          <TouchableOpacity
+            style={styles.notificationIcon}
+            onPress={() => router.push('/notification/notification-screen')} // ✅ Navigate on press
+          >
             <Ionicons
               name={Platform.OS === 'ios' ? 'notifications-outline' : 'notifications-outline'}
               size={22}
