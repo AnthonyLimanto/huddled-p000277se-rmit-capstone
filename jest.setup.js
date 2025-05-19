@@ -1,5 +1,5 @@
 // Jest setup file
-// 模拟Supabase客户端
+// Mock Supabase client
 const mockSupabaseChannel = {
   on: jest.fn().mockReturnThis(),
   subscribe: jest.fn().mockReturnThis(),
@@ -19,28 +19,66 @@ const mockSupabase = {
   }
 };
 
-// 模拟expo-router
-jest.mock('expo-router', () => ({
-  router: {
-    push: jest.fn(),
+// mock @expo/vector-icons
+jest.mock('@expo/vector-icons', () => ({
+  Ionicons: (props) => {
+    const React = require('react');
+    const { View, Text } = require('react-native');
+    return React.createElement(
+      View, 
+      { 
+        testID: props.testID, 
+        accessibilityLabel: props.name,
+        style: { 
+          width: props.size, 
+          height: props.size, 
+          backgroundColor: props.color 
+        }
+      },
+      props.name
+    );
   },
+  MaterialIcons: (props) => {
+    const React = require('react');
+    const { View, Text } = require('react-native');
+    return React.createElement(
+      View, 
+      { 
+        testID: props.testID, 
+        accessibilityLabel: props.name,
+        style: { 
+          width: props.size, 
+          height: props.size, 
+          backgroundColor: props.color 
+        }
+      },
+      props.name
+    );
+  }
 }));
 
-// 全局模拟
+// Mock expo-router
+jest.mock('expo-router', () => ({
+  useRouter: () => ({
+    push: jest.fn(),
+  }),
+}));
+
+// Mock global supabase
 jest.mock('./src/api/supabase', () => ({
   supabase: mockSupabase,
 }));
 
-// 模拟bucket helper
+// Mock bucket helper
 jest.mock('./src/helper/bucketHelper', () => ({
   uploadPfp: jest.fn().mockResolvedValue(true)
 }));
 
-// 导出模拟对象以便在测试中使用
+// Export mock objects for use in tests
 global.mockSupabase = mockSupabase;
 global.mockSupabaseChannel = mockSupabaseChannel;
 
-// 重置所有模拟
+// Reset all mocks
 beforeEach(() => {
   jest.clearAllMocks();
 }); 
