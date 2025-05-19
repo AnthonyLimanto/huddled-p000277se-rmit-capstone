@@ -13,11 +13,27 @@ const mockSupabase = {
   order: jest.fn().mockReturnThis(),
   channel: jest.fn(() => mockSupabaseChannel),
   removeChannel: jest.fn(),
+  auth: {
+    signUp: jest.fn(),
+    getSession: jest.fn()
+  }
 };
+
+// 模拟expo-router
+jest.mock('expo-router', () => ({
+  router: {
+    push: jest.fn(),
+  },
+}));
 
 // 全局模拟
 jest.mock('./src/api/supabase', () => ({
   supabase: mockSupabase,
+}));
+
+// 模拟bucket helper
+jest.mock('./src/helper/bucketHelper', () => ({
+  uploadPfp: jest.fn().mockResolvedValue(true)
 }));
 
 // 导出模拟对象以便在测试中使用
