@@ -4,7 +4,7 @@ import { ImageFileType } from '../app/(home)/create';
 
 
 // since all the bucket methods are similar, we should create a base function to handle the common logic, that we can reuse for all the buckets to follow the Open/Closed principle - TODO
-export const uploadPfp = async (file: File, email: string) => {
+export const uploadPfp = async (file: Blob | File, email: string) => {
     const {data, error} = await supabase.storage
         .from("pfp")
         .upload(email + '/profile-picture.png', file, {
