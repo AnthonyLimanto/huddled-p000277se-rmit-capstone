@@ -11,6 +11,7 @@ export const signUp = async (username: string, password: string) => {
 };
 
 
+// ✨ Full signup with PFP upload
 export const completeSignUp = async (
   email: string,
   password: string,
