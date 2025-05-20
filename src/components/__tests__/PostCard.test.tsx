@@ -6,6 +6,9 @@ import { Post } from '../../model/post';
 import { Comment } from '../../model/comment';
 import { fetchComments, fetchCommentsByLayerId, fetchCommentById, createComment } from '../../api/comments';
 
+// Import howLongAgo function for testing
+import { howLongAgo } from '../PostCard';
+
 // Mock dependencies
 jest.mock('react-native/Libraries/Utilities/Platform', () => ({
   OS: 'ios',
@@ -136,6 +139,78 @@ describe('PostCard Component', () => {
   beforeEach(() => {
     // Clear all mocks
     jest.clearAllMocks();
+  });
+
+  // howLongAgo function
+  describe('howLongAgo Function', () => {
+    it('should return "Just now" for times less than 1 minute ago', () => {
+      const now = new Date();
+      const result = howLongAgo(now);
+      expect(result).toBe('Just now');
+      
+      const fiftySecondsAgo = new Date(now.getTime() - 50 * 1000);
+      expect(howLongAgo(fiftySecondsAgo)).toBe('Just now');
+    });
+
+    it('should return minutes for times between 1 minute and 1 hour ago', () => {
+      const now = new Date();
+      
+      // Since the function adds 10 hours to the current time, we need to subtract 10 hours + the corresponding minutes:
+      // For tests displaying minutes, we need to subtract 10 hours + the corresponding minutes
+      
+      // Subtract 10 hours + 1 minute to get "1 minute ago"
+      const oneMinuteAgo = new Date(now.getTime() - (10 * 60 * 60 * 1000 + 60 * 1000));
+      expect(howLongAgo(oneMinuteAgo)).toBe('1 min');
+      
+      // Subtract 10 hours + 2 minutes to get "2 minutes ago"
+      const twoMinutesAgo = new Date(now.getTime() - (10 * 60 * 60 * 1000 + 2 * 60 * 1000));
+      expect(howLongAgo(twoMinutesAgo)).toBe('2 mins');
+      
+      // Subtract 10 hours + 59 minutes to get "59 minutes ago"
+      const fiftyNineMinutesAgo = new Date(now.getTime() - (10 * 60 * 60 * 1000 + 59 * 60 * 1000));
+      expect(howLongAgo(fiftyNineMinutesAgo)).toBe('59 mins');
+    });
+
+    it('should return hours for times between 1 hour and 24 hours ago', () => {
+      const now = new Date();
+      
+      // Since the function adds 10 hours to the current time, we need to subtract 10 hours + 1 hour to get "1 hour ago"
+      const oneHourAgo = new Date(now.getTime() - (10 * 60 * 60 * 1000 + 60 * 60 * 1000));
+      expect(howLongAgo(oneHourAgo)).toBe('1 hour');
+      
+      // Subtract 10 hours + 2 hours to get "2 hours ago"
+      const twoHoursAgo = new Date(now.getTime() - (10 * 60 * 60 * 1000 + 2 * 60 * 60 * 1000));
+      expect(howLongAgo(twoHoursAgo)).toBe('2 hours');
+      
+      // Subtract 10 hours + 23 hours to get "23 hours ago"
+      const twentyThreeHoursAgo = new Date(now.getTime() - (10 * 60 * 60 * 1000 + 23 * 60 * 60 * 1000));
+      expect(howLongAgo(twentyThreeHoursAgo)).toBe('23 hours');
+    });
+
+    it('should return days for times more than 24 hours ago', () => {
+      const now = new Date();
+      
+      // Since the function adds 10 hours to the current time, we need to subtract 10 hours + 1 day to get "1 day ago"
+      const oneDayAgo = new Date(now.getTime() - (10 * 60 * 60 * 1000 + 24 * 60 * 60 * 1000));
+      expect(howLongAgo(oneDayAgo)).toBe('1 day');
+      
+      // Similarly, 2 days ago needs to subtract 58 hours (48 + 10)
+      const twoDaysAgo = new Date(now.getTime() - (10 * 60 * 60 * 1000 + 58 * 60 * 60 * 1000));
+      expect(howLongAgo(twoDaysAgo)).toBe('2 days');
+      
+      // 7 days ago needs to subtract 178 hours (168 + 10)
+      const sevenDaysAgo = new Date(now.getTime() - (10 * 60 * 60 * 1000 + 178 * 60 * 60 * 1000));
+      expect(howLongAgo(sevenDaysAgo)).toBe('7 days');
+    });
+
+    it('should handle the timezone adjustment correctly', () => {
+      // Test the timezone adjustment logic in the function
+      const now = new Date();
+      const tenHoursLater = new Date(now.getTime() + 10 * 60 * 60 * 1000);
+      
+      // Since the timezone adjustment, the time 10 hours later should display as "Just now"
+      expect(howLongAgo(tenHoursLater)).toBe('Just now');
+    });
   });
 
   // Test component functionality directly, not extracting internal functions
@@ -278,7 +353,7 @@ describe('PostCard Component', () => {
         }
       ];
       
-      // Mock API返回此深层嵌套结构
+      // Mock API returns this deep nested structure
       (fetchComments as jest.Mock).mockResolvedValue(deepReplies);
       
       // Render PostCard
@@ -307,8 +382,8 @@ describe('PostCard Component', () => {
     });
 
     it('should toggle reply input box when clicking Reply button', async () => {
-      // Mock API返回评论数据
-      (fetchComments as jest.Mock).mockResolvedValue([mockReplies[0]]);  // 只返回一个评论，简化测试
+      // Mock API returns comment data
+      (fetchComments as jest.Mock).mockResolvedValue([mockReplies[0]]);  // Return only one comment, simplifying the test
       
       // Render PostCard
       const { getByText, findByText, queryByPlaceholderText, getAllByText } = render(
@@ -337,7 +412,7 @@ describe('PostCard Component', () => {
     });
     
     it('should hide all comments when clicking Hide all', async () => {
-      // Mock API返回评论数据
+      // Mock API returns comment data
       (fetchComments as jest.Mock).mockResolvedValue(mockReplies);
       
       // Render PostCard component
