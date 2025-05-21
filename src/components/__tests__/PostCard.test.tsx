@@ -483,4 +483,173 @@ describe('PostCard Component', () => {
       });
     });
   });
+  
+  // Test the functionality of liking and unliking a post
+  describe('Post Like and Unlike Functionality', () => {
+    // Import the required modules
+    const { addPostLike, deletePostLike, fetchPostLikeInfo } = require('../../api/post_likes');
+    
+    it('should like a post when clicking the like button while post is not liked', async () => {
+      // Mock the unliked state
+      (fetchPostLikeInfo as jest.Mock).mockResolvedValue({ likes: 10, isLike: false });
+      (addPostLike as jest.Mock).mockResolvedValue(true);
+      
+      // Render the PostCard with the unliked state
+      const { getByText } = render(
+        <PostCard post={{...mockPost, isLike: []}} />
+      );
+      
+      // Find the like button and click it
+      // Since there is no testID, we locate the related elements by finding the like number
+      const likeButton = getByText('10');
+      fireEvent.press(likeButton);
+      
+      // Verify addPostLike is called
+      await waitFor(() => {
+        expect(addPostLike).toHaveBeenCalledWith('post-1', 'user-1');
+        expect(fetchPostLikeInfo).toHaveBeenCalledWith('post-1', 'user-1');
+      });
+    });
+    
+    it('should unlike a post when clicking the like button while post is already liked', async () => {
+      // Mock the liked state
+      (fetchPostLikeInfo as jest.Mock).mockResolvedValue({ likes: 9, isLike: false }); // The state after liking
+      (deletePostLike as jest.Mock).mockResolvedValue(true);
+      
+      // Render the PostCard with the liked state
+      const { getByText } = render(
+        <PostCard post={{...mockPost, isLike: ['exists']}} />
+      );
+      
+      // Find the like button and click it
+      const likeButton = getByText('10');
+      fireEvent.press(likeButton);
+      
+      // Verify deletePostLike is called
+      await waitFor(() => {
+        expect(deletePostLike).toHaveBeenCalledWith('post-1', 'user-1');
+        expect(fetchPostLikeInfo).toHaveBeenCalledWith('post-1', 'user-1');
+      });
+    });
+    
+    it('should handle errors when liking/unliking a post', async () => {
+      // Mock the API error
+      (deletePostLike as jest.Mock).mockResolvedValue(false);
+      (fetchPostLikeInfo as jest.Mock).mockResolvedValue({ likes: 10, isLike: true });
+      
+      // Render the PostCard with the liked state
+      const { getByText } = render(
+        <PostCard post={{...mockPost, isLike: ['exists']}} />
+      );
+      
+      // Find the like button and click it
+      const likeButton = getByText('10');
+      fireEvent.press(likeButton);
+      
+      // Verify deletePostLike is called, but fetchPostLikeInfo should not be called (because deletePostLike returns false)
+      await waitFor(() => {
+        expect(deletePostLike).toHaveBeenCalledWith('post-1', 'user-1');
+        expect(fetchPostLikeInfo).not.toHaveBeenCalled();
+      });
+    });
+  });
+  
+  // Test the functionality of liking and unliking a comment
+  describe('Comment Like and Unlike Functionality', () => {
+    // Import the required modules
+    const { addCommentLike, deleteCommentLike } = require('../../api/comment_likes');
+    
+    it('should like a comment when clicking the like button while comment is not liked', async () => {
+      // Prepare an unliked comment
+      const unlikedComment = {
+        ...mockReplies[0],
+        isLike: [],
+        likes: [{ count: 5 }]  // Ensure the likes property exists
+      };
+      
+      (fetchComments as jest.Mock).mockResolvedValue([unlikedComment]);
+      (addCommentLike as jest.Mock).mockResolvedValue(true);
+      
+      // Render the PostCard and display the comment
+      const { getByText, findByText } = render(
+        <PostCard post={mockPost} />
+      );
+      
+      // Display the comment
+      fireEvent.press(getByText('View all comments'));
+      
+      // Wait for the comment to load
+      await findByText('Comment A');
+      
+      // Find the comment like button and click it
+      const commentLikeButton = getByText('5');
+      fireEvent.press(commentLikeButton);
+      
+      // Verify addCommentLike is called
+      expect(addCommentLike).toHaveBeenCalledWith('a', 'user-1');
+    });
+    
+    it('should unlike a comment when clicking the like button while comment is already liked', async () => {
+      // Prepare a liked comment
+      const likedComment = {
+        ...mockReplies[0],
+        isLike: [{ user_id: 'user-1' }],
+        likes: [{ count: 5 }]  // Ensure the likes property exists
+      };
+      
+      (fetchComments as jest.Mock).mockResolvedValue([likedComment]);
+      (deleteCommentLike as jest.Mock).mockResolvedValue(true);
+      
+      // Render the PostCard and display the comment
+      const { getByText, findByText } = render(
+        <PostCard post={mockPost} />
+      );
+      
+      // Display the comment
+      fireEvent.press(getByText('View all comments'));
+      
+      // Wait for the comment to load
+      await findByText('Comment A');
+      
+      // Find the comment like button and click it
+      const commentLikeButton = getByText('5');
+      fireEvent.press(commentLikeButton);
+      
+      // Verify deleteCommentLike is called
+      expect(deleteCommentLike).toHaveBeenCalledWith('a', 'user-1');
+    });
+    
+    it('should handle errors when liking/unliking a comment', async () => {
+      // Prepare a liked comment
+      const likedComment = {
+        ...mockReplies[0],
+        isLike: [{ user_id: 'user-1' }],
+        likes: [{ count: 5 }]  // Ensure the likes property exists
+      };
+      
+      (fetchComments as jest.Mock).mockResolvedValue([likedComment]);
+      (deleteCommentLike as jest.Mock).mockResolvedValue(false);
+      
+      // Render the PostCard and display the comment
+      const { getByText, findByText } = render(
+        <PostCard post={mockPost} />
+      );
+      
+      // Display the comment
+      fireEvent.press(getByText('View all comments'));
+      
+      // Wait for the comment to load
+      await findByText('Comment A');
+      
+      // Find the comment like button and click it
+      const commentLikeButton = getByText('5');
+      fireEvent.press(commentLikeButton);
+      
+      // Verify deleteCommentLike is called
+      expect(deleteCommentLike).toHaveBeenCalledWith('a', 'user-1');
+      
+      // Verify the comment count did not change (because the API returns false)
+      expect(likedComment.likes[0].count).toBe(5);
+    });
+  });
 }); 
