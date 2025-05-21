@@ -43,8 +43,8 @@ export default function MessagesScreen() {
   );
 
   const filterGroups = () => {
-    if (activeTab === 'Chats') return groups.filter(g => !g.group?.isGroup);
-    if (activeTab === 'Groups') return groups.filter(g => g.group?.isGroup);
+    if (activeTab === 'Chats') return groups.filter(g => g.group?.memberCount == 2);
+    if (activeTab === 'Groups') return groups.filter(g => g.group?.memberCount > 2);
     if (activeTab === 'Unread') return []; // Placeholder
     return groups;
   };
