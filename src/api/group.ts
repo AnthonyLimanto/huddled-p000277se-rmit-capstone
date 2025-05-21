@@ -1,26 +1,26 @@
 import {supabase} from "./supabase"
 
 export const createGroup = async (name: string, users: string[]) => {
-    try {
-      
-        const { data: groupData, error: groupError } = await supabase
-            .from("groups")
-            .insert([{ name }])
-            .select("id")
-            .single(); 
-  
-        if (groupError) throw groupError;
-  
-        const groupId = groupData.id;
-    
-        const membersData = await addGroupMembers(groupId, users);
-    
-        return { group: groupData, members: membersData };
-    } catch (error) {
-        console.error("Error creating group:", error);
-        throw error;
-    }
-  };
+  try {
+    const { data: groupData, error: groupError } = await supabase
+      .from("groups")
+      .insert([{ name, isGroup: true }]) // ✅ Add this line
+      .select("id, isGroup") // Optional: return isGroup for verification
+      .single(); 
+
+    if (groupError) throw groupError;
+
+    const groupId = groupData.id;
+
+    const membersData = await addGroupMembers(groupId, users);
+
+    return { group: groupData, members: membersData };
+  } catch (error) {
+    console.error("Error creating group:", error);
+    throw error;
+  }
+};
+
 
   export const addGroupMembers = async (group_id: string, users: string[]) => {
     try {
