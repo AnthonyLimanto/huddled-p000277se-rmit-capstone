@@ -90,7 +90,13 @@ export default function NewGroupScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <Text style={styles.title}>Create New Group</Text>
+      {/* 🔙 Header with Back Button */}
+      <View style={styles.header}>
+        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+          <Ionicons name="arrow-back" size={24} color="#333" />
+        </TouchableOpacity>
+        <Text style={styles.title}>Create New Group</Text>
+      </View>
 
       <TextInput
         placeholder="Group name"
@@ -133,7 +139,18 @@ export default function NewGroupScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#FFF', padding: 16 },
-  title: { fontSize: 24, fontWeight: 'bold', marginBottom: 16 },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  backButton: {
+    marginRight: 12,
+  },
+  title: {
+    fontSize: 24,
+    fontWeight: 'bold',
+  },
   input: {
     borderWidth: 1,
     borderColor: '#CCC',
