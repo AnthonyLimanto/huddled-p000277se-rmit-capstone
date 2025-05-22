@@ -13,7 +13,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { createGroup } from '@/src/api/group';
-import { fetchUsers, getSessionUser } from '@/src/api/users'; 
+import { fetchUsers, getSessionUser } from '@/src/api/users';
 
 export default function NewGroupScreen() {
   const router = useRouter();
@@ -23,21 +23,19 @@ export default function NewGroupScreen() {
   const [loading, setLoading] = useState(true);
   const [currentUser, setCurrentUser] = useState<any>(null);
 
-  // Fetch users dynamically
   useEffect(() => {
     const loadUsers = async () => {
       try {
         const user = await getSessionUser();
-        const fetchedUsers = await fetchUsers(); // Replace with your actual API call
-  
-        // Validate the response
+        const fetchedUsers = await fetchUsers();
+
         if (!Array.isArray(fetchedUsers)) {
           throw new Error('Invalid user data received');
         }
 
-        setUsers(fetchedUsers);
         const filteredUsers = fetchedUsers.filter((u) => u.user_id !== user.id);
         setUsers(filteredUsers);
+        setCurrentUser(user);
         setSelectedUsers([user.id]);
       } catch (error) {
         console.error('Error fetching users:', error);
@@ -46,7 +44,7 @@ export default function NewGroupScreen() {
         setLoading(false);
       }
     };
-  
+
     loadUsers();
   }, []);
 
@@ -63,9 +61,10 @@ export default function NewGroupScreen() {
     }
 
     if (selectedUsers.length < 2) {
-      Alert.alert('Select at least additional 1 user');
+      Alert.alert('Select at least one additional user');
       return;
     }
+
     try {
       const result = await createGroup(groupName, selectedUsers);
 
@@ -73,8 +72,8 @@ export default function NewGroupScreen() {
         throw new Error('Group creation failed');
       }
 
-      // Navigate to the new group chat
-      router.push(`/messages`);
+      // ✅ Redirect to the Groups tab
+      router.replace({ pathname: '/messages', params: { tab: 'Groups' } });
     } catch (error: any) {
       console.error('Group creation error:', error);
       Alert.alert('Failed to create group', error.message || 'Something went wrong');
@@ -91,7 +90,13 @@ export default function NewGroupScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <Text style={styles.title}>Create New Group</Text>
+      {/* 🔙 Header with Back Button */}
+      <View style={styles.header}>
+        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+          <Ionicons name="arrow-back" size={24} color="#333" />
+        </TouchableOpacity>
+        <Text style={styles.title}>Create New Group</Text>
+      </View>
 
       <TextInput
         placeholder="Group name"
@@ -102,29 +107,28 @@ export default function NewGroupScreen() {
 
       <Text style={styles.label}>Add members:</Text>
 
-      {/* 👥 User list */}
-        <FlatList
-          data={users}
-          keyExtractor={(item) => item.user_id || item.id}
-          renderItem={({ item }) => {
-            const userId = item.user_id || item.id;
-            const isSelected = selectedUsers.includes(userId);
-  
-            return (
-              <TouchableOpacity
-                style={styles.userRow}
-                onPress={() => toggleUser(userId)}
-              >
-                <Ionicons
-                  name={isSelected ? 'checkbox' : 'square-outline'}
-                  size={24}
-                  color="#007aff"
-                />
-                <Text style={styles.username}>{item.username}</Text>
-              </TouchableOpacity>
-            );
-          }}
-        />
+      <FlatList
+        data={users}
+        keyExtractor={(item) => item.user_id || item.id}
+        renderItem={({ item }) => {
+          const userId = item.user_id || item.id;
+          const isSelected = selectedUsers.includes(userId);
+
+          return (
+            <TouchableOpacity
+              style={styles.userRow}
+              onPress={() => toggleUser(userId)}
+            >
+              <Ionicons
+                name={isSelected ? 'checkbox' : 'square-outline'}
+                size={24}
+                color="#007aff"
+              />
+              <Text style={styles.username}>{item.username}</Text>
+            </TouchableOpacity>
+          );
+        }}
+      />
 
       <TouchableOpacity style={styles.createButton} onPress={handleCreateGroup}>
         <Text style={styles.buttonText}>Create Group</Text>
@@ -135,7 +139,18 @@ export default function NewGroupScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#FFF', padding: 16 },
-  title: { fontSize: 24, fontWeight: 'bold', marginBottom: 16 },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  backButton: {
+    marginRight: 12,
+  },
+  title: {
+    fontSize: 24,
+    fontWeight: 'bold',
+  },
   input: {
     borderWidth: 1,
     borderColor: '#CCC',
@@ -150,7 +165,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 10,
   },
-  userName: { fontSize: 16, marginLeft: 10 },
+  username: { fontSize: 16, marginLeft: 10 },
   createButton: {
     marginTop: 24,
     backgroundColor: '#1357DA',
