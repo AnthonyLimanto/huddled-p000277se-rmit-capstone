@@ -1,4 +1,4 @@
-import { useLocalSearchParams } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { fetchUser } from '@/src/api/users';
 import { useEffect, useState } from 'react';
 import {
@@ -8,11 +8,14 @@ import {
   ScrollView,
   StyleSheet,
   Text,
+  TouchableOpacity,
   View,
 } from 'react-native';
+import { MaterialIcons } from '@expo/vector-icons'; // <-- Add this line
 
 export default function ProfileUserScreen() {
   const { userId } = useLocalSearchParams(); // userId = email passed in router param
+  const router = useRouter();
   const [userData, setUserData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
@@ -55,6 +58,15 @@ export default function ProfileUserScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
+      {/* HEADER */}
+      <View style={styles.header}>
+        <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+          <MaterialIcons name="arrow-back-ios" size={28} color="#085DB7" />
+        </TouchableOpacity>
+        <Text style={styles.title}>
+          {userData.username ? `${userData.username}'s Profile` : 'Profile'}
+        </Text>
+      </View>
       <ScrollView>
         <View style={styles.profileHeader}>
           {userData?.pfp_url ? (
@@ -86,6 +98,25 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#FF3B30',
   },
+  header: {
+    padding: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F0F0F0',
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  title: {
+    fontSize: 28,
+    fontWeight: 'bold',
+    color: '#085DB7',
+    flex: 1,
+    textAlign: 'center',
+  },
+  backButton: {
+    position: 'absolute',
+    left: 20,
+    zIndex: 2,
+  },  
   profileHeader: { alignItems: 'center', padding: 20 },
   avatar: {
     width: 120,
