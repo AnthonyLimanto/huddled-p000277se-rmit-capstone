@@ -153,6 +153,7 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     borderBottomWidth: 1,
     borderBottomColor: '#F0F0F0',
+    backgroundColor: '#F0F9FF',
   },
   tabText: { fontSize: 16, color: '#666' },
   activeTab: {
@@ -171,7 +172,7 @@ const styles = StyleSheet.create({
     alignItems: 'center', 
   },
   modalContainer: {
-    backgroundColor: '#CDECFF',
+    backgroundColor: '#F0F9FF',
     paddingVertical: 36,         
     paddingHorizontal: 48,       
     borderRadius: 28,            

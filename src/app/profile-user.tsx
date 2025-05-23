@@ -132,7 +132,7 @@ export default function ProfileUserScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#CDECFF' },
+  container: { flex: 1, backgroundColor: '#F0F9FF' },
   centered: {
     flex: 1,
     justifyContent: 'center',
