@@ -105,9 +105,8 @@ export default function NewGroupScreen() {
         style={styles.input}
         value={groupName}
         onChangeText={setGroupName}
-        placeholderTextColor="#888"      // <-- grey placeholder color
+        placeholderTextColor="#888"
       />
-
 
       <Text style={styles.label}>Add members:</Text>
 
@@ -119,19 +118,32 @@ export default function NewGroupScreen() {
           const isSelected = selectedUsers.includes(userId);
 
           return (
-            <TouchableOpacity
-              style={styles.userRow}
-              onPress={() => toggleUser(userId)}
-            >
-              <Ionicons
-                name={isSelected ? 'checkbox' : 'square-outline'}
-                size={24}
-                color="#007aff"
-              />
-              <Text style={styles.username}>{item.username}</Text>
-            </TouchableOpacity>
+            <View style={styles.userBox}>
+              {/* Avatar */}
+              <View style={styles.avatar} />
+
+              {/* Name and subtitle */}
+              <View style={styles.userInfo}>
+                <Text style={styles.userName}>{item.full_name || item.username}</Text>
+                <Text style={styles.userSub}>{item.subtitle || 'Master of IT'}</Text>
+              </View>
+
+              {/* Add button */}
+              <TouchableOpacity
+                style={[
+                  styles.addBtn,
+                  isSelected && styles.addedBtn
+                ]}
+                onPress={() => toggleUser(userId)}
+              >
+                <Text style={styles.addBtnText}>
+                  {isSelected ? 'Added' : 'Add'}
+                </Text>
+              </TouchableOpacity>
+            </View>
           );
         }}
+        contentContainerStyle={{ paddingBottom: 24 }}
       />
 
       <TouchableOpacity style={styles.createButton} onPress={handleCreateGroup}>
@@ -142,7 +154,7 @@ export default function NewGroupScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#FFF', padding: 16 },
+  container: { flex: 1, backgroundColor: '#FFF', padding: 0 },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -151,7 +163,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFF',
     borderBottomWidth: 1,
     borderBottomColor: '#F0F0F0',
-    marginBottom: 16,
+    marginBottom: 10,
   },
   backButton: {
     width: 28,
@@ -165,30 +177,86 @@ const styles = StyleSheet.create({
     color: '#085DB7',
     flex: 1,
     textAlign: 'center',
-  },  
+  },
   input: {
     borderRadius: 10,
     padding: 12,
     marginBottom: 16,
     fontSize: 16,
-    backgroundColor: '#F0F9FF',     
-    marginLeft: 22,                  
-    color: '#222',                  
+    backgroundColor: '#F0F9FF',
+    marginHorizontal: 22,
+    color: '#222',
+    borderWidth: 1,
+    borderColor: '#0066CC',
   },
-  label: { fontWeight: 'bold', marginTop: 18, marginBottom: 18, marginLeft: 24, fontSize: 18,color: '#085DB7',},
-  userRow: {
+  label: {
+    fontWeight: 'bold',
+    marginTop: 10,
+    marginBottom: 18,
+    marginLeft: 24,
+    fontSize: 18,
+    color: '#085DB7',
+  },
+
+  // --- USER BOX DESIGN ---
+  userBox: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 10,
-    marginLeft: 22,
+    backgroundColor: '#F0F9FF',
+    borderRadius: 16,
+    marginBottom: 18,
+    padding: 16,
+    marginHorizontal: 14,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.10,
+    shadowRadius: 8,
+    elevation: 3,
   },
-  username: { fontSize: 16, marginLeft: 10 },
+  avatar: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: '#D9D9D9',
+    marginRight: 18,
+  },
+  userInfo: {
+    flex: 1,
+  },
+  userName: {
+    fontWeight: 'bold',
+    fontSize: 17,
+    color: '#222',
+    marginBottom: 2,
+  },
+  userSub: {
+    color: '#222',
+    fontSize: 14,
+    opacity: 0.7,
+  },
+  addBtn: {
+    backgroundColor: '#085DB7',
+    borderRadius: 12,
+    paddingVertical: 8,
+    paddingHorizontal: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  addedBtn: {
+    backgroundColor: '#7db5f8',
+  },
+  addBtnText: {
+    color: '#FFF',
+    fontWeight: '500',
+    fontSize: 16,
+  },
   createButton: {
-    marginTop: 24,
+    marginTop: 14,
     backgroundColor: '#1357DA',
     padding: 14,
     borderRadius: 10,
     alignItems: 'center',
+    marginHorizontal: 22,
   },
   buttonText: { color: '#FFF', fontWeight: 'bold', fontSize: 16 },
 });
