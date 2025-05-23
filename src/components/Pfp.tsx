@@ -50,7 +50,7 @@ export const Pfp = ({ email, name, style, size = 40 }: PfpProps) => {
       <Avatar
         size={size || 50}
         rounded
-        title={name?.[0].toUpperCase()} // First letter of the username
+        title={name && name.length > 0 ? name[0].toUpperCase() : '?'} // First letter of the username or fallback
         containerStyle={[{ backgroundColor: "#ccc" }, style]} 
         titleStyle={{
           color: "#fff",

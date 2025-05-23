@@ -9,10 +9,20 @@ import { fetchComments, fetchCommentsByLayerId, fetchCommentById, createComment 
 // Import howLongAgo function for testing
 import { howLongAgo } from '../PostCard';
 
+// Mock router
+const mockRouterPush = jest.fn();
+
 // Mock dependencies
 jest.mock('react-native/Libraries/Utilities/Platform', () => ({
   OS: 'ios',
   select: jest.fn(config => config.ios),
+}));
+
+jest.mock('expo-router', () => ({
+  useRouter: () => ({
+    push: mockRouterPush,
+    replace: jest.fn(),
+  }),
 }));
 
 jest.mock('../../context/AuthContext', () => ({
@@ -650,6 +660,72 @@ describe('PostCard Component', () => {
       
       // Verify the comment count did not change (because the API returns false)
       expect(likedComment.likes[0].count).toBe(5);
+    });
+  });
+
+  // User Profile Navigation Functionality
+  describe('User Profile Navigation Functionality', () => {
+    beforeEach(() => {
+      // Clear the router mock before each test
+      mockRouterPush.mockClear();
+    });
+
+    it('should navigate to user profile when clicking on user avatar area', async () => {
+      const { getByTestId } = render(<PostCard post={mockPost} />);
+      
+      // Find the touchable area containing the avatar and username
+      const userClickableArea = getByTestId('user-clickable-area');
+      
+      // Click on the user area
+      fireEvent.press(userClickableArea);
+      
+      // Verify navigation was called with correct parameters
+      expect(mockRouterPush).toHaveBeenCalledWith({
+        pathname: '/profile-user',
+        params: { userId: 'test@example.com' },
+      });
+    });
+
+    it('should show warning when email is missing from post profile', async () => {
+      const postWithoutEmail = {
+        ...mockPost,
+        profile: {
+          ...mockPost.profile,
+          email: '',
+        }
+      } as Post;
+      
+      const consoleSpy = jest.spyOn(console, 'warn').mockImplementation();
+      
+      const { getByTestId } = render(<PostCard post={postWithoutEmail} />);
+      const userClickableArea = getByTestId('user-clickable-area');
+      
+      fireEvent.press(userClickableArea);
+      
+      // Should not navigate when email is missing
+      expect(mockRouterPush).not.toHaveBeenCalled();
+      expect(consoleSpy).toHaveBeenCalledWith('Email not found in post.profile');
+      
+      consoleSpy.mockRestore();
+    });
+
+    it('should handle null or undefined post profile gracefully', async () => {
+      const postWithNullProfile = {
+        ...mockPost,
+        profile: {
+          ...mockPost.profile,
+          email: '',
+        }
+      } as Post;
+      
+      const consoleSpy = jest.spyOn(console, 'warn').mockImplementation();
+      
+      // Should not crash when profile has empty email
+      expect(() => {
+        render(<PostCard post={postWithNullProfile} />);
+      }).not.toThrow();
+      
+      consoleSpy.mockRestore();
     });
   });
 }); 

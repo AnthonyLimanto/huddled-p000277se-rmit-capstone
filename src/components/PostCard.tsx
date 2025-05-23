@@ -319,6 +319,7 @@ const PostCard = ({ post }: PostCardProps) => {
       <View style={styles.userInfo}>
       <TouchableOpacity
   style={styles.leftGroup}
+  testID="user-clickable-area"
   onPress={() => {
     const email = post?.profile?.email;
     if (email) {
