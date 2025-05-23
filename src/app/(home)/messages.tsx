@@ -110,7 +110,7 @@ export default function MessagesScreen() {
                 router.push('/chat/new-group');
               }}
             >
-              <Ionicons name="people-outline" size={20} color="#333" style={styles.modalIcon} />
+              <Ionicons name="people-outline" size={26} color="#333" style={styles.modalIcon} />
               <Text style={styles.modalText}>New Group</Text>
             </TouchableOpacity>
           </View>
@@ -167,20 +167,34 @@ const styles = StyleSheet.create({
   modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.2)',
-    justifyContent: 'flex-end',
+    justifyContent: 'center',
+    alignItems: 'center', 
   },
   modalContainer: {
-    backgroundColor: '#FFF',
-    paddingVertical: 10,
-    borderTopLeftRadius: 12,
-    borderTopRightRadius: 12,
-    paddingHorizontal: 20,
+    backgroundColor: '#CDECFF',
+    paddingVertical: 36,         
+    paddingHorizontal: 48,       
+    borderRadius: 28,            
+    alignItems: 'center',
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.13,
+    shadowRadius: 20,
+    elevation: 12,
+    minWidth: 260,               
   },
+  
   modalOption: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 14,
+    paddingVertical: 6,
+    paddingHorizontal: 4,
+    justifyContent: 'center', 
   },
   modalIcon: { marginRight: 12 },
-  modalText: { fontSize: 16, color: '#333' },
+  modalText: {
+    fontSize: 22,
+    color: '#222',
+    fontWeight: '500',
+  },
 });
