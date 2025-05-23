@@ -69,8 +69,9 @@ export default function MessagesScreen() {
         <TouchableOpacity
           style={styles.newMessageButton}
           onPress={() => setModalVisible(true)}
+          activeOpacity={0.8}
         >
-          <Ionicons name="create-outline" size={24} color="#0066CC" />
+          <Ionicons name="create-outline" size={24} color="#085DB7" />
         </TouchableOpacity>
       </View>
 
@@ -131,13 +132,21 @@ const styles = StyleSheet.create({
   },
   title: { fontSize: 28, fontWeight: 'bold', color: '#085DB7' },
   newMessageButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: '#F8F8F8',
+    width: 32,
+    height: 32,
+    borderRadius: 24,
+    backgroundColor: '#F8F8F8', // subtle background
     alignItems: 'center',
     justifyContent: 'center',
+    // shadow for iOS
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    // elevation for Android
+    elevation: 2,
   },
+  
   tabs: {
     flexDirection: 'row',
     justifyContent: 'space-around',
