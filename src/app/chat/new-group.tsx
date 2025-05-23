@@ -7,7 +7,6 @@ import {
   TextInput,
   FlatList,
   TouchableOpacity,
-  Alert,
   ActivityIndicator,
   Image,
 } from 'react-native';
@@ -23,6 +22,9 @@ export default function NewGroupScreen() {
   const [users, setUsers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [currentUser, setCurrentUser] = useState<any>(null);
+  const [showSuccess, setShowSuccess] = useState(false);
+  const [showError, setShowError] = useState(false);
+  const [errorMsg, setErrorMsg] = useState('');
 
   useEffect(() => {
     const loadUsers = async () => {
@@ -35,12 +37,29 @@ export default function NewGroupScreen() {
         }
 
         const filteredUsers = fetchedUsers.filter((u) => u.user_id !== user.id);
-        setUsers(filteredUsers);
+
+        // Alphabetical sort by name (A-Z, case-insensitive)
+        const sortedUsers = filteredUsers.sort((a, b) => {
+          const nameA =
+            a.full_name ||
+            a.username ||
+            (a.profile && (a.profile.full_name || a.profile.username)) ||
+            '';
+          const nameB =
+            b.full_name ||
+            b.username ||
+            (b.profile && (b.profile.full_name || b.profile.username)) ||
+            '';
+          return nameA.localeCompare(nameB, undefined, { sensitivity: 'base' });
+        });
+
+        setUsers(sortedUsers);
         setCurrentUser(user);
         setSelectedUsers([user.id]);
       } catch (error) {
-        console.error('Error fetching users:', error);
-        Alert.alert('Failed to load users', error.message || 'Something went wrong');
+        setErrorMsg('Failed to load users');
+        setShowError(true);
+        setTimeout(() => setShowError(false), 1200);
       } finally {
         setLoading(false);
       }
@@ -57,26 +76,36 @@ export default function NewGroupScreen() {
 
   const handleCreateGroup = async () => {
     if (!groupName.trim()) {
-      Alert.alert('Enter group name');
+      setErrorMsg('Enter group name');
+      setShowError(true);
+      setTimeout(() => setShowError(false), 1600);
       return;
     }
-
     if (selectedUsers.length < 2) {
-      Alert.alert('Select at least one additional user');
+      setErrorMsg('Select at least one additional user');
+      setShowError(true);
+      setTimeout(() => setShowError(false), 1600);
       return;
     }
-
     try {
       const result = await createGroup(groupName, selectedUsers);
-
       if (!result?.group?.id) {
         throw new Error('Group creation failed');
       }
 
-      router.replace({ pathname: '/messages', params: { tab: 'Groups' } });
+      // Show the message box
+      setShowSuccess(true);
+
+      // After 1 second, redirect
+      setTimeout(() => {
+        setShowSuccess(false);
+        router.replace({ pathname: '/messages', params: { tab: 'Groups' } });
+      }, 1000);
+
     } catch (error: any) {
-      console.error('Group creation error:', error);
-      Alert.alert('Failed to create group', error.message || 'Something went wrong');
+      setErrorMsg(error.message || 'Failed to create group');
+      setShowError(true);
+      setTimeout(() => setShowError(false), 1600);
     }
   };
 
@@ -90,6 +119,23 @@ export default function NewGroupScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
+      {/* Success Message Box */}
+      {showSuccess && (
+        <View style={styles.successBoxOverlay}>
+          <View style={styles.successBox}>
+            <Text style={styles.successText}>Group created successfully!</Text>
+          </View>
+        </View>
+      )}
+      {/* Error Message Box */}
+      {showError && (
+        <View style={styles.successBoxOverlay}>
+          <View style={styles.successBox}>
+            <Text style={[styles.successText, { color: '#D11B1B' }]}>{errorMsg}</Text>
+          </View>
+        </View>
+      )}
+
       {/* 🔙 Header with Back Button */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
@@ -114,8 +160,6 @@ export default function NewGroupScreen() {
         keyExtractor={(item) => item.user_id || item.id}
         renderItem={({ item }) => {
           const userId = item.user_id || item.id;
-
-          // Try nested profile or flat structure
           const profile = item.profile || {};
           const name =
             item.full_name ||
@@ -124,13 +168,11 @@ export default function NewGroupScreen() {
             profile.username ||
             '';
           const degree = item.degree || profile.degree || '';
-
           const avatarUrl = item.pfp_url || profile.pfp_url;
           const isSelected = selectedUsers.includes(userId);
 
           return (
             <View style={styles.userBox}>
-              {/* Avatar: Use image if available, fallback to gray */}
               {avatarUrl ? (
                 <Image
                   source={{ uri: avatarUrl }}
@@ -140,14 +182,10 @@ export default function NewGroupScreen() {
               ) : (
                 <View style={styles.avatar} />
               )}
-
-              {/* Name and degree (dynamically from API, empty if missing) */}
               <View style={styles.userInfo}>
                 <Text style={styles.userName}>{name}</Text>
                 <Text style={styles.userSub}>{degree}</Text>
               </View>
-
-              {/* Add button */}
               <TouchableOpacity
                 style={[
                   styles.addBtn,
@@ -277,4 +315,32 @@ const styles = StyleSheet.create({
     marginHorizontal: 22,
   },
   buttonText: { color: '#FFF', fontWeight: 'bold', fontSize: 16 },
+  successBoxOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0,0,0,0.18)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 99,
+  },
+  successBox: {
+    backgroundColor: '#FFF',
+    borderRadius: 16,
+    paddingVertical: 32,
+    paddingHorizontal: 42,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
+    elevation: 5,
+  },
+  successText: {
+    color: '#085DB7',
+    fontWeight: 'bold',
+    fontSize: 20,
+    textAlign: 'center',
+  },
 });
