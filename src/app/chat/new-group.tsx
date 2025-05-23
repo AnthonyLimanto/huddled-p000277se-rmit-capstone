@@ -9,6 +9,7 @@ import {
   TouchableOpacity,
   Alert,
   ActivityIndicator,
+  Image,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
@@ -72,7 +73,6 @@ export default function NewGroupScreen() {
         throw new Error('Group creation failed');
       }
 
-      // ✅ Redirect to the Groups tab
       router.replace({ pathname: '/messages', params: { tab: 'Groups' } });
     } catch (error: any) {
       console.error('Group creation error:', error);
@@ -96,7 +96,6 @@ export default function NewGroupScreen() {
           <Ionicons name="arrow-back" size={28} color="#085DB7" />
         </TouchableOpacity>
         <Text style={styles.title}>Create New Group</Text>
-        {/* Invisible spacer to balance center */}
         <View style={{ width: 28 }} />
       </View>
 
@@ -115,17 +114,37 @@ export default function NewGroupScreen() {
         keyExtractor={(item) => item.user_id || item.id}
         renderItem={({ item }) => {
           const userId = item.user_id || item.id;
+
+          // Try nested profile or flat structure
+          const profile = item.profile || {};
+          const name =
+            item.full_name ||
+            item.username ||
+            profile.full_name ||
+            profile.username ||
+            '';
+          const degree = item.degree || profile.degree || '';
+
+          const avatarUrl = item.pfp_url || profile.pfp_url;
           const isSelected = selectedUsers.includes(userId);
 
           return (
             <View style={styles.userBox}>
-              {/* Avatar */}
-              <View style={styles.avatar} />
+              {/* Avatar: Use image if available, fallback to gray */}
+              {avatarUrl ? (
+                <Image
+                  source={{ uri: avatarUrl }}
+                  style={styles.avatar}
+                  resizeMode="cover"
+                />
+              ) : (
+                <View style={styles.avatar} />
+              )}
 
-              {/* Name and subtitle */}
+              {/* Name and degree (dynamically from API, empty if missing) */}
               <View style={styles.userInfo}>
-                <Text style={styles.userName}>{item.full_name || item.username}</Text>
-                <Text style={styles.userSub}>{item.subtitle || 'Master of IT'}</Text>
+                <Text style={styles.userName}>{name}</Text>
+                <Text style={styles.userSub}>{degree}</Text>
               </View>
 
               {/* Add button */}
@@ -197,8 +216,6 @@ const styles = StyleSheet.create({
     fontSize: 18,
     color: '#085DB7',
   },
-
-  // --- USER BOX DESIGN ---
   userBox: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -219,6 +236,7 @@ const styles = StyleSheet.create({
     borderRadius: 22,
     backgroundColor: '#D9D9D9',
     marginRight: 18,
+    overflow: 'hidden',
   },
   userInfo: {
     flex: 1,
