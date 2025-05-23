@@ -69,8 +69,9 @@ export default function MessagesScreen() {
         <TouchableOpacity
           style={styles.newMessageButton}
           onPress={() => setModalVisible(true)}
+          activeOpacity={0.8}
         >
-          <Ionicons name="create-outline" size={24} color="#0066CC" />
+          <Ionicons name="create-outline" size={24} color="#085DB7" />
         </TouchableOpacity>
       </View>
 
@@ -109,7 +110,7 @@ export default function MessagesScreen() {
                 router.push('/chat/new-group');
               }}
             >
-              <Ionicons name="people-outline" size={20} color="#333" style={styles.modalIcon} />
+              <Ionicons name="people-outline" size={26} color="#333" style={styles.modalIcon} />
               <Text style={styles.modalText}>New Group</Text>
             </TouchableOpacity>
           </View>
@@ -131,19 +132,28 @@ const styles = StyleSheet.create({
   },
   title: { fontSize: 28, fontWeight: 'bold', color: '#085DB7' },
   newMessageButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: '#F8F8F8',
+    width: 32,
+    height: 32,
+    borderRadius: 24,
+    backgroundColor: '#F8F8F8', // subtle background
     alignItems: 'center',
     justifyContent: 'center',
+    // shadow for iOS
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    // elevation for Android
+    elevation: 2,
   },
+  
   tabs: {
     flexDirection: 'row',
     justifyContent: 'space-around',
     paddingVertical: 10,
     borderBottomWidth: 1,
     borderBottomColor: '#F0F0F0',
+    backgroundColor: '#F0F9FF',
   },
   tabText: { fontSize: 16, color: '#666' },
   activeTab: {
@@ -158,20 +168,34 @@ const styles = StyleSheet.create({
   modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.2)',
-    justifyContent: 'flex-end',
+    justifyContent: 'center',
+    alignItems: 'center', 
   },
   modalContainer: {
-    backgroundColor: '#FFF',
-    paddingVertical: 10,
-    borderTopLeftRadius: 12,
-    borderTopRightRadius: 12,
-    paddingHorizontal: 20,
+    backgroundColor: '#F0F9FF',
+    paddingVertical: 36,         
+    paddingHorizontal: 48,       
+    borderRadius: 28,            
+    alignItems: 'center',
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.13,
+    shadowRadius: 20,
+    elevation: 12,
+    minWidth: 260,               
   },
+  
   modalOption: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 14,
+    paddingVertical: 6,
+    paddingHorizontal: 4,
+    justifyContent: 'center', 
   },
   modalIcon: { marginRight: 12 },
-  modalText: { fontSize: 16, color: '#333' },
+  modalText: {
+    fontSize: 22,
+    color: '#222',
+    fontWeight: '500',
+  },
 });
