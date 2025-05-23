@@ -93,17 +93,21 @@ export default function NewGroupScreen() {
       {/* 🔙 Header with Back Button */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-          <Ionicons name="arrow-back" size={24} color="#333" />
+          <Ionicons name="arrow-back" size={28} color="#085DB7" />
         </TouchableOpacity>
         <Text style={styles.title}>Create New Group</Text>
+        {/* Invisible spacer to balance center */}
+        <View style={{ width: 28 }} />
       </View>
 
       <TextInput
-        placeholder="Group name"
+        placeholder="Insert Group Name Here"
         style={styles.input}
         value={groupName}
         onChangeText={setGroupName}
+        placeholderTextColor="#888"      // <-- grey placeholder color
       />
+
 
       <Text style={styles.label}>Add members:</Text>
 
@@ -142,28 +146,41 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: 20,
+    backgroundColor: '#FFF',
+    borderBottomWidth: 1,
+    borderBottomColor: '#F0F0F0',
     marginBottom: 16,
   },
   backButton: {
-    marginRight: 12,
+    width: 28,
+    height: 28,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   title: {
-    fontSize: 24,
+    fontSize: 28,
     fontWeight: 'bold',
-  },
+    color: '#085DB7',
+    flex: 1,
+    textAlign: 'center',
+  },  
   input: {
-    borderWidth: 1,
-    borderColor: '#CCC',
     borderRadius: 10,
     padding: 12,
     marginBottom: 16,
     fontSize: 16,
+    backgroundColor: '#F0F9FF',     
+    marginLeft: 22,                  
+    color: '#222',                  
   },
-  label: { fontWeight: 'bold', marginBottom: 8 },
+  label: { fontWeight: 'bold', marginTop: 18, marginBottom: 18, marginLeft: 24, fontSize: 18,color: '#085DB7',},
   userRow: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingVertical: 10,
+    marginLeft: 22,
   },
   username: { fontSize: 16, marginLeft: 10 },
   createButton: {
