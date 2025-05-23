@@ -1,5 +1,7 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { fetchUser } from '@/src/api/users';
+import { fetchPostsByUserId } from '@/src/api/posts'; 
+import PostCard from '@/src/components/PostCard';      
 import { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
@@ -11,13 +13,17 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { MaterialIcons } from '@expo/vector-icons'; // <-- Add this line
+import { MaterialIcons } from '@expo/vector-icons';
 
 export default function ProfileUserScreen() {
   const { userId } = useLocalSearchParams(); // userId = email passed in router param
   const router = useRouter();
   const [userData, setUserData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+
+  // New states for posts
+  const [posts, setPosts] = useState<any[]>([]);
+  const [loadingPosts, setLoadingPosts] = useState(true);
 
   useEffect(() => {
     const loadUserData = async () => {
@@ -36,9 +42,29 @@ export default function ProfileUserScreen() {
         setLoading(false);
       }
     };
-
     if (userId) loadUserData();
   }, [userId]);
+
+  // Fetch user's posts when userData is available
+  useEffect(() => {
+    const loadPosts = async () => {
+      if (!userData?.user_id) return;
+      console.log("Trying to fetch posts for user_id:", userData.user_id); 
+      try {
+        setLoadingPosts(true);
+        const userPosts = await fetchPostsByUserId(userData.user_id);
+        console.log("Fetched posts:", userPosts); 
+        setPosts(userPosts || []);
+      } catch (error) {
+        setPosts([]);
+      } finally {
+        setLoadingPosts(false);
+      }
+    };
+    if (userData?.user_id) {
+      loadPosts();
+    }
+  }, [userData]);
 
   if (loading) {
     return (
@@ -68,6 +94,7 @@ export default function ProfileUserScreen() {
         </Text>
       </View>
       <ScrollView>
+        {/* Profile Info */}
         <View style={styles.profileHeader}>
           {userData?.pfp_url ? (
             <Image source={{ uri: userData.pfp_url }} style={styles.avatar} />
@@ -81,6 +108,22 @@ export default function ProfileUserScreen() {
               ? `Studying ${userData.degree}`
               : 'No degree information available.'}
           </Text>
+        </View>
+
+        {/* User's Posts */}
+        <View style={{ paddingHorizontal: 20, paddingBottom: 20 }}>
+          <Text style={{ fontSize: 20, fontWeight: 'bold', marginBottom: 8 }}>
+            Posts
+          </Text>
+          {loadingPosts ? (
+            <ActivityIndicator size="small" color="#075DB6" />
+          ) : posts.length === 0 ? (
+            <Text style={{ color: '#888', textAlign: 'center' }}>No posts yet.</Text>
+          ) : (
+            posts.map((post) => (
+              <PostCard key={post.id} post={post} />
+            ))
+          )}
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -116,7 +159,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     left: 20,
     zIndex: 2,
-  },  
+  },
   profileHeader: { alignItems: 'center', padding: 20 },
   avatar: {
     width: 120,

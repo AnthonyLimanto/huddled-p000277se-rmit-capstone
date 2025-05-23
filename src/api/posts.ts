@@ -62,4 +62,17 @@ export const searchPosts = async (searchTerm: string, user_id: string) => {
   return data;
 };
 
-
+// fetch user's post for user profile
+export const fetchPostsByUserId = async (user_id: string) => {
+  if (!user_id) return [];
+  const { data, error } = await supabase
+    .from('posts')
+    .select('*, profile:users(user_id, username, degree, email, pfp_url)')
+    .eq('user_id', user_id)
+    .order('created_at', { ascending: false });
+  if (error) {
+    console.error('Failed to fetch posts:', error);
+    return [];
+  }
+  return data;
+};
