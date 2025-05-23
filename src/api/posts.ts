@@ -67,7 +67,10 @@ export const fetchPostsByUserId = async (user_id: string) => {
   if (!user_id) return [];
   const { data, error } = await supabase
     .from('posts')
-    .select('*, profile:users(user_id, username, degree, email, pfp_url)')
+    .select(`
+      *,
+      profile:users!posts_user_fk(user_id, username, degree, email, pfp_url)
+    `)
     .eq('user_id', user_id)
     .order('created_at', { ascending: false });
   if (error) {
@@ -76,3 +79,5 @@ export const fetchPostsByUserId = async (user_id: string) => {
   }
   return data;
 };
+
+

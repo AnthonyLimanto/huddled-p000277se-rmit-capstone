@@ -112,7 +112,7 @@ export default function ProfileUserScreen() {
 
         {/* User's Posts */}
         <View style={{ paddingHorizontal: 20, paddingBottom: 20 }}>
-          <Text style={{ fontSize: 20, fontWeight: 'bold', marginBottom: 8 }}>
+          <Text style={{ fontSize: 20, color: '#085DB7', fontWeight: 'bold', marginBottom: 8 }}>
             Posts
           </Text>
           {loadingPosts ? (
