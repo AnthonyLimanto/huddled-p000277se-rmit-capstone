@@ -45,6 +45,7 @@ export default function ProfileUserScreen() {
     if (userId) loadUserData();
   }, [userId]);
 
+
   // Fetch user's posts when userData is available
   useEffect(() => {
     const loadPosts = async () => {
@@ -112,7 +113,7 @@ export default function ProfileUserScreen() {
 
         {/* User's Posts */}
         <View style={{ paddingHorizontal: 20, paddingBottom: 20 }}>
-          <Text style={{ fontSize: 20, color: '#085DB7', fontWeight: 'bold', marginBottom: 8 }}>
+          <Text style={{ fontSize: 24, color: '#085DB7', fontWeight: 'bold', marginBottom: 18 }}>
             Posts
           </Text>
           {loadingPosts ? (
@@ -131,7 +132,7 @@ export default function ProfileUserScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#FFF' },
+  container: { flex: 1, backgroundColor: '#CDECFF' },
   centered: {
     flex: 1,
     justifyContent: 'center',
@@ -147,6 +148,7 @@ const styles = StyleSheet.create({
     borderBottomColor: '#F0F0F0',
     flexDirection: 'row',
     alignItems: 'center',
+    backgroundColor: '#fff',
   },
   title: {
     fontSize: 28,

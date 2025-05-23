@@ -69,7 +69,9 @@ export const fetchPostsByUserId = async (user_id: string) => {
     .from('posts')
     .select(`
       *,
-      profile:users!posts_user_fk(user_id, username, degree, email, pfp_url)
+      profile:users!posts_user_fk(user_id, username, degree, email, pfp_url),
+      count:comments(count),
+      likes:post_likes!post_id(count)
     `)
     .eq('user_id', user_id)
     .order('created_at', { ascending: false });
@@ -79,5 +81,6 @@ export const fetchPostsByUserId = async (user_id: string) => {
   }
   return data;
 };
+
 
 
