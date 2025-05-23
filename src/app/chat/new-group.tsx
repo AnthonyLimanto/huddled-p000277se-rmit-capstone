@@ -100,13 +100,14 @@ export default function NewGroupScreen() {
         <View style={{ width: 28 }} />
       </View>
 
-
       <TextInput
-        placeholder="Group name"
+        placeholder="Insert Group Name Here"
         style={styles.input}
         value={groupName}
         onChangeText={setGroupName}
+        placeholderTextColor="#888"      // <-- grey placeholder color
       />
+
 
       <Text style={styles.label}>Add members:</Text>
 
@@ -166,18 +167,20 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },  
   input: {
-    borderWidth: 1,
-    borderColor: '#CCC',
     borderRadius: 10,
     padding: 12,
     marginBottom: 16,
     fontSize: 16,
+    backgroundColor: '#F0F9FF',     
+    marginLeft: 22,                  
+    color: '#222',                  
   },
-  label: { fontWeight: 'bold', marginBottom: 8 },
+  label: { fontWeight: 'bold', marginTop: 18, marginBottom: 18, marginLeft: 24, fontSize: 18,color: '#085DB7',},
   userRow: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingVertical: 10,
+    marginLeft: 22,
   },
   username: { fontSize: 16, marginLeft: 10 },
   createButton: {
