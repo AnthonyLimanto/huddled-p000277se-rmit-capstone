@@ -112,21 +112,12 @@ export default function SearchScreen() {
     }
   };
 
-  // Function to generate a random pastel color
-  const getRandomPastelColor = () => {
-    // Generate a light pastel color by using high base values (200-240)
-    const r = Math.floor(Math.random() * 55) + 200;
-    const g = Math.floor(Math.random() * 55) + 200;
-    const b = Math.floor(Math.random() * 55) + 200;
-    return `rgb(${r}, ${g}, ${b})`;
-  };
-
   const navigateToUserProfile = (email: string) => {
     router.push(`/profile-user?userId=${encodeURIComponent(email)}`);
   };
 
   const renderUserItem = ({ item }: { item: any }) => (
-    <View style={[styles.userItem, { backgroundColor: getRandomPastelColor() }]}>
+    <View style={[styles.userItem, { backgroundColor: '#D9D9D9' }]}>
       <View style={styles.userInfo}>
         <Image 
           source={{ uri: item.pfp_url || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(item.username) }} 
@@ -299,7 +290,7 @@ const styles = StyleSheet.create({
   searchBar: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#F0F0F0',
+    backgroundColor: '#F0F9FF',
     borderRadius: 10,
     padding: 12,
     marginBottom: 10,
@@ -322,6 +313,8 @@ const styles = StyleSheet.create({
     padding: 14,
     borderRadius: 10,
     alignItems: 'center',
+    alignSelf: 'center',
+    width: '60%',
     marginBottom: 20,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
