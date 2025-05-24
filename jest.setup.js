@@ -93,6 +93,9 @@ jest.mock('expo-router', () => ({
     push: jest.fn(),
     replace: jest.fn(),
   }),
+  useLocalSearchParams: () => ({
+    userId: 'test@example.com'
+  }),
 }));
 
 // Mock URL.createObjectURL
@@ -134,3 +137,27 @@ afterAll(() => {
   console.error = originalConsoleError;
   console.log = originalConsoleLog;
 });
+
+// mock @rneui/base components
+jest.mock('@rneui/base', () => ({
+  Avatar: (props) => {
+    const React = require('react');
+    const { View, Image } = require('react-native');
+    return React.createElement(
+      View,
+      {
+        testID: props.testID || 'avatar',
+        style: {
+          width: props.size || 40,
+          height: props.size || 40,
+          borderRadius: (props.size || 40) / 2,
+          backgroundColor: '#f0f0f0'
+        }
+      },
+      props.source && React.createElement(Image, {
+        source: props.source,
+        style: { width: '100%', height: '100%', borderRadius: (props.size || 40) / 2 }
+      })
+    );
+  }
+}));

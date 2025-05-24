@@ -305,8 +305,22 @@ describe('Group Management Module Tests', () => {
     test('fetch all groups of a user', async () => {
       // 1. Mock group data
       const mockGroupData = [
-        { group: { id: 'group1', name: 'group1', created_at: '2023-01-01' } },
-        { group: { id: 'group2', name: 'group2', created_at: '2023-01-02' } }
+        { 
+          group: { 
+            id: 'group1', 
+            name: 'group1', 
+            created_at: '2023-01-01',
+            members: [{ count: 3 }]
+          } 
+        },
+        { 
+          group: { 
+            id: 'group2', 
+            name: 'group2', 
+            created_at: '2023-01-02',
+            members: [{ count: 5 }]
+          } 
+        }
       ];
       
       // 2. Mock message data
@@ -351,7 +365,14 @@ describe('Group Management Module Tests', () => {
       // Verify results
       expect(supabase.from).toHaveBeenCalledWith('group_members');
       expect(supabase.from).toHaveBeenCalledWith('messages');
-      expect(mockGroupSelect).toHaveBeenCalledWith('group:groups(id, name, created_at)');
+      expect(mockGroupSelect).toHaveBeenCalledWith(`
+      group:groups(
+        id,
+        name,
+        created_at,
+        members:group_members(count)
+      )
+    `);
       expect(mockGroupEq).toHaveBeenCalledWith('user_id', 'user123');
       
       // Verify results structure
@@ -359,6 +380,7 @@ describe('Group Management Module Tests', () => {
       expect(result[0].group).toHaveProperty('id');
       expect(result[0].group).toHaveProperty('name');
       expect(result[0].group).toHaveProperty('createdAt');
+      expect(result[0].group).toHaveProperty('memberCount');
       expect(result[0].message).toHaveProperty('content');
       expect(result[0].message).toHaveProperty('createdAt');
     });
@@ -366,7 +388,14 @@ describe('Group Management Module Tests', () => {
     test('groups with no messages show null', async () => {
       // Mock group data
       const mockGroupData = [
-        { group: { id: 'group1', name: 'group1', created_at: '2023-01-01' } }
+        { 
+          group: { 
+            id: 'group1', 
+            name: 'group1', 
+            created_at: '2023-01-01',
+            members: [{ count: 2 }]
+          } 
+        }
       ];
       
       // Mock empty message data
