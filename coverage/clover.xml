@@ -1,31 +1,31 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<coverage generated="1748105904887" clover="3.2.0">
-  <project timestamp="1748105904887" name="All files">
-    <metrics statements="534" coveredstatements="330" conditionals="382" coveredconditionals="211" methods="116" coveredmethods="70" elements="1032" coveredelements="611" complexity="0" loc="534" ncloc="534" packages="5" files="15" classes="15"/>
+<coverage generated="1748106278317" clover="3.2.0">
+  <project timestamp="1748106278317" name="All files">
+    <metrics statements="534" coveredstatements="370" conditionals="382" coveredconditionals="229" methods="116" coveredmethods="76" elements="1032" coveredelements="675" complexity="0" loc="534" ncloc="534" packages="5" files="15" classes="15"/>
     <package name="api">
-      <metrics statements="218" coveredstatements="138" conditionals="105" coveredconditionals="58" methods="41" coveredmethods="29"/>
+      <metrics statements="218" coveredstatements="178" conditionals="105" coveredconditionals="76" methods="41" coveredmethods="35"/>
       <file name="comment_likes.ts" path="C:\Users\Goddy\Desktop\huddled-p000277se-rmit-capstone\src\api\comment_likes.ts">
-        <metrics statements="20" coveredstatements="0" conditionals="10" coveredconditionals="0" methods="3" coveredmethods="0"/>
-        <line num="4" count="0" type="stmt"/>
-        <line num="5" count="0" type="stmt"/>
-        <line num="10" count="0" type="cond" truecount="0" falsecount="2"/>
-        <line num="12" count="0" type="stmt"/>
-        <line num="19" count="0" type="cond" truecount="0" falsecount="2"/>
-        <line num="21" count="0" type="stmt"/>
-        <line num="27" count="0" type="stmt"/>
-        <line num="28" count="0" type="stmt"/>
-        <line num="33" count="0" type="stmt"/>
-        <line num="34" count="0" type="stmt"/>
-        <line num="40" count="0" type="cond" truecount="0" falsecount="2"/>
-        <line num="42" count="0" type="stmt"/>
-        <line num="44" count="0" type="stmt"/>
-        <line num="45" count="0" type="stmt"/>
-        <line num="50" count="0" type="stmt"/>
-        <line num="51" count="0" type="stmt"/>
-        <line num="57" count="0" type="cond" truecount="0" falsecount="2"/>
-        <line num="59" count="0" type="stmt"/>
-        <line num="61" count="0" type="stmt"/>
-        <line num="62" count="0" type="stmt"/>
+        <metrics statements="20" coveredstatements="20" conditionals="10" coveredconditionals="9" methods="3" coveredmethods="3"/>
+        <line num="4" count="7" type="stmt"/>
+        <line num="5" count="7" type="stmt"/>
+        <line num="10" count="6" type="cond" truecount="2" falsecount="0"/>
+        <line num="12" count="5" type="stmt"/>
+        <line num="19" count="5" type="cond" truecount="2" falsecount="0"/>
+        <line num="21" count="4" type="stmt"/>
+        <line num="27" count="3" type="stmt"/>
+        <line num="28" count="3" type="stmt"/>
+        <line num="33" count="6" type="stmt"/>
+        <line num="34" count="6" type="stmt"/>
+        <line num="40" count="5" type="cond" truecount="2" falsecount="0"/>
+        <line num="42" count="2" type="stmt"/>
+        <line num="44" count="4" type="stmt"/>
+        <line num="45" count="4" type="stmt"/>
+        <line num="50" count="6" type="stmt"/>
+        <line num="51" count="6" type="stmt"/>
+        <line num="57" count="5" type="cond" truecount="2" falsecount="0"/>
+        <line num="59" count="3" type="stmt"/>
+        <line num="61" count="3" type="stmt"/>
+        <line num="62" count="3" type="stmt"/>
       </file>
       <file name="comments.ts" path="C:\Users\Goddy\Desktop\huddled-p000277se-rmit-capstone\src\api\comments.ts">
         <metrics statements="49" coveredstatements="39" conditionals="31" coveredconditionals="23" methods="11" coveredmethods="10"/>
@@ -149,27 +149,27 @@
         <line num="132" count="3" type="stmt"/>
       </file>
       <file name="post_likes.ts" path="C:\Users\Goddy\Desktop\huddled-p000277se-rmit-capstone\src\api\post_likes.ts">
-        <metrics statements="20" coveredstatements="0" conditionals="10" coveredconditionals="0" methods="3" coveredmethods="0"/>
-        <line num="4" count="0" type="stmt"/>
-        <line num="5" count="0" type="stmt"/>
-        <line num="10" count="0" type="cond" truecount="0" falsecount="2"/>
-        <line num="12" count="0" type="stmt"/>
-        <line num="19" count="0" type="cond" truecount="0" falsecount="2"/>
-        <line num="21" count="0" type="stmt"/>
-        <line num="27" count="0" type="stmt"/>
-        <line num="28" count="0" type="stmt"/>
-        <line num="33" count="0" type="stmt"/>
-        <line num="34" count="0" type="stmt"/>
-        <line num="40" count="0" type="cond" truecount="0" falsecount="2"/>
-        <line num="42" count="0" type="stmt"/>
-        <line num="44" count="0" type="stmt"/>
-        <line num="45" count="0" type="stmt"/>
-        <line num="50" count="0" type="stmt"/>
-        <line num="51" count="0" type="stmt"/>
-        <line num="57" count="0" type="cond" truecount="0" falsecount="2"/>
-        <line num="59" count="0" type="stmt"/>
-        <line num="61" count="0" type="stmt"/>
-        <line num="62" count="0" type="stmt"/>
+        <metrics statements="20" coveredstatements="20" conditionals="10" coveredconditionals="9" methods="3" coveredmethods="3"/>
+        <line num="4" count="4" type="stmt"/>
+        <line num="5" count="4" type="stmt"/>
+        <line num="10" count="4" type="cond" truecount="2" falsecount="0"/>
+        <line num="12" count="3" type="stmt"/>
+        <line num="19" count="3" type="cond" truecount="2" falsecount="0"/>
+        <line num="21" count="2" type="stmt"/>
+        <line num="27" count="2" type="stmt"/>
+        <line num="28" count="2" type="stmt"/>
+        <line num="33" count="2" type="stmt"/>
+        <line num="34" count="2" type="stmt"/>
+        <line num="40" count="2" type="cond" truecount="2" falsecount="0"/>
+        <line num="42" count="1" type="stmt"/>
+        <line num="44" count="1" type="stmt"/>
+        <line num="45" count="1" type="stmt"/>
+        <line num="50" count="2" type="stmt"/>
+        <line num="51" count="2" type="stmt"/>
+        <line num="57" count="2" type="cond" truecount="2" falsecount="0"/>
+        <line num="59" count="1" type="stmt"/>
+        <line num="61" count="1" type="stmt"/>
+        <line num="62" count="1" type="stmt"/>
       </file>
       <file name="posts.ts" path="C:\Users\Goddy\Desktop\huddled-p000277se-rmit-capstone\src\api\posts.ts">
         <metrics statements="23" coveredstatements="4" conditionals="10" coveredconditionals="0" methods="4" coveredmethods="0"/>
