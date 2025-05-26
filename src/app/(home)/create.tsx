@@ -18,7 +18,7 @@ import { Audio } from 'expo-av';
 import * as ImagePicker from 'expo-image-picker';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'expo-router'; // ✅ Router for redirect
-import { trackEvent } from '@/src/api/amplitude'; // Import Amplitude tracking
+import { trackEvent } from '@/src/api/amplitude';
 
 const MAX_IMAGE_COUNT = 4;
 
@@ -29,15 +29,17 @@ export type ImageFileType = {
 };
 
 export default function CreatePostScreen() {
-  const router = useRouter(); // ✅ Init router
+  const router = useRouter();
   const MAX_CHAR = 300;
 
   const [text, setText] = useState('');
   const [fileList, setFileList] = useState<ImageFileType[]>([]);
   const [profile, setProfile] = useState<{ username: string; degree: string } | null>(null);
   const [successModalVisible, setSuccessModalVisible] = useState(false);
+  const [inputError, setInputError] = useState(false);
 
   const isImageReachLimit = useMemo(() => fileList.length >= MAX_IMAGE_COUNT, [fileList]);
+  const isPostDisabled = text.trim() === '' && fileList.length === 0;
   const dingSound = useRef<Audio.Sound | null>(null);
 
   useEffect(() => {
@@ -108,9 +110,12 @@ export default function CreatePostScreen() {
     try {
       if (dingSound.current) await dingSound.current.replayAsync();
 
-      if (text.trim() === '' && fileList.length === 0) {
+      if (isPostDisabled) {
+        setInputError(true);
         Alert.alert('Error', 'Please enter text or select an image to post.');
         return;
+      } else {
+        setInputError(false);
       }
 
       const currentUserId = await getSessionUser();
@@ -135,7 +140,7 @@ export default function CreatePostScreen() {
 
       setTimeout(() => {
         setSuccessModalVisible(false);
-        router.replace('/(home)'); // Redirect after modal closes
+        router.replace('/(home)');
       }, 2000);
     } catch (error) {
       console.error('Error creating post:', error);
@@ -169,13 +174,26 @@ export default function CreatePostScreen() {
           placeholder="What's on your mind today?"
           placeholderTextColor="#999"
           multiline
-          style={styles.postInput}
+          style={[
+            styles.postInput,
+            inputError && { borderWidth: 1, borderColor: 'red' },
+          ]}
           value={text}
           numberOfLines={4}
           onChangeText={(input) => {
-            if (input.length <= MAX_CHAR) setText(input);
+            if (input.length <= MAX_CHAR) {
+              setText(input);
+              if (inputError && (input.trim() !== '' || fileList.length > 0)) {
+                setInputError(false);
+              }
+            }
           }}
         />
+
+        {/* Error message below input */}
+        {inputError && (
+          <Text style={styles.errorText}>Please enter text or select at least one image.</Text>
+        )}
 
         <View style={styles.charCounterContainer}>
           <Text style={[styles.charCounter, text.length >= MAX_CHAR && { color: 'red' }]}>
@@ -201,14 +219,20 @@ export default function CreatePostScreen() {
         </View>
 
         <View style={styles.postButtonContainer}>
-          <TouchableOpacity style={styles.postButton} onPress={handleSubmit}>
+          <TouchableOpacity
+            style={[
+              styles.postButton,
+              isPostDisabled && { backgroundColor: '#A0A0A0' },
+            ]}
+            onPress={handleSubmit}
+            disabled={isPostDisabled}
+          >
             <Ionicons name="send" size={18} color="white" style={{ marginRight: 6 }} />
             <Text style={styles.postButtonText}>Post</Text>
           </TouchableOpacity>
         </View>
       </View>
 
-      {/* Post success modal */}
       <Modal transparent visible={successModalVisible} animationType="fade">
         <View style={styles.modalOverlay}>
           <View style={styles.modalBox}>
@@ -227,7 +251,7 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: '#F0F0F0',
   },
-  title: { fontSize: 24, fontWeight: 'bold', color: '#085DB7' },
+  title: { fontSize: 28, fontWeight: 'bold', color: '#085DB7' },
   createContainer: {
     flex: 1,
     padding: 20,
@@ -261,7 +285,13 @@ const styles = StyleSheet.create({
     padding: 12,
     backgroundColor: '#F0F9FF',
     borderRadius: 12,
-    marginBottom: 8,
+    marginBottom: 6,
+  },
+  errorText: {
+    color: 'red',
+    fontSize: 13,
+    marginBottom: 6,
+    marginTop: -2,
   },
   charCounterContainer: {
     alignItems: 'flex-end',

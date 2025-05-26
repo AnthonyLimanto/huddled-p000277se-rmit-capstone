@@ -1,6 +1,6 @@
 import { useAuth } from '@/src/context/AuthContext';
 import { useFocusEffect } from '@react-navigation/native';
-import { useCallback, useState } from "react";
+import { useCallback, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   FlatList,
@@ -8,44 +8,53 @@ import {
   StatusBar,
   StyleSheet,
   Text,
-  View
+  View,
+  TouchableOpacity,
 } from 'react-native';
-import { fetchPosts } from "../../api/posts";
-import Header from "../../components/Header";
-import PostCard from "../../components/PostCard";
+import { fetchPosts } from '../../api/posts';
+import Header from '../../components/Header';
+import PostCard from '../../components/PostCard';
 import { Post } from '../../model/post';
 
 const keyExtractor = (post: Post, index: number) =>
   post?.id ? `${post.id}-${index}` : `${index}`;
 
-const renderPost = ({ item }) => <PostCard post={item} />;
+const renderPost = ({ item }: { item: Post }) => <PostCard post={item} />;
 
 export default function HomeScreen() {
   const [posts, setPosts] = useState<Post[]>([]);
   const [page, setPage] = useState(1);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [hasMore, setHasMore] = useState(true);
-  const {user} = useAuth();
-  console.log(user);
+  const [hasNewPosts, setHasNewPosts] = useState(false);
+  const [latestPostId, setLatestPostId] = useState<string | null>(null);
+
+  const flatListRef = useRef<FlatList>(null);
+  const { user } = useAuth();
 
   const loadPosts = async (pageNum = 1, append = false) => {
     try {
       const fetchedPosts = await fetchPosts(user?.id ?? '');
-      if (fetchedPosts.length === 0) {
+      if (!fetchedPosts || fetchedPosts.length === 0) {
         setHasMore(false);
         return;
       }
 
       if (append) {
-        // Optional: Deduplicate posts if needed
         const combined = [...posts, ...fetchedPosts];
-        const uniqueMap = new Map();
+        const uniqueMap = new Map<string, Post>();
         combined.forEach(post => {
           if (post?.id) uniqueMap.set(post.id, post);
         });
         setPosts(Array.from(uniqueMap.values()));
       } else {
-        setPosts(fetchedPosts);
+        const latestFetchedId = fetchedPosts[0]?.id;
+        if (latestPostId && latestFetchedId && latestFetchedId !== latestPostId) {
+          setHasNewPosts(true); // 🔵 Show "New posts" button
+        } else {
+          setPosts(fetchedPosts);
+          setLatestPostId(latestFetchedId);
+        }
       }
     } catch (error) {
       console.error('Failed to fetch posts:', error);
@@ -54,8 +63,16 @@ export default function HomeScreen() {
 
   useFocusEffect(
     useCallback(() => {
-      loadPosts();
-    }, [])
+      const refreshPosts = async () => {
+        const fetched = await fetchPosts(user?.id ?? '');
+        if (fetched && fetched.length > 0) {
+          setPosts(fetched);
+          setLatestPostId(fetched[0].id);
+          setHasNewPosts(false);
+        }
+      };
+      refreshPosts();
+    }, [user?.id])
   );
 
   const handleLoadMore = async () => {
@@ -84,10 +101,18 @@ export default function HomeScreen() {
     return null;
   };
 
+  const scrollToTopAndRefresh = async () => {
+    await loadPosts(); // Fetch latest posts
+    setHasNewPosts(false);
+    flatListRef.current?.scrollToOffset({ animated: true, offset: 0 });
+  };
+
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" />
+      <Header />
       <FlatList
+        ref={flatListRef}
         data={posts}
         renderItem={renderPost}
         keyExtractor={keyExtractor}
@@ -95,12 +120,14 @@ export default function HomeScreen() {
         onEndReachedThreshold={0.5}
         ListFooterComponent={renderFooter}
         ListHeaderComponent={
-          <>
-            <Header />
-            <View style={styles.newPostsButton}>
+          hasNewPosts ? (
+            <TouchableOpacity
+              style={styles.newPostsButton}
+              onPress={scrollToTopAndRefresh}
+            >
               <Text style={styles.newPostsText}>New posts</Text>
-            </View>
-          </>
+            </TouchableOpacity>
+          ) : null
         }
         ItemSeparatorComponent={() => <View style={{ height: 12 }} />}
         contentContainerStyle={styles.feedContainer}
@@ -114,7 +141,6 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#CDECFF',
   },
-
   newPostsButton: {
     width: 160,
     height: 50,

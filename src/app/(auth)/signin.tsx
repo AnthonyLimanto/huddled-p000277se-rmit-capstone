@@ -6,10 +6,10 @@ import {
   TextInput,
   TouchableOpacity,
   Image,
-  SafeAreaView,
   KeyboardAvoidingView,
   Platform,
   Modal,
+  SafeAreaView,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { supabase } from '../../api/supabase';
@@ -17,14 +17,12 @@ import ReCaptcha from 'react-native-recaptcha-that-works';
 
 export default function SignIn() {
   const router = useRouter();
-
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [emailError, setEmailError] = useState('');
   const [passwordError, setPasswordError] = useState('');
   const [successModalVisible, setSuccessModalVisible] = useState(false);
   const [captchaVerified, setCaptchaVerified] = useState(false);
-
   const recaptchaRef = useRef<any>(null);
 
   const validateEmail = (value: string) => {
@@ -46,14 +44,12 @@ export default function SignIn() {
     setPasswordError(passErr);
     if (emailErr || passErr) return;
 
-    // 👇 If CAPTCHA not yet passed, show it and stop here (only on mobile)
     if ((Platform.OS === 'ios' || Platform.OS === 'android') && !captchaVerified) {
       recaptchaRef.current?.open();
       return;
     }
 
     const { error } = await supabase.auth.signInWithPassword({ email, password });
-
     if (error) {
       if (error.message.includes('Email not confirmed')) {
         setPasswordError('Email pending verification. Check your email to verify.');
@@ -66,7 +62,7 @@ export default function SignIn() {
       setSuccessModalVisible(true);
       setTimeout(() => {
         setSuccessModalVisible(false);
-        setCaptchaVerified(false); // reset for next login
+        setCaptchaVerified(false);
         router.replace('/(home)');
       }, 2000);
     }
@@ -76,15 +72,26 @@ export default function SignIn() {
   const handleForgotPassword = () => router.replace('../(auth)/forgot-password');
 
   return (
-    <SafeAreaView style={styles.container}>
+    <View style={styles.container}>
+      <SafeAreaView style={styles.safeArea}>
+        <View style={styles.topWhiteSection}>
+          <Image
+            source={require('../../../assets/images/icon-only.png')}
+            style={styles.topIcon}
+          />
+            <View style={styles.logoContainer}>
+          <Image
+            source={require('../../../assets/images/Huddled-wordmark.png')}
+            style={styles.logoWordmark}
+          />
+        </View>
+        </View>
+      </SafeAreaView>
+
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         style={styles.keyboardView}
       >
-        <View style={styles.logoContainer}>
-          <Image source={require('../../../assets/images/icon-only.png')} style={styles.logoIcon} />
-          <Image source={require('../../../assets/images/Huddled-wordmark.png')} style={styles.logoWordmark} />
-        </View>
 
         <View style={styles.formContainer}>
           <Text style={styles.welcomeText}>Welcome Back</Text>
@@ -138,7 +145,6 @@ export default function SignIn() {
         </View>
       </KeyboardAvoidingView>
 
-      {/* ✅ reCAPTCHA */}
       {(Platform.OS === 'ios' || Platform.OS === 'android') && (
         <ReCaptcha
           ref={recaptchaRef}
@@ -148,13 +154,10 @@ export default function SignIn() {
             setCaptchaVerified(true);
             setTimeout(() => handleLogin(), 300);
           }}
-          onExpire={() => {
-            setCaptchaVerified(false);
-          }}
+          onExpire={() => setCaptchaVerified(false)}
         />
       )}
 
-      {/* Login success modal */}
       <Modal transparent visible={successModalVisible} animationType="fade">
         <View style={styles.modalOverlay}>
           <View style={styles.modalBox}>
@@ -162,29 +165,35 @@ export default function SignIn() {
           </View>
         </View>
       </Modal>
-    </SafeAreaView>
+    </View>
   );
 }
-
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: '#CDECFF',
+  },
+  safeArea: {
     backgroundColor: '#fff',
+  },
+  topWhiteSection: {
+    alignItems: 'center',
+    paddingTop: 30,
+    backgroundColor: '#fff',
+  },
+  topIcon: {
+    width: 100,
+    height: 90,
+    resizeMode: 'contain',
   },
   keyboardView: {
     flex: 1,
   },
   logoContainer: {
     alignItems: 'center',
-    marginTop: 60,
+    marginTop: 10,
     marginBottom: 30,
-  },
-  logoIcon: {
-    width: 90,
-    height: 80,
-    resizeMode: 'contain',
-    marginBottom: 10,
   },
   logoWordmark: {
     width: 200,
@@ -194,10 +203,9 @@ const styles = StyleSheet.create({
   formContainer: {
     flex: 1,
     backgroundColor: '#CDECFF',
-    borderTopLeftRadius: 35,
-    borderTopRightRadius: 35,
     padding: 30,
     alignItems: 'center',
+    justifyContent: 'flex-start',
   },
   welcomeText: {
     fontSize: 24,

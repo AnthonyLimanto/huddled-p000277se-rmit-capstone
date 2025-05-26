@@ -1,60 +1,66 @@
 import { Ionicons } from '@expo/vector-icons';
 import React from 'react';
-import { Image, Platform, SafeAreaView, StyleSheet, TouchableOpacity, View } from 'react-native';
+import {
+  Platform,
+  View,
+  Text,
+  TouchableOpacity,
+  StyleSheet,
+  SafeAreaView,
+} from 'react-native';
+import { useRouter } from 'expo-router'; // ✅ Add this
 
 const Header = () => {
+  const router = useRouter(); // ✅ Initialize router
+
   return (
-      <SafeAreaView style={styles.container}>
-          <View style={styles.logoContainer}>
-            <Image
-              source={require('../../assets/images/Huddled-wordmark.png')}
-              style={styles.logoWordmark}
-            />
-          </View>
-          <TouchableOpacity style={styles.notificationIcon} >
-            <Ionicons name={Platform.OS === 'ios' ? 'notifications-outline' : 'notifications-outline'}
-              size={30}
-              justifyContent='center'
-              alignItems="center"
-              color="#FFFFFF"
+    <View style={styles.wrapper}>
+      <SafeAreaView style={styles.safeArea}>
+        <View style={styles.header}>
+          <Text style={styles.title}>Huddled</Text>
+          <TouchableOpacity
+            style={styles.notificationIcon}
+            onPress={() => router.push('/notification/notification-screen')} // ✅ Navigate on press
+          >
+            <Ionicons
+              name={Platform.OS === 'ios' ? 'notifications-outline' : 'notifications-outline'}
+              size={22}
+              color="#fff"
             />
           </TouchableOpacity>
-          </SafeAreaView>
+        </View>
+      </SafeAreaView>
+    </View>
   );
 };
+
 const styles = StyleSheet.create({
-  container: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        paddingHorizontal: 20,
-        paddingTop: 20,
-        paddingBottom: 10,
-      },
-      logoContainer: {
-        alignItems: 'left',
-        marginTop: 5,
-        marginLeft: 20,
-        marginBottom: 10,
-      },
-      logoWordmark: {
-        width: 150,
-        height: 50,
-        resizeMode: 'contain',
-      },
-      title: {
-        fontSize: 28,
-        fontWeight: 'bold',
-        color: '#0066CC',
-      },
-      notificationIcon: {
-        width: 50,
-        height: 40,
-        borderRadius: 10,
-        backgroundColor: '#075DB6',
-        alignItems: 'center',
-        justifyContent: 'center',
-      },
+  wrapper: {
+    backgroundColor: '#FFFFFF',
+    borderBottomWidth: 1,
+    borderBottomColor: '#F0F0F0',
+  },
+  safeArea: {
+    backgroundColor: '#FFFFFF',
+  },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingTop: 16,
+    paddingBottom: 12,
+  },
+  title: {
+    fontSize: 28,
+    fontWeight: 'bold',
+    color: '#085DB7',
+  },
+  notificationIcon: {
+    backgroundColor: '#085DB7',
+    borderRadius: 10,
+    padding: 8,
+  },
 });
 
 export default Header;
