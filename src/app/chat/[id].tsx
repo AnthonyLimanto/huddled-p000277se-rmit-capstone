@@ -36,6 +36,7 @@ export default function ChatScreen() {
   const [group, setGroup] = useState<Group>();
   const [members, setMembers] = useState<any[]>([]);
   const [showOptions, setShowOptions] = useState(false);
+  const [showMembersModal, setShowMembersModal] = useState(false);
 
   // Load user, group info, members, and messages
   useEffect(() => {
@@ -152,7 +153,6 @@ export default function ChatScreen() {
   const openInviteScreen = () => {
     setShowOptions(false);
     router.push({ pathname: '/chat/invite', params: { groupId } });
-
   };
 
   // Exit Group function
@@ -165,7 +165,7 @@ export default function ChatScreen() {
         style: 'destructive',
         onPress: async () => {
           try {
-            await leaveGroup(groupId as string); // You must implement this API if not already
+            await leaveGroup(groupId as string);
             Alert.alert('You have left the group');
             router.replace('/messages');
           } catch (e) {
@@ -176,47 +176,76 @@ export default function ChatScreen() {
     ]);
   };
 
-  // Header with group name, members list, and options
+  // Header with WhatsApp-style group name and avatars
   const renderHeader = () => (
     <View>
+      {/* Header Row */}
       <View style={styles.headerRow}>
         <TouchableOpacity onPress={() => router.back()}>
           <Ionicons name="arrow-back" size={24} color="#333" />
         </TouchableOpacity>
         <TouchableOpacity
           style={styles.titleBox}
-          onPress={openGroupOptions}
+          onPress={() => setShowMembersModal(true)}
           activeOpacity={0.7}
         >
           <Text style={styles.headerTitle} numberOfLines={1}>
             {group?.name || 'Group'}
           </Text>
-          <Ionicons name="chevron-down" size={15} color="#666" style={{ marginLeft: 4 }} />
         </TouchableOpacity>
-        <View style={{ width: 24 }} />
+        <TouchableOpacity onPress={openGroupOptions}>
+          <Ionicons name="ellipsis-vertical" size={24} color="#222" />
+        </TouchableOpacity>
       </View>
-      {/* Members list */}
-      <FlatList
-        data={members}
-        keyExtractor={(item) => item.user_id || item.id}
-        renderItem={({ item }) => (
-          <View style={styles.memberBox}>
-            {item.pfp_url ? (
-              <Image source={{ uri: item.pfp_url }} style={styles.avatar} />
-            ) : (
-              <View style={styles.avatar} />
-            )}
-            <Text style={styles.memberName} numberOfLines={1}>
-              {item.full_name || item.username || ''}
-            </Text>
+
+      {/* Members avatar row */}
+      <TouchableOpacity onPress={() => setShowMembersModal(true)}>
+        <View style={styles.memberAvatarRow}>
+          {members.slice(0, 5).map((item, idx) => (
+            <Image
+              key={item.user_id || item.id || idx}
+              source={{ uri: item.profile?.pfp_url || item.pfp_url || undefined }}
+              style={styles.avatar}
+            />
+          ))}
+          {members.length > 5 && (
+            <View style={styles.moreAvatar}>
+              <Text style={styles.moreText}>
+                +{members.length - 5}
+              </Text>
+            </View>
+          )}
+        </View>
+      </TouchableOpacity>
+
+      {/* Members modal (shows all with name + pfp) */}
+      <Modal
+        visible={showMembersModal}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setShowMembersModal(false)}
+      >
+        <Pressable style={styles.membersModalOverlay} onPress={() => setShowMembersModal(false)}>
+          <View style={styles.membersModal}>
+            <Text style={styles.membersModalTitle}>Group Members</Text>
+            <FlatList
+              data={members}
+              keyExtractor={(item) => item.user_id || item.id}
+              renderItem={({ item }) => (
+                <View style={styles.memberListRow}>
+                  <Image
+                    source={{ uri: item.profile?.pfp_url || item.pfp_url || undefined }}
+                    style={styles.avatarModal}
+                  />
+                  <Text style={styles.memberListName}>
+                    {item.profile?.username || item.username || item.profile?.full_name || item.full_name}
+                  </Text>
+                </View>
+              )}
+            />
           </View>
-        )}
-        style={styles.memberList}
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={{ paddingLeft: 10, paddingVertical: 4 }}
-        ListEmptyComponent={<Text style={{ color: '#aaa', fontSize: 12 }}>No members</Text>}
-      />
+        </Pressable>
+      </Modal>
       {/* Android modal for options */}
       <Modal
         visible={showOptions}
@@ -293,34 +322,83 @@ const styles = StyleSheet.create({
     minHeight: 30,
   },
   headerTitle: { fontSize: 22, fontWeight: 'bold', color: '#222', flexShrink: 1 },
-  memberList: {
-    minHeight: 38,
-    backgroundColor: 'transparent',
-    borderBottomWidth: 1,
-    borderBottomColor: '#ececec',
-  },
-  memberBox: {
+  // WhatsApp-style avatars
+  memberAvatarRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#f0f9ff',
-    borderRadius: 16,
-    marginRight: 12,
-    paddingVertical: 4,
-    paddingHorizontal: 10,
-    minWidth: 56,
-    maxWidth: 110,
+    paddingLeft: 15,
+    paddingBottom: 8,
+    minHeight: 44,
   },
   avatar: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
     backgroundColor: '#e1e1e1',
-    marginRight: 7,
+    marginRight: -8, // overlap like WhatsApp
+    borderWidth: 2,
+    borderColor: '#FFF',
   },
-  memberName: {
-    fontSize: 13,
+  moreAvatar: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: '#CED6E0',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 2,
+    borderColor: '#FFF',
+    marginRight: 0,
+  },
+  moreText: {
+    color: '#333',
+    fontWeight: 'bold',
+    fontSize: 15,
+  },
+  // Modal for member list
+  membersModalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.2)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  membersModal: {
+    width: 310,
+    maxHeight: 400,
+    backgroundColor: '#FFF',
+    borderRadius: 18,
+    padding: 20,
+    alignItems: 'stretch',
+    shadowColor: '#000',
+    shadowOpacity: 0.15,
+    shadowOffset: { width: 0, height: 8 },
+    shadowRadius: 24,
+    elevation: 7,
+  },
+  membersModalTitle: {
+    fontWeight: 'bold',
+    fontSize: 19,
+    marginBottom: 15,
+    textAlign: 'center',
+    color: '#1357DA',
+  },
+  memberListRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  avatarModal: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    backgroundColor: '#e1e1e1',
+    marginRight: 14,
+  },
+  memberListName: {
+    fontSize: 16,
     color: '#222',
-    maxWidth: 70,
+    flex: 1,
+    flexWrap: 'wrap',
   },
   messages: { padding: 16, gap: 10 },
   inputContainer: {
@@ -345,7 +423,7 @@ const styles = StyleSheet.create({
     padding: 10,
     borderRadius: 20,
   },
-  // Modal styles for Android
+  // Modal styles for Android group options
   modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.18)',
