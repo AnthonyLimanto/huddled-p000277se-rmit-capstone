@@ -9,6 +9,10 @@ import {
   SafeAreaView,
   KeyboardAvoidingView,
   Platform,
+  Modal,
+  Image,
+  Pressable,
+  Alert,
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -20,7 +24,7 @@ import {
 } from '@/src/api/group-message';
 import { getSessionUser } from '@/src/api/users';
 import { Group } from '@/src/model/group';
-import { fetchGroup } from '@/src/api/group';
+import { fetchGroup, fetchGroupMembers, leaveGroup } from '@/src/api/group';
 import { Message } from '@/src/model/message';
 
 export default function ChatScreen() {
@@ -30,8 +34,10 @@ export default function ChatScreen() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [group, setGroup] = useState<Group>();
+  const [members, setMembers] = useState<any[]>([]);
+  const [showOptions, setShowOptions] = useState(false);
 
-  // 🔄 Load user and messages on mount
+  // Load user, group info, members, and messages
   useEffect(() => {
     const loadData = async () => {
       try {
@@ -48,9 +54,13 @@ export default function ChatScreen() {
           id: msg.id,
           sender: msg.users.username,
           content: msg.content,
-          isOwnMessage: msg.user_id === user.id, // Check if the message is sent by the current user
+          isOwnMessage: msg.user_id === user.id,
         }));
         setMessages(processedMessages);
+
+        // Fetch members
+        const mems = await fetchGroupMembers(groupId as string);
+        setMembers(mems || []);
       } catch (err) {
         console.error('Error loading data:', err);
       }
@@ -60,10 +70,7 @@ export default function ChatScreen() {
 
     // Subscribe to real-time updates
     const unsubscribe = subscribeToGroupMessages(groupId as string, (payload) => {
-      console.log('Real-time update:', payload);
-
       if (payload.eventType === 'INSERT') {
-        // Add new message to the list
         setMessages((prevMessages) => [
           ...prevMessages,
           {
@@ -74,19 +81,14 @@ export default function ChatScreen() {
           },
         ]);
       } else if (payload.eventType === 'UPDATE') {
-        // Update an existing message
         setMessages((prevMessages) =>
           prevMessages.map((message) =>
             message.id === payload.new.id
-              ? {
-                  ...message,
-                  content: payload.new.content,
-                }
+              ? { ...message, content: payload.new.content }
               : message
           )
         );
       } else if (payload.eventType === 'DELETE') {
-        // Remove a deleted message
         setMessages((prevMessages) =>
           prevMessages.filter((message) => message.id !== payload.old.id)
         );
@@ -99,7 +101,7 @@ export default function ChatScreen() {
     };
   }, [groupId]);
 
-  // 💬 Send a message
+  // Send a message
   const handleSend = async () => {
     if (!input.trim() || !currentUser) return;
 
@@ -125,26 +127,122 @@ export default function ChatScreen() {
     }
   };
 
-  return (
-    <SafeAreaView style={styles.container}>
-      {/* 🔙 Header */}
-      <View style={styles.header}>
+  // Group options menu (Invite, Exit)
+  const openGroupOptions = () => {
+    if (Platform.OS === 'ios') {
+      import('react-native').then(({ ActionSheetIOS }) => {
+        ActionSheetIOS.showActionSheetWithOptions(
+          {
+            options: ['Cancel', 'Invite Users', 'Exit Group'],
+            destructiveButtonIndex: 2,
+            cancelButtonIndex: 0,
+          },
+          (buttonIndex) => {
+            if (buttonIndex === 1) openInviteScreen();
+            if (buttonIndex === 2) handleExitGroup();
+          }
+        );
+      });
+    } else {
+      setShowOptions(true);
+    }
+  };
+
+  // Invite Users route
+  const openInviteScreen = () => {
+    setShowOptions(false);
+    router.push({ pathname: '/chat/invite', params: { groupId } });
+
+  };
+
+  // Exit Group function
+  const handleExitGroup = async () => {
+    setShowOptions(false);
+    Alert.alert('Exit Group', 'Are you sure you want to leave this group?', [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Exit',
+        style: 'destructive',
+        onPress: async () => {
+          try {
+            await leaveGroup(groupId as string); // You must implement this API if not already
+            Alert.alert('You have left the group');
+            router.replace('/messages');
+          } catch (e) {
+            Alert.alert('Failed to exit group');
+          }
+        },
+      },
+    ]);
+  };
+
+  // Header with group name, members list, and options
+  const renderHeader = () => (
+    <View>
+      <View style={styles.headerRow}>
         <TouchableOpacity onPress={() => router.back()}>
           <Ionicons name="arrow-back" size={24} color="#333" />
         </TouchableOpacity>
-        <View style={{ marginLeft: 12 }}>
-          <Text style={styles.headerTitle}>{group?.name}</Text>
-          <Text style={styles.subTitle}>Group ID: {groupId}</Text>
-        </View>
-        {/* ➕ Invite button */}
         <TouchableOpacity
-          onPress={() => router.push({ pathname: '/chat/invite', params: { groupId } })}
-          style={styles.inviteButton}
+          style={styles.titleBox}
+          onPress={openGroupOptions}
+          activeOpacity={0.7}
         >
-          <Ionicons name="person-add-outline" size={22} color="#007aff" />
-          <Text style={styles.inviteText}>Invite Users</Text>
+          <Text style={styles.headerTitle} numberOfLines={1}>
+            {group?.name || 'Group'}
+          </Text>
+          <Ionicons name="chevron-down" size={15} color="#666" style={{ marginLeft: 4 }} />
         </TouchableOpacity>
+        <View style={{ width: 24 }} />
       </View>
+      {/* Members list */}
+      <FlatList
+        data={members}
+        keyExtractor={(item) => item.user_id || item.id}
+        renderItem={({ item }) => (
+          <View style={styles.memberBox}>
+            {item.pfp_url ? (
+              <Image source={{ uri: item.pfp_url }} style={styles.avatar} />
+            ) : (
+              <View style={styles.avatar} />
+            )}
+            <Text style={styles.memberName} numberOfLines={1}>
+              {item.full_name || item.username || ''}
+            </Text>
+          </View>
+        )}
+        style={styles.memberList}
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={{ paddingLeft: 10, paddingVertical: 4 }}
+        ListEmptyComponent={<Text style={{ color: '#aaa', fontSize: 12 }}>No members</Text>}
+      />
+      {/* Android modal for options */}
+      <Modal
+        visible={showOptions}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowOptions(false)}
+      >
+        <Pressable style={styles.modalOverlay} onPress={() => setShowOptions(false)}>
+          <View style={styles.optionsModal}>
+            <TouchableOpacity style={styles.optionBtn} onPress={openInviteScreen}>
+              <Ionicons name="person-add-outline" size={20} color="#007aff" />
+              <Text style={styles.optionText}>Invite Users</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.optionBtn} onPress={handleExitGroup}>
+              <Ionicons name="exit-outline" size={20} color="#d11b1b" />
+              <Text style={[styles.optionText, { color: '#d11b1b' }]}>Exit Group</Text>
+            </TouchableOpacity>
+          </View>
+        </Pressable>
+      </Modal>
+    </View>
+  );
+
+  return (
+    <SafeAreaView style={styles.container}>
+      {renderHeader()}
 
       {/* 📨 Messages */}
       <FlatList
@@ -178,20 +276,51 @@ export default function ChatScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#FFF' },
-  header: {
+  headerRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 16,
+    padding: 14,
     backgroundColor: '#F5F5F5',
     borderBottomWidth: 1,
     borderBottomColor: '#EAEAEA',
+    position: 'relative',
   },
-  headerTitle: { fontSize: 22, fontWeight: 'bold' },
-  subTitle: { color: '#888', fontSize: 14, marginTop: 4 },
-  inviteButton: {
-    marginLeft: 'auto',
+  titleBox: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: 30,
+  },
+  headerTitle: { fontSize: 22, fontWeight: 'bold', color: '#222', flexShrink: 1 },
+  memberList: {
+    minHeight: 38,
     backgroundColor: 'transparent',
-    paddingHorizontal: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: '#ececec',
+  },
+  memberBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#f0f9ff',
+    borderRadius: 16,
+    marginRight: 12,
+    paddingVertical: 4,
+    paddingHorizontal: 10,
+    minWidth: 56,
+    maxWidth: 110,
+  },
+  avatar: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: '#e1e1e1',
+    marginRight: 7,
+  },
+  memberName: {
+    fontSize: 13,
+    color: '#222',
+    maxWidth: 70,
   },
   messages: { padding: 16, gap: 10 },
   inputContainer: {
@@ -216,8 +345,35 @@ const styles = StyleSheet.create({
     padding: 10,
     borderRadius: 20,
   },
-  inviteText: {
+  // Modal styles for Android
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.18)',
+    justifyContent: 'center',
     alignItems: 'center',
+  },
+  optionsModal: {
+    backgroundColor: '#fff',
+    borderRadius: 16,
+    paddingVertical: 14,
+    width: 220,
+    alignItems: 'stretch',
+    shadowColor: '#000',
+    shadowOpacity: 0.15,
+    shadowOffset: { width: 0, height: 6 },
+    shadowRadius: 14,
+    elevation: 5,
+  },
+  optionBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 11,
+    paddingHorizontal: 16,
+  },
+  optionText: {
     fontSize: 16,
+    color: '#222',
+    marginLeft: 11,
+    fontWeight: '500',
   },
 });
