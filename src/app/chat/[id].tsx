@@ -182,7 +182,7 @@ export default function ChatScreen() {
       {/* Header Row */}
       <View style={styles.headerRow}>
         <TouchableOpacity onPress={() => router.back()}>
-          <Ionicons name="arrow-back" size={24} color="#333" />
+          <Ionicons name="arrow-back" size={24} color="#085DB7" />
         </TouchableOpacity>
         <TouchableOpacity
           style={styles.titleBox}
@@ -194,7 +194,7 @@ export default function ChatScreen() {
           </Text>
         </TouchableOpacity>
         <TouchableOpacity onPress={openGroupOptions}>
-          <Ionicons name="ellipsis-vertical" size={24} color="#222" />
+          <Ionicons name="ellipsis-vertical" size={24} color="#085DB7" />
         </TouchableOpacity>
       </View>
 
@@ -228,6 +228,7 @@ export default function ChatScreen() {
         <Pressable style={styles.membersModalOverlay} onPress={() => setShowMembersModal(false)}>
           <View style={styles.membersModal}>
             <Text style={styles.membersModalTitle}>Group Members</Text>
+            <View style={styles.membersDivider} /> 
             <FlatList
               data={members}
               keyExtractor={(item) => item.user_id || item.id}
@@ -309,7 +310,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     padding: 14,
-    backgroundColor: '#F5F5F5',
+    backgroundColor: '#fff',
     borderBottomWidth: 1,
     borderBottomColor: '#EAEAEA',
     position: 'relative',
@@ -321,7 +322,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     minHeight: 30,
   },
-  headerTitle: { fontSize: 22, fontWeight: 'bold', color: '#222', flexShrink: 1 },
+  headerTitle: { fontSize: 22, fontWeight: 'bold', color: '#085DB7', flexShrink: 1 },
   // WhatsApp-style avatars
   memberAvatarRow: {
     flexDirection: 'row',
@@ -329,6 +330,7 @@ const styles = StyleSheet.create({
     paddingLeft: 15,
     paddingBottom: 8,
     minHeight: 44,
+    paddingTop: 15,
   },
   avatar: {
     width: 36,
@@ -351,7 +353,7 @@ const styles = StyleSheet.create({
     marginRight: 0,
   },
   moreText: {
-    color: '#333',
+    color: '#085DB7',
     fontWeight: 'bold',
     fontSize: 15,
   },
@@ -382,6 +384,13 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     color: '#1357DA',
   },
+  membersDivider: {
+    height: 1,
+    backgroundColor: '#e0e0e0', // subtle gray divider
+    marginBottom: 16,
+    marginTop: 2,
+    marginHorizontal: -20, // makes the divider stretch edge-to-edge inside the modal
+  },  
   memberListRow: {
     flexDirection: 'row',
     alignItems: 'center',
