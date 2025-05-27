@@ -131,3 +131,24 @@ export const fetchGroupMembers = async (group_id: string) => {
 
     return groupMemberData;
 } 
+
+// Remove current user from the group
+export const leaveGroup = async (group_id: string) => {
+  // Get current session user
+  const { data: { user }, error: authError } = await supabase.auth.getUser();
+  if (authError) throw authError;
+  if (!user) throw new Error("Not logged in");
+
+  // Delete the group member row for this user and group
+  const { error } = await supabase
+    .from('group_members')
+    .delete()
+    .eq('group_id', group_id)
+    .eq('user_id', user.id);
+
+  if (error) {
+    console.error("Error leaving group:", error);
+    throw error;
+  }
+  return true;
+};
