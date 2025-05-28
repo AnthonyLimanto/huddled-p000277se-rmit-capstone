@@ -26,6 +26,7 @@ import { getSessionUser } from '@/src/api/users';
 import { Group } from '@/src/model/group';
 import { fetchGroup, fetchGroupMembers, leaveGroup } from '@/src/api/group';
 import { Message } from '@/src/model/message';
+import { useIsFocused } from '@react-navigation/native';
 
 export default function ChatScreen() {
   const { id: groupId } = useLocalSearchParams(); // groupId from route
@@ -38,69 +39,75 @@ export default function ChatScreen() {
   const [showOptions, setShowOptions] = useState(false);
   const [showMembersModal, setShowMembersModal] = useState(false);
 
+  const isFocused = useIsFocused(); 
+
   // Load user, group info, members, and messages
   useEffect(() => {
-    const loadData = async () => {
-      try {
-        const user = await getSessionUser();
-        setCurrentUser(user);
-
-        const fetchedGroup = await fetchGroup(groupId);
-        if (fetchedGroup && fetchedGroup.length > 0) {
-          setGroup(fetchedGroup[0]);
+    
+  
+    if (isFocused) {
+      const loadData = async () => {
+        try {
+          const user = await getSessionUser();
+          setCurrentUser(user);
+  
+          const fetchedGroup = await fetchGroup(groupId);
+          if (fetchedGroup && fetchedGroup.length > 0) {
+            setGroup(fetchedGroup[0]);
+          }
+  
+          const fetchedMessages = await fetchGroupMessages(groupId as string);
+          const processedMessages = fetchedMessages.map((msg: any) => ({
+            id: msg.id,
+            sender: msg.users.username,
+            content: msg.content,
+            isOwnMessage: msg.user_id === user.id,
+          }));
+          setMessages(processedMessages);
+  
+          // Fetch members
+          const mems = await fetchGroupMembers(groupId as string);
+          setMembers(mems || []);
+        } catch (err) {
+          console.error('Error loading data:', err);
         }
-
-        const fetchedMessages = await fetchGroupMessages(groupId as string);
-        const processedMessages = fetchedMessages.map((msg: any) => ({
-          id: msg.id,
-          sender: msg.users.username,
-          content: msg.content,
-          isOwnMessage: msg.user_id === user.id,
-        }));
-        setMessages(processedMessages);
-
-        // Fetch members
-        const mems = await fetchGroupMembers(groupId as string);
-        setMembers(mems || []);
-      } catch (err) {
-        console.error('Error loading data:', err);
-      }
-    };
-
-    loadData();
-
-    // Subscribe to real-time updates
-    const unsubscribe = subscribeToGroupMessages(groupId as string, (payload) => {
-      if (payload.eventType === 'INSERT') {
-        setMessages((prevMessages) => [
-          ...prevMessages,
-          {
-            id: payload.new.id,
-            sender: payload.new.users?.username || 'Unknown',
-            content: payload.new.content,
-            isOwnMessage: payload.new.user_id === currentUser?.id,
-          },
-        ]);
-      } else if (payload.eventType === 'UPDATE') {
-        setMessages((prevMessages) =>
-          prevMessages.map((message) =>
-            message.id === payload.new.id
-              ? { ...message, content: payload.new.content }
-              : message
-          )
-        );
-      } else if (payload.eventType === 'DELETE') {
-        setMessages((prevMessages) =>
-          prevMessages.filter((message) => message.id !== payload.old.id)
-        );
-      }
-    });
-
-    // Cleanup subscription on unmount
-    return () => {
-      unsubscribe();
-    };
-  }, [groupId]);
+      };
+  
+      loadData();
+  
+      // Subscribe to real-time updates
+      const unsubscribe = subscribeToGroupMessages(groupId as string, (payload) => {
+        if (payload.eventType === 'INSERT') {
+          setMessages((prevMessages) => [
+            ...prevMessages,
+            {
+              id: payload.new.id,
+              sender: payload.new.users?.username || 'Unknown',
+              content: payload.new.content,
+              isOwnMessage: payload.new.user_id === currentUser?.id,
+            },
+          ]);
+        } else if (payload.eventType === 'UPDATE') {
+          setMessages((prevMessages) =>
+            prevMessages.map((message) =>
+              message.id === payload.new.id
+                ? { ...message, content: payload.new.content }
+                : message
+            )
+          );
+        } else if (payload.eventType === 'DELETE') {
+          setMessages((prevMessages) =>
+            prevMessages.filter((message) => message.id !== payload.old.id)
+          );
+        }
+      });
+  
+      // Cleanup subscription on unmount
+      return () => {
+        unsubscribe();
+      };
+    }
+  }, [groupId, isFocused]);
 
   // Send a message
   const handleSend = async () => {
@@ -181,7 +188,7 @@ export default function ChatScreen() {
     <View>
       {/* Header Row */}
       <View style={styles.headerRow}>
-        <TouchableOpacity onPress={() => router.back()}>
+        <TouchableOpacity onPress={() => router.push('/messages')}>
           <Ionicons name="arrow-back" size={24} color="#085DB7" />
         </TouchableOpacity>
         <TouchableOpacity
