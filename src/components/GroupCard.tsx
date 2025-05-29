@@ -15,10 +15,14 @@ export const GroupCard = ({ group, latestMessage, timestamp }: GroupCardProps) =
   // Add 10 hours to the timestamp
   const adjustedTime = new Date(new Date(timestamp).getTime() + 10 * 60 * 60 * 1000);
 
-  const formattedTime = adjustedTime.toLocaleTimeString([], {
+  const isValidTime = !isNaN(adjustedTime.getTime());
+
+  const formattedTime = isValidTime
+   ? adjustedTime.toLocaleTimeString([], {
     hour: '2-digit',
     minute: '2-digit',
-  });
+  })
+  : "No Messages";
 
   console.log('given group prop:', group);
 

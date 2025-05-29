@@ -1,26 +1,27 @@
 import {supabase} from "./supabase"
 
 export const createGroup = async (name: string, users: string[]) => {
-    try {
+  try {
       
-        const { data: groupData, error: groupError } = await supabase
-            .from("groups")
-            .insert([{ name }])
-            .select("id")
-            .single(); 
-  
-        if (groupError) throw groupError;
-  
-        const groupId = groupData.id;
-    
-        const membersData = await addGroupMembers(groupId, users);
-    
-        return { group: groupData, members: membersData };
-    } catch (error) {
-        console.error("Error creating group:", error);
-        throw error;
-    }
-  };
+    const { data: groupData, error: groupError } = await supabase
+        .from("groups")
+        .insert([{ name }])
+        .select("id")
+        .single(); 
+
+    if (groupError) throw groupError;
+
+    const groupId = groupData.id;
+
+    const membersData = await addGroupMembers(groupId, users);
+
+    return { group: groupData, members: membersData };
+} catch (error) {
+    console.error("Error creating group:", error);
+    throw error;
+}
+};
+
 
   export const addGroupMembers = async (group_id: string, users: string[]) => {
     try {
@@ -57,10 +58,17 @@ export const fetchGroup = async (group_id: string) => {
 export const fetchGroups = async (user_id: string) => {
   // Step 1: Fetch groups for the user
   const { data: groupData, error } = await supabase
-      .from('group_members')
-      .select('group:groups(id, name, created_at)')
-      .eq('user_id', user_id)
-      .order('joined_at', { ascending: false });
+    .from('group_members')
+    .select(`
+      group:groups(
+        id,
+        name,
+        created_at,
+        members:group_members(count)
+      )
+    `)
+    .eq('user_id', user_id)
+    .order('joined_at', { ascending: false });
 
   if (error) {
     console.error('Error fetching groups:', error);
@@ -84,12 +92,13 @@ export const fetchGroups = async (user_id: string) => {
     throw messageError;
   }
 
-  // Step 3: Combine groups with their latest messages
+  // Step 3: Combine groups with their latest messages and member count
   const processedGroups = groupData.map((item: any) => {
     const group = {
       id: item.group.id,
       name: item.group.name,
       createdAt: item.group.created_at,
+      memberCount: item.group.members[0].count || 0, // Count of members
     };
 
     const latestMessage = messageData.find((msg: any) => msg.group_id === group.id) || null;
@@ -122,3 +131,24 @@ export const fetchGroupMembers = async (group_id: string) => {
 
     return groupMemberData;
 } 
+
+// Remove current user from the group
+export const leaveGroup = async (group_id: string) => {
+  // Get current session user
+  const { data: { user }, error: authError } = await supabase.auth.getUser();
+  if (authError) throw authError;
+  if (!user) throw new Error("Not logged in");
+
+  // Delete the group member row for this user and group
+  const { error } = await supabase
+    .from('group_members')
+    .delete()
+    .eq('group_id', group_id)
+    .eq('user_id', user.id);
+
+  if (error) {
+    console.error("Error leaving group:", error);
+    throw error;
+  }
+  return true;
+};
