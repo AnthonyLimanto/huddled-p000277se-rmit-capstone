@@ -100,11 +100,10 @@ export default function ProfileScreen() {
     }
   };
 
-  const [editBio, setEditBio] = useState('');
 
   const handleEditProfile = () => {
     setEditUsername(userData?.username || '');
-    setEditBio(userData?.bio || '');
+    setEditDegree(userData?.degree || '');
     setEditModalVisible(true);
   };  
 
@@ -113,25 +112,24 @@ export default function ProfileScreen() {
       Alert.alert('Validation Error', 'Username is required');
       return;
     }
+    console.log('Updating:', userData.user_id, editUsername, editDegree);
   
-    try {
-      const { error } = await supabase
-        .from('users')
-        .update({ username: editUsername.trim(), bio: editBio.trim() })
-        .eq('email', userData.email);
+    const { error } = await supabase
+      .from('users')
+      .update({ username: editUsername.trim(), degree: editDegree.trim() })
+      .eq('user_id', userData.user_id);
   
-      if (error) {
-        Alert.alert('Update Failed', error.message);
-      } else {
-        setUserData({ ...userData, username: editUsername.trim(), bio: editBio.trim() });
-        Alert.alert('Profile updated!');
-        setEditModalVisible(false);
-      }
-    } catch (error) {
-      Alert.alert('Error', 'Something went wrong');
-      console.error(error);
+    if (error) {
+      console.log('Update error:', error);
+      Alert.alert('Update Failed', error.message);
+    } else {
+      setUserData({ ...userData, username: editUsername.trim(), degree: editDegree.trim() });
+      Alert.alert('Profile updated!');
+      setEditModalVisible(false);
+      loadPosts();
     }
   };
+  
   
 
   // --- Load user and posts ---
@@ -158,21 +156,25 @@ export default function ProfileScreen() {
     loadUserData();
   }, []);
 
+  const loadPosts = async () => {
+    if (!userData?.user_id) return;
+    setLoadingPosts(true);
+    try {
+      const userPosts = await fetchPostsByUserId(userData.user_id);
+      setPosts(userPosts || []);
+    } catch (error) {
+      setPosts([]);
+    } finally {
+      setLoadingPosts(false);
+    }
+  };
+  
   useEffect(() => {
-    const loadPosts = async () => {
-      if (!userData?.user_id) return;
-      setLoadingPosts(true);
-      try {
-        const userPosts = await fetchPostsByUserId(userData.user_id);
-        setPosts(userPosts || []);
-      } catch (error) {
-        setPosts([]);
-      } finally {
-        setLoadingPosts(false);
-      }
-    };
-    if (userData?.user_id) loadPosts();
+    if (userData?.user_id) {
+      loadPosts();
+    }
   }, [userData]);
+  
 
   // --- Render ---
   if (loading) {
@@ -220,7 +222,7 @@ export default function ProfileScreen() {
           <Text style={styles.userBio}>
             {userData?.degree
               ? `Studying ${userData.degree}`
-              : 'This is where your bio would appear. Share a bit about yourself with others.'}
+              : 'This is where your degree would appear. Share a bit about yourself with others.'}
           </Text>
 
           <TouchableOpacity style={styles.editProfileButton} onPress={handleEditProfile}>
@@ -272,13 +274,12 @@ export default function ProfileScreen() {
             />
             <TextInput
               style={styles.input}
-              value={editBio}
-              placeholder="Bio"
+              value={editDegree}
+              placeholder="Degree"
               placeholderTextColor="#B0B0B0"
-              onChangeText={setEditBio}
+              onChangeText={setEditDegree}
               multiline={true}
             />
-
             <TouchableOpacity style={styles.updateButton} onPress={handleUpdateProfile}>
               <Text style={styles.updateButtonText}>Update</Text>
             </TouchableOpacity>
