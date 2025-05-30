@@ -100,28 +100,30 @@ export default function ProfileScreen() {
     }
   };
 
+  const [editBio, setEditBio] = useState('');
+
   const handleEditProfile = () => {
-    setEditUsername(userData.username);
-    setEditDegree(userData.degree);
+    setEditUsername(userData?.username || '');
+    setEditBio(userData?.bio || '');
     setEditModalVisible(true);
-  };
+  };  
 
   const handleUpdateProfile = async () => {
-    if (!editUsername.trim() || !editDegree.trim()) {
-      Alert.alert('Validation Error', 'All fields are required');
+    if (!editUsername.trim()) {
+      Alert.alert('Validation Error', 'Username is required');
       return;
     }
-
+  
     try {
       const { error } = await supabase
         .from('users')
-        .update({ username: editUsername.trim(), degree: editDegree.trim() })
+        .update({ username: editUsername.trim(), bio: editBio.trim() })
         .eq('email', userData.email);
-
+  
       if (error) {
         Alert.alert('Update Failed', error.message);
       } else {
-        setUserData({ ...userData, username: editUsername.trim(), degree: editDegree.trim() });
+        setUserData({ ...userData, username: editUsername.trim(), bio: editBio.trim() });
         Alert.alert('Profile updated!');
         setEditModalVisible(false);
       }
@@ -130,6 +132,7 @@ export default function ProfileScreen() {
       console.error(error);
     }
   };
+  
 
   // --- Load user and posts ---
   useEffect(() => {
@@ -194,7 +197,11 @@ export default function ProfileScreen() {
       {/* HEADER */}
       <View style={styles.header}>
         <Text style={styles.title}>Profile</Text>
+        <TouchableOpacity style={styles.headerLogoutButton} onPress={handleLogout}>
+          <Ionicons name="log-out-outline" size={24} color="#FF3B30" />
+        </TouchableOpacity>
       </View>
+
       <ScrollView>
         {/* Profile Info */}
         <View style={styles.profileHeader}>
@@ -215,6 +222,7 @@ export default function ProfileScreen() {
               ? `Studying ${userData.degree}`
               : 'This is where your bio would appear. Share a bit about yourself with others.'}
           </Text>
+
           <TouchableOpacity style={styles.editProfileButton} onPress={handleEditProfile}>
             <Text style={styles.editProfileText}>Edit Profile</Text>
           </TouchableOpacity>
@@ -239,7 +247,7 @@ export default function ProfileScreen() {
         {/* Logout Button */}
         <View style={styles.logoutContainer}>
           <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
-            <Ionicons name="log-out-outline" size={20} color="#FF3B30" />
+            <Ionicons name="log-out-outline" size={20} color="#085DB7" />
             <Text style={styles.logoutText}>Log Out</Text>
           </TouchableOpacity>
         </View>
@@ -250,23 +258,25 @@ export default function ProfileScreen() {
         <View style={styles.modalContainer}>
           <View style={styles.modalContent}>
             <TouchableOpacity style={styles.closeButton} onPress={() => setEditModalVisible(false)}>
-              <Ionicons name="close" size={24} color="#000" />
+              <Ionicons name="close" size={28} color="#000" />
             </TouchableOpacity>
-
-            <Text style={styles.title}>Edit Profile</Text>
+            <Text style={styles.editProfileTitle}>Edit Profile</Text>
 
             <TextInput
               style={styles.input}
               value={editUsername}
               placeholder="Username"
+              placeholderTextColor="#B0B0B0"
               onChangeText={setEditUsername}
+              autoCapitalize="none"
             />
-
             <TextInput
               style={styles.input}
-              value={editDegree}
-              placeholder="Degree"
-              onChangeText={setEditDegree}
+              value={editBio}
+              placeholder="Bio"
+              placeholderTextColor="#B0B0B0"
+              onChangeText={setEditBio}
+              multiline={true}
             />
 
             <TouchableOpacity style={styles.updateButton} onPress={handleUpdateProfile}>
@@ -275,6 +285,7 @@ export default function ProfileScreen() {
           </View>
         </View>
       </Modal>
+
     </SafeAreaView>
   );
 }
@@ -291,20 +302,25 @@ const styles = StyleSheet.create({
     color: '#FF3B30',
   },
   header: {
-    padding: 20,
-    borderBottomWidth: 1,
-    borderBottomColor: '#F0F0F0',
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between', 
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F0F0F0',
     backgroundColor: '#fff',
-    justifyContent: 'center',
   },
   title: {
     fontSize: 28,
     fontWeight: 'bold',
     color: '#085DB7',
     flex: 1,
-    textAlign: 'center',
+    textAlign: 'left',
+  },
+  headerLogoutButton: {
+    marginLeft: 'auto',
+    padding: 6,
   },
   profileHeader: { alignItems: 'center', padding: 20 },
   avatar: {
@@ -327,6 +343,13 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: '#FFF',
   },
+  editProfileTitle: {
+    fontSize: 28,
+    fontWeight: 'bold',
+    color: '#085DB7',
+    textAlign: 'center',
+    marginBottom: 20,
+  },
   userName: { fontSize: 24, fontWeight: 'bold', marginBottom: 5 },
   userHandle: { fontSize: 16, color: '#666', marginBottom: 12 },
   userBio: { textAlign: 'center', color: '#333', paddingHorizontal: 20, marginBottom: 16 },
@@ -342,7 +365,7 @@ const styles = StyleSheet.create({
   editProfileText: { color: '#0066CC', fontWeight: 'bold' },
   logoutContainer: { padding: 20, borderTopWidth: 1, borderColor: '#EEE', marginTop: 20 },
   logoutButton: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: 12 },
-  logoutText: { color: '#FF3B30', fontWeight: 'bold', marginLeft: 8, fontSize: 16 },
+  logoutText: { color: '#085DB7', fontWeight: 'bold', marginLeft: 8, fontSize: 16 },
 
   // Posts section (reusing padding/colors for consistency)
   postsContainer: {
@@ -364,22 +387,33 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     alignItems: 'center',
   },
-  closeButton: { alignSelf: 'flex-end' },
   input: {
     width: '100%',
-    backgroundColor: '#eee',
-    borderRadius: 8,
-    padding: 10,
-    fontSize: 16,
-    marginVertical: 10,
+    backgroundColor: '#E7F3FF',
+    borderRadius: 12,
+    padding: 14,
+    fontSize: 18,
+    marginVertical: 8,
+    color: '#222',
   },
   updateButton: {
     backgroundColor: '#0066CC',
-    padding: 15,
-    borderRadius: 8,
+    padding: 18,
+    borderRadius: 12,
     alignItems: 'center',
     width: '100%',
     marginTop: 20,
   },
-  updateButtonText: { color: '#fff', fontSize: 16, fontWeight: 'bold' },
+  updateButtonText: {
+    color: '#fff',
+    fontSize: 20,
+    fontWeight: 'bold',
+  },
+  closeButton: {
+    position: 'absolute',
+    right: 0,
+    top: 0,
+    zIndex: 1,
+    padding: 16,
+  },
 });
