@@ -1,13 +1,12 @@
 import { supabase } from '@/src/api/supabase';
 import { fetchUser } from '@/src/api/users';
-import { Ionicons } from '@expo/vector-icons';
-import * as ImagePicker from 'expo-image-picker';
-import { router } from 'expo-router';
+import { fetchPostsByUserId } from '@/src/api/posts';
+import PostCard from '@/src/components/PostCard';
+import { useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import {
-  Alert,
+  ActivityIndicator,
   Image,
-  Modal,
   SafeAreaView,
   ScrollView,
   StatusBar,
@@ -15,17 +14,27 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
-  View
+  View,
+  Modal,
+  Alert
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import * as ImagePicker from 'expo-image-picker';
 
 export default function ProfileScreen() {
+  const router = useRouter();
   const [userData, setUserData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  const [editModalVisible, setEditModalVisible] = useState(false);
 
+  const [editModalVisible, setEditModalVisible] = useState(false);
   const [editUsername, setEditUsername] = useState('');
   const [editDegree, setEditDegree] = useState('');
 
+  // For user's posts
+  const [posts, setPosts] = useState<any[]>([]);
+  const [loadingPosts, setLoadingPosts] = useState(true);
+
+  // --- Logout and Edit functions ---
   const handleLogout = async () => {
     const { error } = await supabase.auth.signOut();
     if (error) {
@@ -122,75 +131,112 @@ export default function ProfileScreen() {
     }
   };
 
+  // --- Load user and posts ---
   useEffect(() => {
     const loadUserData = async () => {
       try {
         const { data: sessionData, error: sessionError } = await supabase.auth.getUser();
+        console.log('Session email:', sessionData?.user?.email);
         if (sessionError) throw sessionError;
-
         const userDetails = await fetchUser(sessionData.user.email!);
-        if (userDetails && userDetails.length > 0) {
-          setUserData(userDetails[0]);
-        }
+        console.log('User details from DB:', userDetails);
+        if (userDetails) {
+          setUserData(userDetails); // userDetails is an object!
+        } else {
+          setUserData(null);
+        }        
       } catch (error) {
         console.error("Error loading user data:", error);
+        setUserData(null);
       } finally {
         setLoading(false);
       }
     };
-
     loadUserData();
   }, []);
+
+  useEffect(() => {
+    const loadPosts = async () => {
+      if (!userData?.user_id) return;
+      setLoadingPosts(true);
+      try {
+        const userPosts = await fetchPostsByUserId(userData.user_id);
+        setPosts(userPosts || []);
+      } catch (error) {
+        setPosts([]);
+      } finally {
+        setLoadingPosts(false);
+      }
+    };
+    if (userData?.user_id) loadPosts();
+  }, [userData]);
+
+  // --- Render ---
+  if (loading) {
+    return (
+      <SafeAreaView style={styles.centered}>
+        <ActivityIndicator size="large" color="#075DB6" />
+      </SafeAreaView>
+    );
+  }
+
+  if (!userData) {
+    return (
+      <SafeAreaView style={styles.centered}>
+        <Text style={styles.errorText}>User not found.</Text>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" />
+      {/* HEADER */}
+      <View style={styles.header}>
+        <Text style={styles.title}>Profile</Text>
+      </View>
       <ScrollView>
-        <View style={styles.header}>
-          <Text style={styles.title}>Profile</Text>
-        </View>
-
+        {/* Profile Info */}
         <View style={styles.profileHeader}>
-          <View style={styles.avatarContainer}>
+          <View style={{ position: 'relative' }}>
             {userData?.pfp_url ? (
               <Image source={{ uri: userData.pfp_url }} style={styles.avatar} />
             ) : (
-              <View style={styles.avatar} />
+              <View style={[styles.avatar, { backgroundColor: '#ccc' }]} />
             )}
             <TouchableOpacity style={styles.editAvatarButton} onPress={handleChangeProfilePic}>
               <Ionicons name="camera" size={18} color="#FFF" />
             </TouchableOpacity>
           </View>
-
-          <Text style={styles.userName}>{userData?.username || 'Loading...'}</Text>
-          <Text style={styles.userHandle}>
-            {userData?.email ? `@${userData.email.split('@')[0]}` : ''}
-          </Text>
+          <Text style={styles.userName}>{userData.username}</Text>
+          <Text style={styles.userHandle}>@{userData.email?.split('@')[0]}</Text>
           <Text style={styles.userBio}>
             {userData?.degree
               ? `Studying ${userData.degree}`
               : 'This is where your bio would appear. Share a bit about yourself with others.'}
           </Text>
-
           <TouchableOpacity style={styles.editProfileButton} onPress={handleEditProfile}>
             <Text style={styles.editProfileText}>Edit Profile</Text>
           </TouchableOpacity>
         </View>
-        <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>Your Posts</Text>
-        </View>
-        
-        <View style={styles.postsContainer}>
-          {/* Empty state for posts */}
-          <View style={styles.emptyState}>
-            <Ionicons name="document-text-outline" size={40} color="#CCC" />
-            <Text style={styles.emptyStateText}>No posts yet</Text>
-            <Text style={styles.emptyStateSubtext}>
-              Your posts will appear here
-            </Text>
-          </View>
+
+        {/* User's Posts */}
+        <View style={{ paddingHorizontal: 20, paddingBottom: 20 }}>
+          <Text style={{ fontSize: 24, color: '#085DB7', fontWeight: 'bold', marginBottom: 18 }}>
+            Posts
+          </Text>
+          {loadingPosts ? (
+            <ActivityIndicator size="small" color="#075DB6" />
+          ) : posts.length === 0 ? (
+            <Text style={{ color: '#888', textAlign: 'center' }}>No posts yet.</Text>
+          ) : (
+            posts.map((post) => (
+              <PostCard key={post.id} post={post} />
+            ))
+          )}
         </View>
 
+        {/* Logout Button */}
         <View style={styles.logoutContainer}>
           <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
             <Ionicons name="log-out-outline" size={20} color="#FF3B30" />
@@ -234,16 +280,40 @@ export default function ProfileScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#FFF' },
-  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 20 },
+  container: { flex: 1, backgroundColor: '#F0F9FF' },
+  centered: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  errorText: {
+    fontSize: 16,
+    color: '#FF3B30',
+  },
+  header: {
+    padding: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F0F0F0',
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#fff',
+    justifyContent: 'center',
+  },
   title: {
     fontSize: 28,
     fontWeight: 'bold',
     color: '#085DB7',
-  },  
+    flex: 1,
+    textAlign: 'center',
+  },
   profileHeader: { alignItems: 'center', padding: 20 },
-  avatarContainer: { position: 'relative', marginBottom: 16 },
-  avatar: { width: 100, height: 100, borderRadius: 50, backgroundColor: '#DDD' },
+  avatar: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    marginBottom: 16,
+    backgroundColor: '#ccc',
+  },
   editAvatarButton: {
     position: 'absolute',
     bottom: 0,
@@ -259,18 +329,26 @@ const styles = StyleSheet.create({
   },
   userName: { fontSize: 24, fontWeight: 'bold', marginBottom: 5 },
   userHandle: { fontSize: 16, color: '#666', marginBottom: 12 },
-  userBio: { textAlign: 'center', color: '#333', marginBottom: 24, paddingHorizontal: 20 },
+  userBio: { textAlign: 'center', color: '#333', paddingHorizontal: 20, marginBottom: 16 },
   editProfileButton: {
     borderWidth: 1,
     borderColor: '#0066CC',
     borderRadius: 20,
     paddingHorizontal: 24,
     paddingVertical: 8,
+    marginTop: 10,
+    marginBottom: 4,
   },
   editProfileText: { color: '#0066CC', fontWeight: 'bold' },
   logoutContainer: { padding: 20, borderTopWidth: 1, borderColor: '#EEE', marginTop: 20 },
   logoutButton: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: 12 },
   logoutText: { color: '#FF3B30', fontWeight: 'bold', marginLeft: 8, fontSize: 16 },
+
+  // Posts section (reusing padding/colors for consistency)
+  postsContainer: {
+    paddingHorizontal: 20,
+    paddingBottom: 20,
+  },
 
   // Modal styles
   modalContainer: {
@@ -302,62 +380,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     width: '100%',
     marginTop: 20,
-  },
-statsContainer: {
-  flexDirection: 'row',
-  width: '100%',
-  marginBottom: 24,
-  paddingHorizontal: 30,
-  justifyContent: 'space-around',
-},
-statItem: {
-  alignItems: 'center',
-},
-statNumber: {
-  fontSize: 18,
-  fontWeight: 'bold',
-  marginBottom: 5,
-},
-statLabel: {
-  fontSize: 14,
-  color: '#666',
-},
-divider: {
-  width: 1,
-  height: '100%',
-  backgroundColor: '#EEE',
-},
-
-sectionHeader: {
-    paddingHorizontal: 20,
-    paddingVertical: 12,
-    backgroundColor: '#F8F8F8',
-    borderTopWidth: 1,
-    borderBottomWidth: 1,
-    borderColor: '#EEE',
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-  },
-  postsContainer: {
-    padding: 20,
-  },
-  emptyState: {
-    padding: 40,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  emptyStateText: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginTop: 12,
-    marginBottom: 8,
-  },
-  emptyStateSubtext: {
-    fontSize: 14,
-    color: '#999',
-    textAlign: 'center',
   },
   updateButtonText: { color: '#fff', fontSize: 16, fontWeight: 'bold' },
 });
