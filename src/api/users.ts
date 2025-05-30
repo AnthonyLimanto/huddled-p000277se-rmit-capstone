@@ -79,9 +79,12 @@ export const fetchUser = async (email: string) => {
     .eq("email", email)
     .single();
 
-  if (error) throw error;
-  return data;
-};
+    if (error) {
+      console.error('Fetch user error:', error);
+      return null;
+    }
+    return data;
+  };
 
 //Get logged-in user + profile info from `users`
 export const getSessionUser = async () => {
