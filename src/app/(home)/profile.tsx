@@ -53,53 +53,62 @@ export default function ProfileScreen() {
         Alert.alert('Permission required', 'Camera roll access is needed to change your photo');
         return;
       }
-
       const pickerResult = await ImagePicker.launchImageLibraryAsync({
         allowsEditing: true,
         aspect: [1, 1],
-        quality: 0.7,
+        quality: 1,
       });
-
+  
       if (!pickerResult.canceled && pickerResult.assets.length > 0) {
         const imageUri = pickerResult.assets[0].uri;
-
+        const fileExt = imageUri.split('.').pop();
+        const filePath = `${userData.email}/profile-pic.${fileExt}`;
         const response = await fetch(imageUri);
         const blob = await response.blob();
-
-        const fileExt = imageUri.split('.').pop();
-        const fileName = `${Date.now()}.${fileExt}`;
-        const filePath = `profile-pics/${fileName}`;
-
+  
+        // Upload with upsert:true to overwrite existing
         const { error: uploadError } = await supabase.storage
-          .from('avatars')
-          .upload(filePath, blob, { contentType: 'image/jpeg' });
-
+          .from('pfp')
+          .upload(filePath, blob, { contentType: 'image/jpeg', upsert: true });
+  
         if (uploadError) {
           Alert.alert('Upload failed', uploadError.message);
           return;
         }
-
-        const { data } = supabase.storage.from('avatars').getPublicUrl(filePath);
+  
+        const { data } = supabase.storage.from('pfp').getPublicUrl(filePath);
         const publicUrl = data.publicUrl;
+  
+        // Update user profile
+const { error: updateError } = await supabase
+.from('users')
+.update({ pfp_url: publicUrl })
+.eq('email', userData.email);
 
-        const { error: updateError } = await supabase
-          .from('users')
-          .update({ pfp_url: publicUrl })
-          .eq('email', userData.email);
+if (updateError) {
+Alert.alert('Update failed', updateError.message);
+} else {
+// Update posts
+await supabase
+  .from('posts')
+  .update({ pfp_url: publicUrl })
+  .eq('user_id', userData.user_id);
 
-        if (updateError) {
-          Alert.alert('Update failed', updateError.message);
-        } else {
-          setUserData({ ...userData, pfp_url: publicUrl });
-          Alert.alert('Profile picture updated!');
-        }
+// Update comments
+await supabase
+  .from('comments')
+  .update({ pfp_url: publicUrl })
+  .eq('user_id', userData.user_id);
+
+setUserData({ ...userData, pfp_url: publicUrl });
+Alert.alert('Profile picture updated!');
+}
       }
     } catch (error) {
       Alert.alert('Failed', 'Something went wrong while updating profile picture');
       console.error('Error:', error);
     }
-  };
-
+  };  
 
   const handleEditProfile = () => {
     setEditUsername(userData?.username || '');
