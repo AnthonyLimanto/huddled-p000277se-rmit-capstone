@@ -16,6 +16,7 @@ import {
   View,
 } from 'react-native';
 import { completeSignUp } from '../../api/users';
+import { trackEvent } from '@/src/api/amplitude'; // Import Amplitude tracking
 
 export default function SignUp() {
   const router = useRouter();
@@ -108,6 +109,15 @@ export default function SignUp() {
       setIsSubmitting(true);
       const user = await completeSignUp(email, password, username, degree, pfpFile);
       console.log('User created:', user);
+
+      // Track the "Sign Up" event with Amplitude
+      trackEvent('Sign Up', {
+        username,
+        email,
+        degree,
+        hasProfilePicture: !!pfpFile,
+      });
+
       Alert.alert('Success', 'Account created successfully!');
       router.replace('/(home)');
     } catch (error: any) {
@@ -238,7 +248,6 @@ export default function SignUp() {
                 <Text style={styles.loginLink}>Login</Text>
               </TouchableOpacity>
             </View>
-
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
