@@ -70,7 +70,7 @@ export default function ProfileUserScreen() {
   if (loading) {
     return (
       <SafeAreaView style={styles.centered}>
-        <ActivityIndicator size="large" color="#075DB6" />
+        <ActivityIndicator size="large" color="#075DB6" testID="activity-indicator" />
       </SafeAreaView>
     );
   }
@@ -98,9 +98,9 @@ export default function ProfileUserScreen() {
         {/* Profile Info */}
         <View style={styles.profileHeader}>
           {userData?.pfp_url ? (
-            <Image source={{ uri: userData.pfp_url }} style={styles.avatar} />
+            <Image source={{ uri: userData.pfp_url }} style={styles.avatar} testID="profile-image" />
           ) : (
-            <View style={[styles.avatar, { backgroundColor: '#ccc' }]} />
+            <View style={[styles.avatar, { backgroundColor: '#ccc' }]} testID="default-avatar" />
           )}
           <Text style={styles.userName}>{userData.username}</Text>
           <Text style={styles.userHandle}>@{userData.email?.split('@')[0]}</Text>

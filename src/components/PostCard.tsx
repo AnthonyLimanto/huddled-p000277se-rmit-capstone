@@ -18,7 +18,7 @@ type PostCardProps = {
 
 type Reply = Comment;
 
-const howLongAgo = (postTime: Date) => {
+export const howLongAgo = (postTime: Date) => {
   const postDate = new Date(postTime.getTime() + 10 * 60 * 60 * 1000); // Subtract 9 hours
   const now = new Date();
   const diffMs = now.getTime() - postDate.getTime();
@@ -319,6 +319,7 @@ const PostCard = ({ post }: PostCardProps) => {
       <View style={styles.userInfo}>
       <TouchableOpacity
   style={styles.leftGroup}
+  testID="user-clickable-area"
   onPress={() => {
     const email = post?.profile?.email;
     if (email) {
