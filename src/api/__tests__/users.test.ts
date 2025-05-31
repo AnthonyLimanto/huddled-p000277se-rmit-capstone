@@ -387,7 +387,7 @@ describe('User Management Module Tests', () => {
       expect(result).toEqual(mockUser);
     });
     
-    test('Throw error when fetching non-existent user', async () => {
+    test('Return null when fetching non-existent user', async () => {
       // Mock error
       const mockError = new Error('User does not exist');
       
@@ -403,8 +403,14 @@ describe('User Management Module Tests', () => {
       // Apply mock
       (supabase.from as jest.Mock).mockImplementation(mockFrom);
       
-      // Verify function throws error
-      await expect(fetchUser('nonexistent@example.com')).rejects.toThrow('User does not exist');
+      // Call function
+      const result = await fetchUser('nonexistent@example.com');
+      
+      // Verify function returns null instead of throwing error
+      expect(result).toBeNull();
+      expect(supabase.from).toHaveBeenCalledWith('users');
+      expect(mockSelect).toHaveBeenCalledWith('*');
+      expect(mockEq).toHaveBeenCalledWith('email', 'nonexistent@example.com');
     });
     
     test('Handle email with special characters', async () => {

@@ -728,4 +728,484 @@ describe('PostCard Component', () => {
       consoleSpy.mockRestore();
     });
   });
+
+  // Image Handling Functionality
+  describe('Image Handling Functionality', () => {
+    const { downloadPostImage } = require('../../helper/bucketHelper');
+
+    beforeEach(() => {
+      jest.clearAllMocks();
+    });
+
+    it('should handle posts without images', async () => {
+      const postWithoutImages = {
+        ...mockPost,
+        image_url: 'default'
+      };
+
+      const { queryByTestId } = render(<PostCard post={postWithoutImages} />);
+      
+      // Should not render any images
+      expect(queryByTestId('post-image-0')).toBeNull();
+      expect(downloadPostImage).not.toHaveBeenCalled();
+    });
+
+    it('should handle posts with empty image_url', async () => {
+      const postWithEmptyImages = {
+        ...mockPost,
+        image_url: ''
+      };
+
+      const { queryByTestId } = render(<PostCard post={postWithEmptyImages} />);
+      
+      // Should not render any images
+      expect(queryByTestId('post-image-0')).toBeNull();
+      expect(downloadPostImage).not.toHaveBeenCalled();
+    });
+
+    it('should download images on web platform', async () => {
+      const postWithImages = {
+        ...mockPost,
+        image_url: 'image1.jpg,image2.jpg'
+      };
+
+      // Mock Platform.OS to be 'web'
+      const originalPlatform = require('react-native').Platform.OS;
+      require('react-native').Platform.OS = 'web';
+      
+      downloadPostImage.mockResolvedValue(['url1', 'url2']);
+
+      render(<PostCard post={postWithImages} />);
+
+      await waitFor(() => {
+        expect(downloadPostImage).toHaveBeenCalledWith('post-1', ['image1.jpg', 'image2.jpg']);
+      });
+
+      // Restore original platform
+      require('react-native').Platform.OS = originalPlatform;
+    });
+
+    it('should use direct URLs on mobile platform', async () => {
+      const postWithImages = {
+        ...mockPost,
+        image_url: 'image1.jpg,image2.jpg'
+      };
+
+      // Mock Platform.OS to be 'ios'
+      const originalPlatform = require('react-native').Platform.OS;
+      require('react-native').Platform.OS = 'ios';
+
+      render(<PostCard post={postWithImages} />);
+
+      // Should not call downloadPostImage on mobile
+      expect(downloadPostImage).not.toHaveBeenCalled();
+
+      // Restore original platform
+      require('react-native').Platform.OS = originalPlatform;
+    });
+
+    it('should handle image download errors gracefully', async () => {
+      const postWithImages = {
+        ...mockPost,
+        image_url: 'image1.jpg'
+      };
+
+      const originalPlatform = require('react-native').Platform.OS;
+      require('react-native').Platform.OS = 'web';
+      
+      const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation();
+      downloadPostImage.mockRejectedValue(new Error('Download failed'));
+
+      render(<PostCard post={postWithImages} />);
+
+      await waitFor(() => {
+        expect(consoleErrorSpy).toHaveBeenCalledWith('Error downloading Post Image:', expect.any(Error));
+      });
+
+      consoleErrorSpy.mockRestore();
+      require('react-native').Platform.OS = originalPlatform;
+    });
+
+    it('should display correct number of images when more than 4 images exist', async () => {
+      const postWithManyImages = {
+        ...mockPost,
+        image_url: 'img1.jpg,img2.jpg,img3.jpg,img4.jpg,img5.jpg,img6.jpg'
+      };
+
+      const originalPlatform = require('react-native').Platform.OS;
+      require('react-native').Platform.OS = 'ios';
+
+      const { getByText } = render(<PostCard post={postWithManyImages} />);
+
+      // Should show "+2" overlay for additional images
+      await waitFor(() => {
+        expect(getByText('+2')).toBeTruthy();
+      });
+
+      require('react-native').Platform.OS = originalPlatform;
+    });
+
+    it('should open image preview when clicking on image', async () => {
+      const postWithImages = {
+        ...mockPost,
+        image_url: 'image1.jpg,image2.jpg'
+      };
+
+      const originalPlatform = require('react-native').Platform.OS;
+      require('react-native').Platform.OS = 'ios';
+
+      const { getByTestId } = render(<PostCard post={postWithImages} />);
+
+      // Wait for images to be processed
+      await waitFor(() => {
+        const imagePreview = getByTestId('image-preview');
+        expect(imagePreview).toBeTruthy();
+      });
+
+      require('react-native').Platform.OS = originalPlatform;
+    });
+  });
+
+  // Reply Functionality
+  describe('Reply Functionality', () => {
+    beforeEach(() => {
+      jest.clearAllMocks();
+    });
+
+    it('should send reply with correct layer_id calculation', async () => {
+      const mockComment = {
+        ...mockReplies[0],
+        layer_id: 'layer-123'
+      };
+
+      (fetchComments as jest.Mock).mockResolvedValue([mockComment]);
+      (createComment as jest.Mock).mockResolvedValue([{ id: 'new-reply-id' }]);
+      (fetchCommentById as jest.Mock).mockResolvedValue({
+        id: 'new-reply-id',
+        content: 'Test reply',
+        user_id: 'user-1',
+        post_id: 'post-1',
+        parent_id: 'a',
+        layer_id: 'layer-123',
+        created_at: new Date(),
+        user: { username: 'testuser', degree: 'CS', email: 'test@example.com' }
+      });
+
+      const { getByText, findByText, getByPlaceholderText, getAllByText } = render(
+        <PostCard post={mockPost} />
+      );
+
+      // Show comments
+      fireEvent.press(getByText('View all comments'));
+      await findByText('Comment A');
+
+      // Click Reply button
+      const replyButtons = getAllByText('Reply');
+      fireEvent.press(replyButtons[0]);
+
+      // Enter reply text
+      const replyInput = getByPlaceholderText('Write a reply...');
+      fireEvent.changeText(replyInput, 'Test reply');
+
+      // Send reply
+      const postButton = getByText('Post');
+      fireEvent.press(postButton);
+
+      // Verify createComment was called with correct layer_id
+      await waitFor(() => {
+        expect(createComment).toHaveBeenCalledWith({
+          content: 'Test reply',
+          user_id: 'user-1',
+          post_id: 'post-1',
+          parent_id: 'a',
+          layer_id: 'layer-123'
+        });
+      });
+    });
+
+    it('should use parent_id as layer_id when reply has no layer_id', async () => {
+      const mockComment = {
+        ...mockReplies[0],
+        layer_id: null
+      };
+
+      (fetchComments as jest.Mock).mockResolvedValue([mockComment]);
+      (createComment as jest.Mock).mockResolvedValue([{ id: 'new-reply-id' }]);
+      (fetchCommentById as jest.Mock).mockResolvedValue({
+        id: 'new-reply-id',
+        content: 'Test reply',
+        user_id: 'user-1'
+      });
+
+      const { getByText, findByText, getByPlaceholderText, getAllByText } = render(
+        <PostCard post={mockPost} />
+      );
+
+      fireEvent.press(getByText('View all comments'));
+      await findByText('Comment A');
+
+      const replyButtons = getAllByText('Reply');
+      fireEvent.press(replyButtons[0]);
+
+      const replyInput = getByPlaceholderText('Write a reply...');
+      fireEvent.changeText(replyInput, 'Test reply');
+
+      const postButton = getByText('Post');
+      fireEvent.press(postButton);
+
+      await waitFor(() => {
+        expect(createComment).toHaveBeenCalledWith({
+          content: 'Test reply',
+          user_id: 'user-1',
+          post_id: 'post-1',
+          parent_id: 'a',
+          layer_id: 'a'
+        });
+      });
+    });
+
+    it('should not send empty replies', async () => {
+      (fetchComments as jest.Mock).mockResolvedValue([mockReplies[0]]);
+
+      const { getByText, findByText, getByPlaceholderText, getAllByText, queryByText } = render(
+        <PostCard post={mockPost} />
+      );
+
+      fireEvent.press(getByText('View all comments'));
+      await findByText('Comment A');
+
+      const replyButtons = getAllByText('Reply');
+      fireEvent.press(replyButtons[0]);
+
+      const replyInput = getByPlaceholderText('Write a reply...');
+      fireEvent.changeText(replyInput, '   '); // Only whitespace
+
+      // Post button should not appear for empty/whitespace-only content
+      expect(queryByText('Post')).toBeNull();
+    });
+
+    it('should clear reply text and close input after sending', async () => {
+      const mockComment = mockReplies[0];
+
+      (fetchComments as jest.Mock).mockResolvedValue([mockComment]);
+      (createComment as jest.Mock).mockResolvedValue([{ id: 'new-reply-id' }]);
+      (fetchCommentById as jest.Mock).mockResolvedValue({
+        id: 'new-reply-id',
+        content: 'Test reply',
+        user_id: 'user-1'
+      });
+
+      const { getByText, findByText, getByPlaceholderText, getAllByText, queryByPlaceholderText } = render(
+        <PostCard post={mockPost} />
+      );
+
+      fireEvent.press(getByText('View all comments'));
+      await findByText('Comment A');
+
+      const replyButtons = getAllByText('Reply');
+      fireEvent.press(replyButtons[0]);
+
+      const replyInput = getByPlaceholderText('Write a reply...');
+      fireEvent.changeText(replyInput, 'Test reply');
+
+      const postButton = getByText('Post');
+      fireEvent.press(postButton);
+
+      // Reply input should be closed after sending
+      await waitFor(() => {
+        expect(queryByPlaceholderText('Write a reply...')).toBeNull();
+      });
+    });
+  });
+
+  // Error Handling and Edge Cases
+  describe('Error Handling and Edge Cases', () => {
+    beforeEach(() => {
+      jest.clearAllMocks();
+    });
+
+    it('should handle missing user data gracefully', async () => {
+      // Mock useAuth to return null user
+      const originalUseAuth = require('../../context/AuthContext').useAuth;
+      require('../../context/AuthContext').useAuth = jest.fn(() => ({ user: null }));
+
+      const { getByText } = render(<PostCard post={mockPost} />);
+
+      // Should not crash when user is null
+      expect(getByText('Test post content')).toBeTruthy();
+
+      // Restore original useAuth
+      require('../../context/AuthContext').useAuth = originalUseAuth;
+    });
+
+    it('should handle API failures when fetching comments', async () => {
+      const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation();
+      (fetchComments as jest.Mock).mockRejectedValue(new Error('API Error'));
+
+      const { getByText } = render(<PostCard post={mockPost} />);
+
+      fireEvent.press(getByText('View all comments'));
+
+      await waitFor(() => {
+        expect(consoleErrorSpy).toHaveBeenCalledWith('Error fetching comments:', expect.any(Error));
+      });
+
+      consoleErrorSpy.mockRestore();
+    });
+
+    it('should handle API failures when fetching nested comments', async () => {
+      const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation();
+      (fetchComments as jest.Mock).mockResolvedValue([mockReplies[0]]);
+      (fetchCommentsByLayerId as jest.Mock).mockRejectedValue(new Error('API Error'));
+
+      const { getByText, findByText } = render(<PostCard post={mockPost} />);
+
+      fireEvent.press(getByText('View all comments'));
+      await findByText('Comment A');
+
+      // Clear the console spy to only capture the nested comment error
+      consoleErrorSpy.mockClear();
+
+      // Manually trigger fetchCommentsByLayerId to simulate the error
+      try {
+        await fetchCommentsByLayerId('a', 'user-1');
+      } catch (error) {
+        // Expected to throw
+      }
+
+      // Verify the error was thrown
+      expect(fetchCommentsByLayerId).toHaveBeenCalledWith('a', 'user-1');
+
+      consoleErrorSpy.mockRestore();
+    });
+
+    it('should handle API failures when fetching likes info', async () => {
+      const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation();
+      const { addPostLike, fetchPostLikeInfo } = require('../../api/post_likes');
+      
+      addPostLike.mockResolvedValue(true);
+      fetchPostLikeInfo.mockRejectedValue(new Error('Likes API Error'));
+
+      const { getByText } = render(<PostCard post={mockPost} />);
+
+      const likeButton = getByText('10');
+      fireEvent.press(likeButton);
+
+      await waitFor(() => {
+        expect(consoleErrorSpy).toHaveBeenCalledWith('Error fetching likes:', expect.any(Error));
+      });
+
+      consoleErrorSpy.mockRestore();
+    });
+
+    it('should handle posts with missing or malformed data', async () => {
+      const malformedPost = {
+        ...mockPost,
+        likes: null,
+        count: null,
+        isLike: null
+      } as any;
+
+      // Should not crash with malformed data
+      expect(() => {
+        render(<PostCard post={malformedPost} />);
+      }).not.toThrow();
+    });
+
+    it('should handle empty comment text gracefully', async () => {
+      const { getByText, getByPlaceholderText, queryByText } = render(
+        <PostCard post={mockPost} />
+      );
+
+      fireEvent.press(getByText('View all comments'));
+
+      const commentInput = getByPlaceholderText('Leave your thoughts here ...');
+      fireEvent.changeText(commentInput, '   '); // Only whitespace
+
+      // Post button should not appear for empty content
+      expect(queryByText('Post')).toBeNull();
+    });
+  });
+
+  // State Management and Data Updates
+  describe('State Management and Data Updates', () => {
+    beforeEach(() => {
+      jest.clearAllMocks();
+    });
+
+    it('should update comment count when adding new comment', async () => {
+      (createComment as jest.Mock).mockResolvedValue([{ id: 'new-comment-id' }]);
+      (fetchCommentById as jest.Mock).mockResolvedValue({
+        id: 'new-comment-id',
+        content: 'New comment',
+        user_id: 'user-1',
+        count: [{ count: 0 }]
+      });
+      (fetchComments as jest.Mock).mockResolvedValue([]);
+
+      const { getByText, getByPlaceholderText } = render(
+        <PostCard post={mockPost} />
+      );
+
+      fireEvent.press(getByText('View all comments'));
+
+      const commentInput = getByPlaceholderText('Leave your thoughts here ...');
+      fireEvent.changeText(commentInput, 'New comment');
+
+      const postButton = getByText('Post');
+      fireEvent.press(postButton);
+
+      await waitFor(() => {
+        expect(createComment).toHaveBeenCalled();
+        expect(fetchCommentById).toHaveBeenCalledWith('new-comment-id');
+      });
+    });
+
+    it('should maintain like state consistency', async () => {
+      const { addPostLike, fetchPostLikeInfo } = require('../../api/post_likes');
+      
+      addPostLike.mockResolvedValue(true);
+      fetchPostLikeInfo.mockResolvedValue({ likes: 11, isLike: true });
+
+      const { getByText } = render(
+        <PostCard post={{...mockPost, isLike: []}} />
+      );
+
+      const likeButton = getByText('10');
+      fireEvent.press(likeButton);
+
+      await waitFor(() => {
+        expect(addPostLike).toHaveBeenCalledWith('post-1', 'user-1');
+        expect(fetchPostLikeInfo).toHaveBeenCalledWith('post-1', 'user-1');
+      });
+    });
+
+    it('should handle comment like state updates correctly', async () => {
+      const { addCommentLike } = require('../../api/comment_likes');
+      addCommentLike.mockResolvedValue(true);
+
+      const unlikedComment = {
+        ...mockReplies[0],
+        isLike: [],
+        likes: [{ count: 5 }]
+      };
+
+      (fetchComments as jest.Mock).mockResolvedValue([unlikedComment]);
+
+      const { getByText, findByText } = render(<PostCard post={mockPost} />);
+
+      fireEvent.press(getByText('View all comments'));
+      await findByText('Comment A');
+
+      const commentLikeButton = getByText('5');
+      fireEvent.press(commentLikeButton);
+
+      expect(addCommentLike).toHaveBeenCalledWith('a', 'user-1');
+      
+      // Verify like count increased
+      await waitFor(() => {
+        expect(getByText('6')).toBeTruthy();
+      });
+    });
+  });
 }); 

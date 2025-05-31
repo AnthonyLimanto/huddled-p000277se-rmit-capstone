@@ -28,7 +28,8 @@ import {
   addGroupMembers,
   fetchGroup,
   fetchGroups,
-  fetchGroupMembers
+  fetchGroupMembers,
+  leaveGroup
 } from '../group';
 import { supabase } from '../supabase';
 
@@ -38,7 +39,10 @@ jest.mock('../supabase', () => {
     supabase: {
       from: jest.fn(),
       channel: jest.fn(),
-      removeChannel: jest.fn()
+      removeChannel: jest.fn(),
+      auth: {
+        getUser: jest.fn()
+      }
     }
   };
 });
@@ -550,6 +554,125 @@ describe('Group Management Module Tests', () => {
       
       // Verify results - note this function does not throw error, only records error and returns null
       expect(result).toBeNull();
+    });
+  });
+
+  describe('leaveGroup', () => {
+    test('successfully leave group', async () => {
+      // Mock authenticated user
+      const mockUser = { id: 'user123' };
+      (supabase.auth.getUser as jest.Mock).mockResolvedValue({
+        data: { user: mockUser },
+        error: null
+      });
+      
+      // Mock delete operation
+      const mockDelete = jest.fn().mockResolvedValue({ 
+        error: null 
+      });
+      const mockEq2 = jest.fn().mockReturnValue(mockDelete);
+      const mockEq1 = jest.fn().mockReturnValue({ eq: mockEq2 });
+      const mockFrom = jest.fn().mockReturnValue({ 
+        delete: jest.fn().mockReturnValue({ eq: mockEq1 })
+      });
+      
+      // Apply mock
+      (supabase.from as jest.Mock).mockImplementation(mockFrom);
+      
+      // Call function
+      const result = await leaveGroup('group123');
+      
+      // Verify results
+      expect(supabase.auth.getUser).toHaveBeenCalled();
+      expect(supabase.from).toHaveBeenCalledWith('group_members');
+      expect(mockEq1).toHaveBeenCalledWith('group_id', 'group123');
+      expect(mockEq2).toHaveBeenCalledWith('user_id', 'user123');
+      expect(result).toBe(true);
+    });
+    
+    test('throw error when user not authenticated', async () => {
+      // Mock authentication error
+      const authError = new Error('Authentication failed');
+      (supabase.auth.getUser as jest.Mock).mockResolvedValue({
+        data: { user: null },
+        error: authError
+      });
+      
+      // Verify function throws error
+      await expect(leaveGroup('group123')).rejects.toThrow('Authentication failed');
+      
+      // Verify subsequent steps not called
+      expect(supabase.from).not.toHaveBeenCalled();
+    });
+    
+    test('throw error when no user logged in', async () => {
+      // Mock no user logged in
+      (supabase.auth.getUser as jest.Mock).mockResolvedValue({
+        data: { user: null },
+        error: null
+      });
+      
+      // Verify function throws error
+      await expect(leaveGroup('group123')).rejects.toThrow('Not logged in');
+      
+      // Verify subsequent steps not called
+      expect(supabase.from).not.toHaveBeenCalled();
+    });
+    
+    test('throw error when delete operation fails', async () => {
+      // Mock authenticated user
+      const mockUser = { id: 'user123' };
+      (supabase.auth.getUser as jest.Mock).mockResolvedValue({
+        data: { user: mockUser },
+        error: null
+      });
+      
+      // Mock delete operation failure - directly throw error
+      const deleteError = new Error('Delete operation failed');
+      const mockFrom = jest.fn().mockReturnValue({
+        delete: jest.fn().mockReturnValue({
+          eq: jest.fn().mockReturnValue({
+            eq: jest.fn().mockResolvedValue({
+              error: deleteError
+            })
+          })
+        })
+      });
+      
+      // Apply mock
+      (supabase.from as jest.Mock).mockImplementation(mockFrom);
+      
+      // Verify function throws error
+      await expect(leaveGroup('group123')).rejects.toThrow('Delete operation failed');
+    });
+    
+    test('handle empty group_id', async () => {
+      // Mock authenticated user
+      const mockUser = { id: 'user123' };
+      (supabase.auth.getUser as jest.Mock).mockResolvedValue({
+        data: { user: mockUser },
+        error: null
+      });
+      
+      // Mock delete operation
+      const mockDelete = jest.fn().mockResolvedValue({ 
+        error: null 
+      });
+      const mockEq2 = jest.fn().mockReturnValue(mockDelete);
+      const mockEq1 = jest.fn().mockReturnValue({ eq: mockEq2 });
+      const mockFrom = jest.fn().mockReturnValue({ 
+        delete: jest.fn().mockReturnValue({ eq: mockEq1 })
+      });
+      
+      // Apply mock
+      (supabase.from as jest.Mock).mockImplementation(mockFrom);
+      
+      // Call function with empty group_id
+      const result = await leaveGroup('');
+      
+      // Verify results
+      expect(mockEq1).toHaveBeenCalledWith('group_id', '');
+      expect(result).toBe(true);
     });
   });
 }); 
