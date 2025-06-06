@@ -36,6 +36,8 @@ SUPABASE_KEY=your-supabase-key
 AMPLITUDE_KEY=your-amplitude-key
 ```
 
+At the moment existing credential already exist, please feel free to ustilse these.
+
 ---
 
 ### **3. Start the App**
