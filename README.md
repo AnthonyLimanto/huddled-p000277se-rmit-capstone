@@ -1,52 +1,76 @@
-# Welcome to your Expo app 👋
+# Huddled - Social Platform for Students
 
-Currently code in repo is just example code
+Welcome to **Huddled**, a React Native application built using Expo. This app provides features such as group chats, post feed, real-time updates, and analytics tracking. It is powered by Supabase for backend services and Amplitude for analytics.
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+---
 
-## Get started
+## **Features**
 
-1. Install dependencies
+- **Authentication**: Secure user authentication using Supabase.
+- **Post Feed**: Global post feed, with likes and comments.
+- **Group Chats**: Create and join group chats with real-time messaging.
+- **Analytics**: Track user behavior using Amplitude.
+- **File-Based Routing**: Organized navigation using Expo Router.
 
-   ```bash
-   npm install
-   ```
+---
 
-2. Start the app
+## **Getting Started**
 
-   ```bash
-    npx expo start
-   ```
+Follow these steps to set up and run the project locally:
 
-In the output, you'll find options to open the app in a
+### **1. Install Dependencies**
+Run the following command to install all required dependencies:
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
-
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
-
-```bash
-npm run reset-project
+```
+npm install
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+---
 
-## Learn more
+### **2. Configure Environment Variables**
+In env.ts file and add the following keys:
 
-To learn more about developing your project with Expo, look at the following resources:
+```env
+SUPABASE_URL=https://your-supabase-url.supabase.co
+SUPABASE_KEY=your-supabase-key
+AMPLITUDE_KEY=your-amplitude-key
+```
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+---
 
-## Join the community
+### **3. Start the App**
+Run the following command to start the development server:
 
-Join our community of developers creating universal apps.
+```
+npm run start
+```
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+You can open the app in:
+- **Web Build**: For quick testing on your PC
+- **Android Emulator**: Using Android Studio.
+- **iOS Simulator**: Using Xcode.
+
+---
+
+## **Project Structure**
+
+### **Key Directories**
+- **`src/api`**: Contains API functions for interacting with Supabase.
+- **`src/app`**: Contains screens and components organized by feature.
+- **`src/components`**: Reusable UI components.
+- **`src/context`**: Context API for global state management.
+
+### **Key Files**
+- **`src/api/supabase.ts`**: Initializes Supabase client.
+- **`src/api/amplitude.ts`**: Configures Amplitude analytics.
+- **`src/app/_layout.tsx`**: Defines the app's navigation structure.
+
+---
+
+## **Technologies Used**
+
+- **Frontend**: React Native with Expo.
+- **Backend**: Supabase for database and authentication.
+- **Analytics**: Amplitude for tracking user behavior.
+- **Navigation**: Expo Router for file-based routing.
+- **Styling**: React Native's `StyleSheet`.
