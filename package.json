@@ -8,21 +8,15 @@
     "android": "expo run:android",
     "ios": "expo run:ios",
     "web": "expo start --web",
-    "test": "jest --coverage",
+    "test": "jest --watchAll",
     "lint": "expo lint"
   },
   "jest": {
-    "preset": "jest-expo",
-    "setupFilesAfterEnv": [
-      "./jest.setup.js"
-    ],
-    "transformIgnorePatterns": [
-      "node_modules/(?!((jest-)?react-native|@react-native(-community)?)|expo(nent)?|@expo(nent)?/.*|@expo-google-fonts/.*|react-navigation|@react-navigation/.*|@unimodules/.*|unimodules|sentry-expo|native-base|react-native-svg|@rneui/.*|@testing-library/.*)"
-    ]
+    "preset": "jest-expo"
   },
   "dependencies": {
-    "@amplitude/analytics-react-native": "^1.4.13",
     "@expo/vector-icons": "^14.1.0",
+    "@amplitude/analytics-react-native": "^1.4.13",
     "@hcaptcha/react-hcaptcha": "^1.12.0",
     "@react-native-async-storage/async-storage": "^2.1.2",
     "@react-navigation/bottom-tabs": "^7.2.0",
@@ -63,8 +57,6 @@
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",
-    "@testing-library/jest-native": "^5.4.3",
-    "@testing-library/react-native": "^13.2.0",
     "@types/jest": "^29.5.12",
     "@types/react": "~18.3.12",
     "@types/react-test-renderer": "^18.3.0",

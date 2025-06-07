@@ -1,0 +1,11 @@
+# Supabase Credentials
+SUPABASE_URL = 'https://leqcmbvpugjvyzlxxmgs.supabase.co'
+SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxlcWNtYnZwdWdqdnl6bHh4bWdzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDIxMzE0NjMsImV4cCI6MjA1NzcwNzQ2M30.6SBHE2Hxto_qW4-PY6wbxlzY37H-0ekxz3Aj6_GxrJg"
+
+# Amplitude Credentials
+AMPLITUDE_KEY="4aa30055123f88372e20a28506714bb4"
+
+
+These credentials link to an existing supabase and amplitude account. Please feel free to use them for demo purposes.
+They are already configured in the env.ts file for convenience.
+They are both on the free tier so there is no cost envolved.
